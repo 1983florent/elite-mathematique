@@ -353,6 +353,15 @@ const GUARDS = {
   effet: { notFollowedBy: /^\s*(?:de|d[\u2019'])/i },
   travail: { notFollowedBy: /^\s*(?:de|d[\u2019'])/i },
   simple: { notFollowedBy: /^\s*(?:fait|d[\u2019'])/i },
+  // « il est important de… », « il est nécessaire de… » : l'adjectif appartient
+  // à la locution et doit être remplacé en bloc, ou pas du tout.
+  important: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  importante: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  nécessaire: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  nécessaires: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  possible: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  possibles: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
+  utile: { notFollowedBy: /^\s*(?:de\b|d[\u2019'])/i },
 };
 
 /** Dictionnaire complet par langue, prêt à l'emploi. */

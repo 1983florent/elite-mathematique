@@ -48,19 +48,40 @@ le bouton « Effacer toutes mes données » les supprime.
 
 ## Utilisation
 
-L'application utilise des modules ES et des Web Workers : elle doit être
-servie en HTTP. Une ouverture directe en `file://` ne fonctionne pas.
+### Version hébergée
+
+L'application utilise des modules ES et des Web Workers : servie en HTTP, elle
+exécute l'analyse dans un worker et l'interface reste fluide. Une ouverture
+directe en `file://` ne fonctionne pas — c'est à cela que sert la version en
+fichier unique ci-dessous.
 
 ```bash
 npm run serve            # http://localhost:8080/plagiat/
 ```
 
-En production, tout fichier statique suffit — GitHub Pages convient tel quel.
+En production, tout hébergement statique suffit — GitHub Pages convient tel quel.
+
+### Version en fichier unique
+
+```bash
+npm run build            # dist/analyseur-plagiat.html  (~335 Ko)
+```
+
+Un seul `.html` contenant l'interface, la feuille de style et la totalité du
+code. Il s'ouvre par double-clic, sans serveur, et fonctionne depuis une clé
+USB. Deux différences avec la version hébergée : l'analyse s'exécute sur le fil
+principal (l'interface peut se figer quelques instants sur un très gros
+document), et les réglages ne sont pas conservés d'une ouverture à l'autre
+lorsque la page vient d'un fichier local — IndexedDB y est indisponible.
+
+Le regroupement (`tools/build-standalone.mjs`) ne fait qu'assembler : ni
+minification, ni transformation de syntaxe. Le code livré reste celui du dépôt,
+lisible et vérifiable.
 
 ### Tests
 
 ```bash
-npm test                 # 89 tests : ZIP, DOCX, texte, correspondance,
+npm test                 # 90 tests : ZIP, DOCX, texte, correspondance,
                          # pipeline, humanisation, rapport et exports
 ```
 
@@ -96,7 +117,8 @@ plagiat/
 
 docs/relais-cloudflare.js      relais CORS prêt à déployer (recherche + lecture de pages)
 tools/serve.mjs                serveur statique de développement
-tests/                         tests Node du cœur applicatif
+tools/build-standalone.mjs     assemblage de la version en fichier unique
+tests/                         tests Node du cœur applicatif (fixtures générées)
 ```
 
 Les modules de `core/` ne dépendent d'aucune API du DOM : ils tournent

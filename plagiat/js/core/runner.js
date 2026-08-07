@@ -36,6 +36,12 @@ class WorkerRunner {
   /** Crée le worker, ou renvoie `null` si l'environnement ne le permet pas. */
   ensureWorker() {
     if (this.worker || this.workerFailed) return this.worker;
+    // Échappatoire utilisée par la version en fichier unique, où il n'existe
+    // pas de fichier de worker séparé à charger.
+    if (globalThis.ELITE_SANS_WORKER) {
+      this.workerFailed = true;
+      return null;
+    }
     try {
       if (typeof Worker !== 'function') throw new Error('Worker indisponible');
       this.worker = new Worker(this.workerUrl, { type: 'module' });

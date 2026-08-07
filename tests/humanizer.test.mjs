@@ -247,3 +247,18 @@ test('les connecteurs en tête ne sont pas déplacés en fin de phrase', () => {
     'Les mesures relevées sur le terrain ont changé au printemps.',
   );
 });
+
+test('les adjectifs des locutions impersonnelles ne sont pas isolés', () => {
+  const source =
+    "Il est important de noter que le résultat tient. Il est nécessaire de vérifier chaque étape. " +
+    "Il est possible de conclure ainsi sur ce point précis du raisonnement.";
+  for (let seed = 1; seed <= 25; seed++) {
+    const out = humanize(source, { seed, intensity: 1 }).text;
+    // Soit la locution entière est reformulée, soit elle reste intacte.
+    assert.doesNotMatch(
+      out,
+      /est (considérable|notable|majeur|indispensable|requis|envisageable|réalisable) d/i,
+      `graine ${seed} : « ${out} »`,
+    );
+  }
+});

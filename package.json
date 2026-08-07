@@ -7,7 +7,10 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "serve": "node tools/serve.mjs",
-    "build": "node tools/build-standalone.mjs"
+    "build": "node tools/build-standalone.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "sw": "node tools/make-sw.mjs",
+    "assets": "node tools/make-icons.mjs && node tools/make-sw.mjs"
   },
   "license": "MIT"
 }

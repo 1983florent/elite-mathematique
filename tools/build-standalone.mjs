@@ -202,6 +202,23 @@ __req(${JSON.stringify(idOf(ENTRY))});
   };
 
   let out = html;
+
+  // Les ressources propres à la version installable (manifeste PWA, icônes PNG
+  // séparées) n'ont pas de sens dans un fichier unique : on les retire pour
+  // éviter des requêtes vouées à échouer sous file://.
+  const retirerSiPresent = (texte, motif) => texte.replace(motif, '');
+  out = retirerSiPresent(out, '<link rel="manifest" href="manifest.webmanifest">\n');
+  out = retirerSiPresent(
+    out,
+    '<link rel="icon" type="image/png" sizes="512x512" href="icons/favicon-512.png">\n',
+  );
+  out = retirerSiPresent(out, '<link rel="apple-touch-icon" href="icons/icon-192.png">\n');
+  // Le bouton « Installer » ne s'applique pas au fichier unique.
+  out = retirerSiPresent(
+    out,
+    /<button type="button" id="btn-installer"[\s\S]*?<\/button>\n\s*/,
+  );
+
   out = remplacer(out, '<link rel="stylesheet" href="css/app.css">', `<style>\n${css}\n</style>`);
   out = remplacer(out, '<link rel="icon" href="../logo.png">', `<link rel="icon" href="${LOGO_URI}">`);
   out = remplacer(

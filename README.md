@@ -54,7 +54,9 @@ le bouton « Effacer toutes mes données » les supprime.
 
 ## Utilisation
 
-### Version hébergée
+L'application se décline en quatre formes, de la plus légère à la plus intégrée.
+
+### Version hébergée (site web)
 
 L'application utilise des modules ES et des Web Workers : servie en HTTP, elle
 exécute l'analyse dans un worker et l'interface reste fluide. Une ouverture
@@ -66,6 +68,33 @@ npm run serve            # http://localhost:8080/plagiat/
 ```
 
 En production, tout hébergement statique suffit — GitHub Pages convient tel quel.
+
+### Application installable (PWA)
+
+Servie en HTTPS (GitHub Pages, par exemple), l'application est **installable**
+depuis Chrome ou Edge : bouton « ⤓ Installer » ou icône dans la barre
+d'adresse. Elle obtient alors son icône, sa fenêtre propre et **fonctionne hors
+ligne** — un service worker met en cache l'intégralité de l'application. Les
+ressources associées sont générées par :
+
+```bash
+npm run assets           # icônes PNG + service worker
+```
+
+### Application de bureau (Windows, macOS, Linux)
+
+Le dossier [`desktop/`](desktop/) contient un projet Electron qui produit un
+**installateur natif** (`.exe`, `.dmg`, `.AppImage`) :
+
+```bash
+cd desktop
+npm install              # récupère Electron (~200 Mo, une seule fois)
+npm run dist             # installateur pour votre système, dans desktop/dist/
+```
+
+Voir [`desktop/README.md`](desktop/README.md). L'application ouvre l'analyseur
+dans une fenêtre native, avec un serveur local interne (workers + persistance),
+entièrement hors ligne.
 
 ### Version en fichier unique
 
@@ -123,12 +152,18 @@ plagiat/
     │   ├── runner.js          worker avec repli sur le fil principal
     │   └── errors.js          sérialisation des erreurs
     ├── data/synonyms.js       lexique annoté (catégorie grammaticale, contraintes)
-    ├── ui/                    aides DOM et rendu des résultats
+    ├── ui/                    aides DOM, rendu des résultats, intégration PWA
     └── workers/               workers d'analyse et d'humanisation
+├── manifest.webmanifest      manifeste d'application installable (PWA)
+├── sw.js                     service worker hors ligne (généré)
+└── icons/                    icônes de l'application (générées)
 
+desktop/                       application de bureau Electron (win/mac/linux)
 docs/relais-cloudflare.js      relais CORS prêt à déployer (recherche + lecture de pages)
 tools/serve.mjs                serveur statique de développement
 tools/build-standalone.mjs     assemblage de la version en fichier unique
+tools/make-icons.mjs           génère les icônes PNG (sans dépendance)
+tools/make-sw.mjs              génère le service worker
 tests/                         tests Node du cœur applicatif (fixtures générées)
 ```
 

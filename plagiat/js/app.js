@@ -27,6 +27,7 @@ import { HUMANIZE_DEFAULTS, OPERATION_LABELS, wordDiff } from './core/humanizer.
 import { userMessage } from './core/errors.js';
 import { compareTexts, createFingerprint, validateFingerprint } from './core/compare.js';
 import { decloakText } from './core/forensics.js';
+import { setupPwa } from './ui/pwa.js';
 import { put as storePut, all as storeAll, remove as storeRemove, clear as storeClear } from './core/store.js';
 
 /* ------------------------------------------------------------------ *
@@ -1193,6 +1194,21 @@ function reopenReport(json) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Installation (PWA)
+ * ------------------------------------------------------------------ */
+
+function setupInstall() {
+  const button = $('#btn-installer');
+  const pwa = setupPwa({
+    notify,
+    onInstallable: (show) => {
+      if (button) button.hidden = !show;
+    },
+  });
+  button?.addEventListener('click', () => pwa.promptInstall());
+}
+
+/* ------------------------------------------------------------------ *
  * Démarrage
  * ------------------------------------------------------------------ */
 
@@ -1212,6 +1228,7 @@ async function start() {
   setupHumanize();
   setupTools();
   setupSettings();
+  setupInstall();
   updateAnalysisSummary();
   updateSourceStats();
 

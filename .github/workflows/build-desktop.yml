@@ -1,0 +1,80 @@
+# Construit les installateurs de bureau (Windows .exe, macOS .dmg, Linux
+# .AppImage/.deb) sur les machines de GitHub — aucun outil à installer
+# localement. Le résultat est téléchargeable directement depuis GitHub.
+#
+# Deux façons de le déclencher :
+#   • onglet « Actions » du dépôt ▸ « Construire les applications de bureau »
+#     ▸ « Run workflow » : les installateurs sont joints à l'exécution
+#     (section « Artifacts »).
+#   • en poussant une étiquette de version (ex. « v1.0.0 ») : une Release
+#     GitHub est créée avec les installateurs attachés.
+
+name: Construire les applications de bureau
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            plateforme: Windows
+          - os: macos-latest
+            plateforme: macOS
+          - os: ubuntu-latest
+            plateforme: Linux
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.plateforme }}
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Vérifier le cœur applicatif
+        run: npm test
+
+      - name: Installer les dépendances de l'application de bureau
+        working-directory: desktop
+        run: npm install
+
+      - name: Construire l'installateur
+        working-directory: desktop
+        run: npm run dist
+        env:
+          # Pas de signature de code : les binaires ne sont pas signés.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Publier les installateurs (téléchargeables)
+        uses: actions/upload-artifact@v4
+        with:
+          name: installateurs-${{ matrix.plateforme }}
+          if-no-files-found: error
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.dmg
+            desktop/dist/*.AppImage
+            desktop/dist/*.deb
+
+      - name: Joindre à la Release (si étiquette de version)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/*.dmg
+            desktop/dist/*.AppImage
+            desktop/dist/*.deb

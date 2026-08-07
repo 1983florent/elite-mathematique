@@ -1,0 +1,53 @@
+ANALYSEUR ELITE MATHEMATIQUE — application prete a l'emploi
+===========================================================
+
+Cette application s'ouvre dans sa PROPRE FENETRE, par un simple double-clic,
+SANS RIEN INSTALLER. Elle reutilise le navigateur deja present sur votre
+ordinateur (Edge, preinstalle sur Windows 10/11, ou Chrome). Tout fonctionne
+hors ligne : votre document n'est envoye a aucun serveur.
+
+DEMARRER
+--------
+  * Windows : double-cliquez sur  « Analyseur ELITE (Windows).bat »
+              (si un avertissement bleu « Windows a protege votre PC » apparait,
+               cliquez « Informations complementaires » puis « Executer quand
+               meme » : le fichier n'est pas signe, mais son contenu est visible
+               en l'ouvrant avec le Bloc-notes.)
+
+  * macOS   : clic droit sur « Analyseur ELITE (macOS).command » puis « Ouvrir »
+              (la premiere fois seulement, pour lever l'avertissement).
+
+  * Linux   : double-cliquez sur « Analyseur ELITE (Linux).sh »
+              (ou, dans un terminal :  bash "Analyseur ELITE (Linux).sh")
+
+Vous pouvez aussi, sur n'importe quel systeme, ouvrir directement le fichier
+« analyseur-plagiat.html » par double-clic : c'est la meme application.
+
+GARDEZ LES DEUX FICHIERS ENSEMBLE
+---------------------------------
+Le lanceur et « analyseur-plagiat.html » doivent rester dans le meme dossier.
+Vous pouvez copier ce dossier ou vous voulez (Bureau, cle USB...).
+
+CE QUE FAIT L'APPLICATION
+-------------------------
+  * Taux de plagiat d'un document Word (.docx), sans limite de taille.
+  * Recherche multi-bases (Wikipedia, OpenAlex, Crossref, HAL... sans cle ;
+    Google, Serper, Tavily... avec votre cle) — necessite une connexion.
+  * Corpus local et empreintes : comparer a une source SANS divulguer son texte.
+  * Analyse forensique : texte cache, homoglyphes, caracteres invisibles.
+  * Indices de redaction par IA. Verification des citations. Comparaison de
+    deux documents. Humanisation de texte. Historique.
+  * Rapport exportable en Word, HTML, JSON, CSV et PDF.
+
+Un taux eleve n'est pas une preuve de plagiat : verifiez chaque passage.
+
+POURQUOI PAS UN VRAI .EXE ?
+---------------------------
+Un installateur classique (.exe) embarque un moteur de navigateur complet et
+pese plus de 100 Mo — trop lourd pour etre transmis ici. Ce lanceur obtient le
+meme resultat (une fenetre d'application dediee) en quelques kilo-octets, en
+s'appuyant sur le navigateur que vous avez deja. Si vous tenez a un .exe
+autonome, le dossier « desktop » du projet le construit en une commande
+(voir desktop/OBTENIR-LE-EXE.md).
+
+Licence MIT.

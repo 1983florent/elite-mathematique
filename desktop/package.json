@@ -43,8 +43,18 @@
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.png"
     },
@@ -57,15 +67,31 @@
       "shortcutName": "Analyseur ELITE"
     },
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
       "icon": "build/icon.png",
       "category": "public.app-category.education"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "build/icon.png",
       "category": "Education",
       "maintainer": "ELITE MATHEMATIQUE"
-    }
+    },
+    "publish": null
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1983florent/elite-mathematique"
   }
 }

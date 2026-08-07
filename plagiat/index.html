@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyseur de plagiat & humanisation — ELITE MATHEMATIQUE</title>
+<meta name="description" content="Analysez un document Word (.docx) pour calculer son taux de plagiat, humanisez votre texte et générez un rapport détaillé. Tout se passe dans votre navigateur.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="../logo.png">
+</head>
+<body>
+
+<a class="saut-contenu" href="#contenu">Aller au contenu principal</a>
+
+<header class="entete">
+  <div class="conteneur entete__barre">
+    <a class="entete__marque" href="../index.html">
+      <img src="../logo.png" alt="" width="34" height="34">
+      <span>ELITE MATHEMATIQUE</span>
+    </a>
+    <div class="entete__actions">
+      <button type="button" id="btn-theme" class="bouton bouton--discret" aria-label="Changer de thème" title="Thème clair / sombre">
+        <span aria-hidden="true" id="icone-theme">◐</span>
+      </button>
+      <span class="etiquette etiquette--info" title="Aucun document n'est envoyé sur un serveur">100 % dans votre navigateur</span>
+    </div>
+  </div>
+  <div class="conteneur entete__titre">
+    <h1>Analyseur de plagiat &amp; humanisation de texte</h1>
+    <p>Déposez un document Word, obtenez un taux de similitude, un rapport détaillé et une réécriture assistée. Le fichier ne quitte jamais votre ordinateur&nbsp;; seules de courtes requêtes de recherche partent vers les moteurs que vous activez.</p>
+  </div>
+</header>
+
+<nav class="onglets conteneur" role="tablist" aria-label="Sections de l'application">
+  <button role="tab" id="onglet-analyse" aria-controls="panneau-analyse" aria-selected="true" class="onglet actif">Analyse de plagiat</button>
+  <button role="tab" id="onglet-humanisation" aria-controls="panneau-humanisation" aria-selected="false" class="onglet">Humanisation</button>
+  <button role="tab" id="onglet-reglages" aria-controls="panneau-reglages" aria-selected="false" class="onglet">Réglages</button>
+  <button role="tab" id="onglet-aide" aria-controls="panneau-aide" aria-selected="false" class="onglet">Aide &amp; méthode</button>
+</nav>
+
+<main id="contenu" class="conteneur">
+
+  <!-- ============================ ANALYSE ============================ -->
+  <section id="panneau-analyse" role="tabpanel" aria-labelledby="onglet-analyse" class="panneau">
+
+    <div class="grille-2">
+      <div class="carte">
+        <h2>1. Document à analyser</h2>
+
+        <div id="zone-depot" class="depot" tabindex="0" role="button"
+             aria-label="Déposer un document Word ou choisir un fichier">
+          <svg viewBox="0 0 24 24" width="42" height="42" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+          </svg>
+          <p><strong>Déposez votre fichier .docx ici</strong></p>
+          <p class="discret">ou cliquez pour le choisir — aucune limite de taille ni de pages</p>
+          <input type="file" id="fichier" accept=".docx,.docm,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        </div>
+
+        <div id="info-fichier" class="info-fichier" hidden>
+          <div>
+            <strong id="nom-fichier"></strong>
+            <div class="discret" id="details-fichier"></div>
+          </div>
+          <button type="button" class="bouton bouton--discret" id="btn-retirer-fichier">Retirer</button>
+        </div>
+
+        <details class="repli">
+          <summary>Ou coller directement du texte</summary>
+          <label class="champ">
+            <span>Texte à analyser</span>
+            <textarea id="texte-colle" rows="7" placeholder="Collez ici le texte à vérifier…"></textarea>
+          </label>
+        </details>
+
+        <details class="repli">
+          <summary>Corpus de référence local <span class="discret">(comparaison hors ligne)</span></summary>
+          <p class="discret">Ajoutez d'autres documents (.docx, .txt, .md) pour détecter les emprunts entre vos propres travaux, les copies entre étudiants ou les sources fournies par votre encadrant. Cette comparaison fonctionne sans connexion.</p>
+          <input type="file" id="fichiers-corpus" multiple accept=".docx,.txt,.md,.csv,.odt">
+          <ul id="liste-corpus" class="liste-fichiers"></ul>
+        </details>
+      </div>
+
+      <div class="carte">
+        <h2>2. Profondeur d'analyse</h2>
+        <div id="profils" class="profils" role="radiogroup" aria-label="Profondeur d'analyse"></div>
+
+        <div class="resume-analyse" id="resume-analyse">
+          <p class="discret">Choisissez un document pour estimer le volume de travail.</p>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="btn-analyser" class="bouton bouton--primaire" disabled>Lancer l'analyse</button>
+          <button type="button" id="btn-annuler" class="bouton bouton--danger" hidden>Interrompre</button>
+        </div>
+
+        <p class="discret" id="etat-moteurs"></p>
+      </div>
+    </div>
+
+    <div class="carte" id="carte-progression" hidden>
+      <h2>Analyse en cours</h2>
+      <div class="barre-progression" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barre-progression">
+        <div class="barre-progression__remplissage" id="remplissage-progression"></div>
+      </div>
+      <p id="message-progression" aria-live="polite" class="message-progression">Préparation…</p>
+      <ul id="journal" class="journal" aria-live="polite"></ul>
+    </div>
+
+    <div id="resultats" hidden></div>
+  </section>
+
+  <!-- ========================= HUMANISATION ========================= -->
+  <section id="panneau-humanisation" role="tabpanel" aria-labelledby="onglet-humanisation" class="panneau" hidden>
+
+    <div class="carte encart-ethique">
+      <h2>À quoi sert cette fonction</h2>
+      <p>L'humanisation retravaille <strong>votre propre texte</strong> : elle varie les charnières, casse les phrases interminables, remplace les tournures stéréotypées et alterne les rythmes. Citations, formules, références et liens restent intacts.</p>
+      <p class="discret">Réécrire un texte emprunté ne le rend pas vôtre : la source doit rester citée. Utilisez cet outil pour améliorer votre rédaction, pas pour masquer un emprunt.</p>
+    </div>
+
+    <div class="grille-2">
+      <div class="carte">
+        <h2>Texte d'origine</h2>
+        <div class="actions actions--compactes">
+          <button type="button" class="bouton bouton--discret" id="btn-importer-analyse">Reprendre le document analysé</button>
+          <label class="bouton bouton--discret" for="fichier-humanisation">Importer un .docx</label>
+          <input type="file" id="fichier-humanisation" accept=".docx,.docm,.txt,.md" hidden>
+        </div>
+        <textarea id="texte-source" rows="16" placeholder="Collez ou importez le texte à retravailler…"></textarea>
+        <p class="discret" id="stats-source"></p>
+      </div>
+
+      <div class="carte">
+        <h2>Texte humanisé</h2>
+        <div class="actions actions--compactes">
+          <button type="button" class="bouton bouton--primaire" id="btn-humaniser">Humaniser</button>
+          <button type="button" class="bouton bouton--discret" id="btn-copier-humanise" disabled>Copier</button>
+          <button type="button" class="bouton bouton--discret" id="btn-docx-humanise" disabled>Télécharger .docx</button>
+          <button type="button" class="bouton bouton--discret" id="btn-verifier-humanise" disabled>Vérifier le plagiat</button>
+        </div>
+        <textarea id="texte-humanise" rows="16" placeholder="Le résultat apparaîtra ici." aria-live="polite"></textarea>
+        <p class="discret" id="stats-humanise"></p>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Réglages de réécriture</h2>
+      <div class="grille-3">
+        <label class="champ">
+          <span>Intensité : <output id="valeur-intensite">60 %</output></span>
+          <input type="range" id="intensite" min="0" max="100" value="60" step="5">
+          <small class="discret">Plus l'intensité est forte, plus le texte est remanié.</small>
+        </label>
+        <label class="champ">
+          <span>Langue</span>
+          <select id="langue-humanisation">
+            <option value="auto">Détection automatique</option>
+            <option value="fr">Français</option>
+            <option value="en">Anglais</option>
+          </select>
+        </label>
+        <label class="champ">
+          <span>Graine (reproductibilité)</span>
+          <input type="number" id="graine" value="0" min="0" step="1">
+          <small class="discret">0 = graine dérivée du texte. Une même graine redonne le même résultat.</small>
+        </label>
+      </div>
+      <fieldset class="operations">
+        <legend>Opérations appliquées</legend>
+        <div id="liste-operations" class="cases"></div>
+      </fieldset>
+    </div>
+
+    <div class="carte" id="carte-diff" hidden>
+      <h2>Modifications apportées</h2>
+      <div id="tableau-operations"></div>
+      <div id="comparatif-style"></div>
+      <h3>Différentiel paragraphe par paragraphe</h3>
+      <div id="diff" class="diff"></div>
+    </div>
+  </section>
+
+  <!-- =========================== RÉGLAGES =========================== -->
+  <section id="panneau-reglages" role="tabpanel" aria-labelledby="onglet-reglages" class="panneau" hidden>
+
+    <div class="carte">
+      <h2>Moteurs et bases de données</h2>
+      <p class="discret">Les moteurs « ouverts » fonctionnent immédiatement. Les autres demandent une clé personnelle, conservée uniquement dans ce navigateur et envoyée directement au service concerné.</p>
+      <div id="liste-fournisseurs" class="fournisseurs"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Récupération du contenu des pages</h2>
+      <p class="discret">Pour les résultats web, la comparaison est bien plus fiable si le texte intégral de la page est récupéré plutôt que le seul extrait.</p>
+      <div id="liste-lecteurs" class="cases"></div>
+      <label class="champ" id="champ-relais" hidden>
+        <span>Gabarit du relais</span>
+        <input type="text" id="relais-lecteur" placeholder="https://exemple.workers.dev/?url={url}">
+      </label>
+    </div>
+
+    <div class="carte">
+      <h2>Analyse</h2>
+      <div class="grille-3">
+        <label class="champ">
+          <span>Requêtes simultanées</span>
+          <input type="number" id="concurrence" min="1" max="8" value="4">
+        </label>
+        <label class="champ">
+          <span>Résultats par requête</span>
+          <input type="number" id="resultats-par-requete" min="1" max="10" value="5">
+        </label>
+        <label class="champ">
+          <span>Adresse de contact <span class="discret">(politesse API)</span></span>
+          <input type="email" id="email-contact" placeholder="vous@exemple.org">
+        </label>
+      </div>
+      <div class="cases">
+        <label><input type="checkbox" id="exclure-citations" checked> Exclure les citations entre guillemets du taux net</label>
+        <label><input type="checkbox" id="exclure-biblio" checked> Exclure la bibliographie du taux net</label>
+        <label><input type="checkbox" id="inclure-notes" checked> Analyser les notes de bas de page et de fin</label>
+        <label><input type="checkbox" id="inclure-entetes"> Analyser les en-têtes et pieds de page</label>
+        <label><input type="checkbox" id="detecter-interne" checked> Détecter les répétitions internes au document</label>
+        <label><input type="checkbox" id="cache-actif" checked> Mettre en cache les réponses des moteurs</label>
+      </div>
+    </div>
+
+    <div class="carte">
+      <h2>Données locales</h2>
+      <p class="discret" id="usage-stockage">Calcul de l'espace utilisé…</p>
+      <div class="actions">
+        <button type="button" class="bouton bouton--discret" id="btn-vider-cache">Vider le cache des sources</button>
+        <button type="button" class="bouton bouton--danger" id="btn-tout-effacer">Effacer toutes mes données</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= AIDE ============================= -->
+  <section id="panneau-aide" role="tabpanel" aria-labelledby="onglet-aide" class="panneau" hidden>
+
+    <div class="carte">
+      <h2>Comment fonctionne la détection</h2>
+      <ol class="etapes">
+        <li><strong>Lecture du document.</strong> Le .docx est une archive ZIP : elle est ouverte par plages, et <code>word/document.xml</code> est parcouru en flux. Un mémoire de mille pages passe donc sans saturer la mémoire. Corps de texte, titres, listes, tableaux, zones de texte et notes sont extraits ; le texte supprimé en suivi de modifications est ignoré.</li>
+        <li><strong>Découpage.</strong> Le texte est segmenté en phrases (abréviations, initiales et décimales gérées), puis regroupé en blocs d'une trentaine de mots.</li>
+        <li><strong>Sélection des requêtes.</strong> Le document est divisé en autant de tranches que de requêtes autorisées, et le bloc le plus distinctif de chaque tranche est envoyé aux moteurs. La couverture reste donc uniforme du début à la fin, quelle que soit la longueur.</li>
+        <li><strong>Récupération des sources.</strong> Wikipédia et les bases académiques renvoient le texte intégral ou le résumé ; pour les résultats web, un lecteur de page peut être activé.</li>
+        <li><strong>Comparaison locale.</strong> Le document est indexé une fois sous forme d'empreintes de n-grammes. Chaque source est ensuite balayée contre cet index : les correspondances sont chaînées par diagonale, puis vérifiées par alignement. Deux passes coexistent — une passe littérale sur tous les mots, une passe « paraphrase » sur les mots pleins racinisés.</li>
+        <li><strong>Calcul du taux.</strong> Le taux brut est la part du document couverte par au moins un passage. Le taux net retire les citations encadrées et la bibliographie.</li>
+      </ol>
+    </div>
+
+    <div class="carte">
+      <h2>Ce que l'outil ne peut pas faire</h2>
+      <ul>
+        <li>Il ne consulte <strong>que les bases que vous activez</strong>. Les archives fermées des universités, les bases commerciales et les travaux non publiés lui sont inaccessibles : un taux nul ne prouve rien à leur sujet.</li>
+        <li>Une similitude n'est pas un plagiat. Citations référencées, définitions consacrées, formules mathématiques et expressions techniques produisent légitimement des correspondances. <strong>Chaque passage doit être vérifié à la main.</strong></li>
+        <li>Sans clé de moteur web, la couverture se limite aux encyclopédies et bases scientifiques ouvertes.</li>
+        <li>Le rapport est un outil d'aide à la relecture, pas une décision institutionnelle.</li>
+      </ul>
+    </div>
+
+    <div class="carte">
+      <h2>Confidentialité</h2>
+      <p>Le document est lu et analysé <strong>dans votre navigateur</strong>. Il n'est envoyé à aucun serveur, y compris le nôtre. Ce qui circule sur le réseau se limite aux courtes requêtes de recherche adressées aux moteurs que vous avez activés — c'est-à-dire quelques phrases, jamais le fichier.</p>
+      <p>Vos clés d'API, vos réglages, le cache et l'historique restent dans le stockage local de ce navigateur, et le bouton « Effacer toutes mes données » les supprime définitivement.</p>
+    </div>
+
+    <div class="carte">
+      <h2>Configurer un moteur web</h2>
+      <dl class="faq">
+        <dt>Google Programmable Search</dt>
+        <dd>Créez un moteur sur <em>programmablesearchengine.google.com</em> en cochant « rechercher sur tout le Web », relevez son identifiant <code>cx</code>, puis générez une clé d'API dans la console Google Cloud (API « Custom Search »). 100 requêtes gratuites par jour.</dd>
+        <dt>Serper.dev</dt>
+        <dd>Inscription gratuite avec 2 500 requêtes offertes. Copiez la clé dans les réglages.</dd>
+        <dt>Tavily</dt>
+        <dd>Renvoie directement le contenu des pages, ce qui améliore nettement la détection sans lecteur externe.</dd>
+        <dt>SearXNG</dt>
+        <dd>Si vous hébergez une instance, autorisez le format JSON et votre domaine, puis indiquez son URL.</dd>
+        <dt>Point d'accès personnalisé</dt>
+        <dd>Votre propre service doit répondre <code>{"results":[{"title","url","snippet","text"}]}</code>. Un relais Cloudflare prêt à déployer est fourni dans le dépôt (<code>docs/relais-cloudflare.js</code>).</dd>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="pied">
+  <div class="conteneur">
+    <p>ELITE MATHEMATIQUE — outil d'analyse de similitude et d'aide à la rédaction.</p>
+    <p class="discret">Analyse effectuée localement. Aucun document transmis.</p>
+  </div>
+</footer>
+
+<div id="notifications" class="notifications" aria-live="assertive"></div>
+
+<script type="module" src="js/app.js"></script>
+<noscript>
+  <p style="padding:24px;text-align:center">Cette application nécessite JavaScript pour analyser vos documents localement.</p>
+</noscript>
+</body>
+</html>

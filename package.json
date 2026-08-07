@@ -1,0 +1,12 @@
+{
+  "name": "elite-mathematique-plagiat",
+  "version": "1.0.0",
+  "description": "Analyseur de plagiat DOCX + humanisation de texte, 100 % côté navigateur.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "serve": "node tools/serve.mjs"
+  },
+  "license": "MIT"
+}

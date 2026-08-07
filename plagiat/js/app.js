@@ -21,10 +21,13 @@ import {
   eraseEverything,
   storageUsage,
 } from './core/store.js';
-import { renderReportHtml, buildReportDocx, reportToJson } from './core/report.js';
+import { renderReportHtml, buildReportDocx, reportToJson, reportToCsv, summarize } from './core/report.js';
 import { DocxBuilder } from './core/docx-writer.js';
 import { HUMANIZE_DEFAULTS, OPERATION_LABELS, wordDiff } from './core/humanizer.js';
 import { userMessage } from './core/errors.js';
+import { compareTexts, createFingerprint, validateFingerprint } from './core/compare.js';
+import { decloakText } from './core/forensics.js';
+import { put as storePut, all as storeAll, remove as storeRemove, clear as storeClear } from './core/store.js';
 
 /* ------------------------------------------------------------------ *
  * État
@@ -38,6 +41,8 @@ const state = {
   prepared: null,
   /** @type {{name: string, text: string}[]} */
   corpus: [],
+  /** @type {{name: string, fp: any}[]} */
+  fingerprints: [],
   /** @type {any|null} */
   report: null,
   /** @type {any|null} */
@@ -81,7 +86,7 @@ function setupTheme() {
  * Onglets
  * ------------------------------------------------------------------ */
 
-const TABS = ['analyse', 'humanisation', 'reglages', 'aide'];
+const TABS = ['analyse', 'humanisation', 'outils', 'reglages', 'aide'];
 
 function showTab(name) {
   for (const tab of TABS) {
@@ -210,6 +215,47 @@ function setupCorpus() {
     input.value = '';
     renderCorpus();
     updateAnalysisSummary();
+  });
+
+  const empreintes = $('#fichiers-empreintes');
+  empreintes.addEventListener('change', async () => {
+    for (const file of [...(empreintes.files || [])]) {
+      try {
+        const data = JSON.parse(await file.text());
+        const check = validateFingerprint(data);
+        if (!check.ok) {
+          notify(`${file.name} : ${check.error}`, 'erreur');
+          continue;
+        }
+        state.fingerprints.push({ name: data.name || file.name, fp: data });
+      } catch {
+        notify(`${file.name} : fichier JSON illisible.`, 'erreur');
+      }
+    }
+    empreintes.value = '';
+    renderFingerprints();
+    updateAnalysisSummary();
+  });
+}
+
+function renderFingerprints() {
+  const list = $('#liste-empreintes');
+  clear(list);
+  state.fingerprints.forEach((entry, index) => {
+    list.append(
+      el('li', {}, [
+        el('span', {}, `${entry.name} — ${num(entry.fp.hashes.length)} signatures`),
+        el('button', {
+          type: 'button',
+          class: 'bouton bouton--discret',
+          onclick: () => {
+            state.fingerprints.splice(index, 1);
+            renderFingerprints();
+            updateAnalysisSummary();
+          },
+        }, 'Retirer'),
+      ]),
+    );
   });
 }
 
@@ -380,8 +426,19 @@ async function runAnalysis() {
   setProgress(0, 'Préparation…');
 
   const input = state.prepared
-    ? { prepared: state.prepared, file: state.file, name: state.file?.name, corpus: state.corpus }
-    : { text: pasted, name: 'Texte collé', corpus: state.corpus };
+    ? {
+        prepared: state.prepared,
+        file: state.file,
+        name: state.file?.name,
+        corpus: state.corpus,
+        fingerprints: state.fingerprints,
+      }
+    : {
+        text: pasted,
+        name: 'Texte collé',
+        corpus: state.corpus,
+        fingerprints: state.fingerprints,
+      };
 
   let lastPhase = '';
   try {
@@ -395,6 +452,7 @@ async function runAnalysis() {
       },
     });
     state.report = report;
+    saveToHistory(report);
     renderResults($('#resultats'), report, {
       onExport: exportReport,
       onHumanize: () => {
@@ -436,6 +494,10 @@ async function exportReport(format) {
   try {
     if (format === 'json') {
       download(reportToJson(report, { includeText: true }), `rapport-${base}.json`, 'application/json');
+      return;
+    }
+    if (format === 'csv') {
+      download(reportToCsv(report), `passages-${base}.csv`, 'text/csv;charset=utf-8');
       return;
     }
     if (format === 'html') {
@@ -727,6 +789,10 @@ function setupSettings() {
   bindCheckbox('#inclure-entetes', 'includeHeadersFooters');
   bindCheckbox('#detecter-interne', 'detectInternalDuplication');
   bindCheckbox('#cache-actif', 'cacheEnabled');
+  bindCheckbox('#analyse-forensique', 'forensics');
+  bindCheckbox('#analyse-ia', 'detectAI');
+  bindCheckbox('#analyse-citations', 'checkCitations');
+  bindSelect('#sensibilite', 'sensitivity');
 
   $('#btn-vider-cache').addEventListener('click', async () => {
     await clearStore('cache');
@@ -845,6 +911,17 @@ function bindCheckbox(selector, key) {
   });
 }
 
+function bindSelect(selector, key) {
+  const input = $(selector);
+  if (!input) return;
+  if (state.settings[key]) input.value = state.settings[key];
+  input.addEventListener('change', () => {
+    state.settings[key] = input.value;
+    persist();
+    updateAnalysisSummary();
+  });
+}
+
 function bindNumber(selector, key) {
   const input = $(selector);
   if (!input) return;
@@ -878,6 +955,244 @@ async function refreshStorageUsage() {
 }
 
 /* ------------------------------------------------------------------ *
+ * Panneau « Outils »
+ * ------------------------------------------------------------------ */
+
+function setupTools() {
+  // Comparaison de deux documents.
+  $('#btn-comparer').addEventListener('click', async () => {
+    const button = $('#btn-comparer');
+    button.disabled = true;
+    button.textContent = 'Comparaison…';
+    try {
+      const textA = await toolText('#compare-a', '#compare-a-texte');
+      const textB = await toolText('#compare-b', '#compare-b-texte');
+      if (!textA.trim() || !textB.trim()) {
+        notify('Fournissez les deux documents à comparer.', 'erreur');
+        return;
+      }
+      renderComparison(compareTexts(textA, textB));
+    } catch (err) {
+      notify(`Comparaison impossible : ${userMessage(err)}`, 'erreur');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Comparer';
+    }
+  });
+
+  // Création d'empreinte.
+  $('#btn-creer-empreinte').addEventListener('click', async () => {
+    try {
+      const text = await toolText('#empreinte-fichier', '#empreinte-texte');
+      if (!text.trim()) {
+        notify('Fournissez le texte source de l’empreinte.', 'erreur');
+        return;
+      }
+      const nom = $('#empreinte-nom').value.trim() || 'source';
+      const fp = createFingerprint(nom, text);
+      download(JSON.stringify(fp), `empreinte-${slug(nom)}.json`, 'application/json');
+      $('#etat-empreinte').textContent =
+        `Empreinte créée : ${num(fp.hashes.length)} signatures pour ${num(fp.words)} mots. ` +
+        `Le texte source n’y figure pas et ne peut pas en être reconstitué.`;
+    } catch (err) {
+      notify(`Création impossible : ${userMessage(err)}`, 'erreur');
+    }
+  });
+
+  // Décamouflage.
+  $('#btn-decloak').addEventListener('click', () => {
+    const source = $('#decloak-source').value;
+    if (!source.trim()) return;
+    const cleaned = decloakText(source);
+    $('#decloak-resultat').value = cleaned;
+    $('#btn-decloak-copier').disabled = !cleaned;
+    const removed = [...source].length - [...cleaned].length;
+    const changed = countDifferences(source, cleaned);
+    $('#etat-decloak').textContent = changed
+      ? `${changed} caractère(s) suspect(s) traité(s), ${removed} supprimé(s).`
+      : 'Aucun caractère suspect trouvé : le texte est déjà propre.';
+  });
+  $('#btn-decloak-copier').addEventListener('click', async () => {
+    const ok = await copyToClipboard($('#decloak-resultat').value);
+    notify(ok ? 'Texte copié.' : 'Copie impossible.', ok ? 'succes' : 'erreur');
+  });
+
+  $('#btn-vider-historique').addEventListener('click', async () => {
+    if (!confirm('Effacer tout l’historique des analyses de ce navigateur ?')) return;
+    await storeClear('reports');
+    renderHistory();
+    notify('Historique vidé.', 'succes');
+  });
+
+  renderHistory();
+}
+
+/** Récupère le texte d'un couple (fichier, zone de texte). */
+async function toolText(fileSelector, textSelector) {
+  const file = $(fileSelector).files?.[0];
+  if (file) return readAnyText(file);
+  return $(textSelector).value;
+}
+
+/** Compte les positions où deux chaînes diffèrent (approximation). */
+function countDifferences(a, b) {
+  const ca = [...a];
+  const cb = [...b];
+  let diff = Math.abs(ca.length - cb.length);
+  for (let i = 0; i < Math.min(ca.length, cb.length); i++) {
+    if (ca[i] !== cb[i]) diff++;
+  }
+  return diff;
+}
+
+/** Rend le résultat d'une comparaison de documents. */
+function renderComparison(result) {
+  const host = $('#resultat-comparaison');
+  clear(host);
+
+  host.append(
+    el('div', { class: 'alerte alerte--info', style: { marginTop: '16px' } }, [
+      el('strong', {}, `${result.verdict.label}. `),
+      `Le document A est couvert à ${result.coverageA} % par B, et B à ${result.coverageB} % par A. ` +
+        `Similarité lexicale globale : ${result.lexicalSimilarity} %.`,
+    ]),
+  );
+
+  if (!result.passages.length) {
+    host.append(el('p', { class: 'discret' }, 'Aucun passage commun significatif.'));
+    return;
+  }
+
+  host.append(el('h3', {}, `Passages communs (${result.passages.length})`));
+  for (const p of result.passages.slice(0, 40)) {
+    host.append(
+      el('article', { class: 'passage' }, [
+        el('div', { class: 'passage__meta' }, [
+          el('span', { class: 'pastille-type', style: { background: 'var(--fond-doux)' } }, p.typeLabel),
+          el('span', {}, `${Math.round(p.similarity * 100)} %`),
+          el('span', {}, `${p.words} mots`),
+        ]),
+        el('div', { class: 'passage__cotes' }, [
+          el('div', {}, [el('h4', {}, 'Document A'), p.aText.slice(0, 800)]),
+          el('div', {}, [el('h4', {}, 'Document B'), p.bText.slice(0, 800)]),
+        ]),
+      ]),
+    );
+  }
+}
+
+/** @param {string} s */
+function slug(s) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'source';
+}
+
+/* ------------------------------------------------------------------ *
+ * Historique
+ * ------------------------------------------------------------------ */
+
+async function saveToHistory(report) {
+  try {
+    const entry = summarize(report);
+    // On conserve le rapport complet, mais borné en taille.
+    const json = reportToJson(report, { includeText: true });
+    await storePut('reports', report.id, { summary: entry, report: json });
+    renderHistory();
+  } catch {
+    /* l'historique est un confort, pas un impératif */
+  }
+}
+
+async function renderHistory() {
+  const host = $('#liste-historique');
+  if (!host) return;
+  clear(host);
+  let rows = [];
+  try {
+    rows = await storeAll('reports');
+  } catch {
+    rows = [];
+  }
+  if (!rows.length) {
+    host.append(el('p', { class: 'discret' }, 'Aucune analyse enregistrée pour le moment.'));
+    return;
+  }
+  rows.sort((a, b) => (b.value?.summary?.generatedAt || '').localeCompare(a.value?.summary?.generatedAt || ''));
+
+  const table = el('div', { class: 'tableau-defilant' }, [
+    el('table', {}, [
+      el('thead', {}, [
+        el('tr', {}, [
+          el('th', {}, 'Date'),
+          el('th', {}, 'Document'),
+          el('th', { class: 'num' }, 'Taux net'),
+          el('th', { class: 'num' }, 'IA'),
+          el('th', {}, ''),
+        ]),
+      ]),
+      el('tbody', {}, rows.slice(0, 40).map((row) => {
+        const s = row.value?.summary || {};
+        return el('tr', {}, [
+          el('td', { class: 'discret' }, s.generatedAt ? new Date(s.generatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'),
+          el('td', {}, [
+            el('a', {
+              href: '#',
+              onclick: (e) => {
+                e.preventDefault();
+                reopenReport(row.value?.report);
+              },
+            }, s.name || 'document'),
+          ]),
+          el('td', { class: 'num' }, s.tauxNet != null ? `${s.tauxNet} %` : '—'),
+          el('td', { class: 'num' }, s.aiScore != null ? `${s.aiScore}` : '—'),
+          el('td', {}, [
+            el('button', {
+              type: 'button',
+              class: 'bouton bouton--discret',
+              onclick: () => removeHistory(row.key),
+            }, 'Suppr.'),
+          ]),
+        ]);
+      })),
+    ]),
+  ]);
+  host.append(table);
+}
+
+async function removeHistory(key) {
+  await storeRemove('reports', key);
+  renderHistory();
+}
+
+function reopenReport(json) {
+  if (!json) {
+    notify('Ce rapport ne contient pas assez de données pour être rouvert.', 'erreur');
+    return;
+  }
+  try {
+    const report = JSON.parse(json);
+    state.report = report;
+    renderResults($('#resultats'), report, {
+      onExport: exportReport,
+      onHumanize: () => {
+        $('#texte-source').value = report.text || '';
+        updateSourceStats();
+        showTab('humanisation');
+      },
+    });
+    showTab('analyse');
+    $('#resultats').hidden = false;
+  } catch {
+    notify('Rapport illisible.', 'erreur');
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Démarrage
  * ------------------------------------------------------------------ */
 
@@ -895,6 +1210,7 @@ async function start() {
   setupProfiles();
   setupAnalysis();
   setupHumanize();
+  setupTools();
   setupSettings();
   updateAnalysisSummary();
   updateSourceStats();

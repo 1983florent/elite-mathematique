@@ -39,6 +39,9 @@ export function renderResults(host, report, actions) {
     sourcesCard(report),
     annotatedCard(report),
   );
+  if (report.forensics) host.append(forensicsCard(report));
+  if (report.ai) host.append(aiCard(report));
+  if (report.citations) host.append(citationsCard(report));
   if (report.passages.length) host.append(passagesCard(report));
   if ((report.internal || []).length) host.append(internalCard(report));
   host.append(methodCard(report));
@@ -110,6 +113,8 @@ function synthesisCard(report, actions) {
       onclick: () => actions.onExport('html') }, 'Rapport HTML'),
     el('button', { type: 'button', class: 'bouton bouton--discret',
       onclick: () => actions.onExport('json') }, 'Données JSON'),
+    el('button', { type: 'button', class: 'bouton bouton--discret',
+      onclick: () => actions.onExport('csv') }, 'Passages CSV'),
     el('button', { type: 'button', class: 'bouton bouton--discret',
       onclick: () => actions.onExport('print') }, 'Imprimer / PDF'),
     el('button', { type: 'button', class: 'bouton bouton--discret',
@@ -408,6 +413,156 @@ function internalCard(report) {
       ]),
     ),
   ]);
+}
+
+/** Analyse forensique : procédés de camouflage. */
+function forensicsCard(report) {
+  const f = report.forensics;
+  const severityLabel = {
+    aucun: ['Aucun camouflage détecté', 'var(--succes)'],
+    indice: ['Indices de camouflage', 'var(--alerte)'],
+    alerte: ['Camouflage détecté', 'var(--danger)'],
+  }[f.severity];
+
+  const card = el('section', { class: 'carte' }, [
+    el('h2', {}, 'Analyse forensique'),
+    el('p', {}, [
+      el('span', {
+        class: `pastille-type`,
+        style: { background: 'var(--fond-doux)', color: severityLabel[1] },
+      }, severityLabel[0]),
+    ]),
+  ]);
+
+  if (f.severity === 'aucun') {
+    card.append(
+      el('p', { class: 'discret' },
+        "Ni homoglyphes, ni caractères invisibles, ni texte dissimulé dans le fichier. Le document ne présente aucun signe de manipulation destinée à tromper un détecteur."),
+    );
+    return card;
+  }
+
+  for (const finding of f.findings) {
+    card.append(el('div', { class: f.severity === 'alerte' ? 'alerte alerte--danger' : 'alerte alerte--attention' }, finding));
+  }
+
+  if (f.mixedWords.length) {
+    card.append(
+      el('h3', {}, 'Mots à alphabets mélangés'),
+      el('p', { class: 'discret' },
+        f.mixedWords.slice(0, 25).map((w) => `« ${w.word} » → « ${w.cleaned} »`).join('  ·  ')),
+    );
+  }
+  if (f.hiddenRuns.length) {
+    card.append(
+      el('h3', {}, 'Texte dissimulé dans le fichier Word'),
+      el('div', { class: 'tableau-defilant' }, [
+        el('table', {}, [
+          el('thead', {}, [el('tr', {}, [el('th', {}, 'Procédé'), el('th', {}, 'Contenu')])]),
+          el('tbody', {}, f.hiddenRuns.slice(0, 20).map((r) =>
+            el('tr', {}, [el('td', {}, r.type), el('td', {}, truncate(r.text, 300))]))),
+        ]),
+      ]),
+    );
+  }
+  return card;
+}
+
+/** Indices de rédaction assistée par IA. */
+function aiCard(report) {
+  const ai = report.ai;
+  const card = el('section', { class: 'carte' }, [el('h2', {}, 'Indices de rédaction assistée par IA')]);
+
+  if (!ai.indicators.length) {
+    card.append(el('p', { class: 'discret' }, ai.disclaimer));
+    return card;
+  }
+
+  card.append(
+    el('div', { class: 'synthese' }, [
+      el('div', { html: gaugeSvg(ai.score, ai.band.color, 'Indices IA') }),
+      el('div', { class: 'synthese__chiffres' }, [
+        el('p', {}, [
+          el('strong', { style: { color: ai.band.color } }, ai.band.label),
+          ai.reliable ? '' : ' — échantillon court, fiabilité réduite',
+        ]),
+        el('div', { class: 'tableau-defilant' }, [
+          el('table', {}, [
+            el('thead', {}, [el('tr', {}, [el('th', {}, 'Indicateur'), el('th', {}, 'Mesure'), el('th', { class: 'num' }, '/100')])]),
+            el('tbody', {}, ai.indicators.map((i) =>
+              el('tr', {}, [
+                el('td', {}, i.label),
+                el('td', { class: 'discret' }, i.detail),
+                el('td', { class: 'num' }, String(Math.round(i.value * 100))),
+              ]))),
+          ]),
+        ]),
+      ]),
+    ]),
+  );
+
+  if (ai.paragraphs.length) {
+    card.append(el('h3', {}, 'Paragraphes les plus typés'));
+    for (const p of ai.paragraphs) {
+      card.append(
+        el('div', { class: 'alerte alerte--attention' }, [
+          el('strong', {}, `Paragraphe ${p.index + 1} `),
+          el('span', { class: 'discret' }, `(${p.reasons.join(', ')})`),
+          el('br'),
+          p.excerpt,
+        ]),
+      );
+    }
+  }
+  card.append(el('div', { class: 'alerte alerte--info' }, ai.disclaimer));
+  return card;
+}
+
+/** Vérification croisée des citations. */
+function citationsCard(report) {
+  const c = report.citations;
+  const card = el('section', { class: 'carte' }, [el('h2', {}, 'Citations et bibliographie')]);
+
+  if (c.style === 'aucune') {
+    card.append(el('p', { class: 'discret' },
+      `Aucun appel de citation détecté dans le corps du texte${c.hasBibliography ? ", alors qu'une bibliographie existe." : '.'}`));
+    return card;
+  }
+
+  card.append(
+    el('p', {}, [
+      'Style détecté : ', el('strong', {}, c.style),
+      ` — ${num(c.inTextCount)} appel(s) dans le texte, ${num(c.entryCount)} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.`,
+    ]),
+  );
+
+  if (c.orphans.length) {
+    card.append(
+      el('h3', {}, `Références orphelines (${c.orphans.length})`),
+      el('p', { class: 'discret' }, 'Citées dans le texte mais absentes de la bibliographie.'),
+      el('div', { class: 'tableau-defilant' }, [
+        el('table', {}, [
+          el('thead', {}, [el('tr', {}, [el('th', {}, 'Appel'), el('th', {}, 'Contexte')])]),
+          el('tbody', {}, c.orphans.slice(0, 25).map((o) =>
+            el('tr', {}, [el('td', {}, `${o.author}, ${o.year}`), el('td', { class: 'discret' }, o.context)]))),
+        ]),
+      ]),
+    );
+  }
+  if (c.uncited.length) {
+    card.append(
+      el('h3', {}, `Entrées jamais citées (${c.uncited.length})`),
+      el('p', { class: 'discret' }, 'Présentes en bibliographie mais jamais appelées dans le texte.'),
+      ...c.uncited.slice(0, 25).map((u) => el('div', { class: 'alerte alerte--attention' }, u.text)),
+    );
+  }
+  for (const issue of c.numericIssues) {
+    card.append(el('div', { class: 'alerte alerte--danger' }, issue));
+  }
+  if (!c.orphans.length && !c.uncited.length && !c.numericIssues.length) {
+    card.append(el('p', { class: 'discret' }, 'Appels de citation et bibliographie concordent.'));
+  }
+  return card;
 }
 
 /** Méthodologie, moteurs et limites. */

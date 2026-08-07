@@ -23,7 +23,13 @@ similitude, produit un rapport détaillé et propose une réécriture assistée.
 | Corpus local | Comparaison intégrale, **hors ligne**, avec vos propres documents de référence (`.docx`, `.odt`, `.txt`, `.md`). |
 | Détection | Deux passes : n-grammes littéraux (n = 8) sur tous les mots, et n-grammes sur mots pleins racinisés (n = 4) pour la paraphrase. Chaînage par diagonale puis vérification par alignement (plus longue sous-séquence commune). |
 | Scores | Taux brut, taux net (hors citations et bibliographie), indice d'originalité, répartition copie littérale / copie modifiée / paraphrase, part attribuée à chaque source, répétitions internes. |
-| Rapport | Texte annoté, tableau des sources, passages côte à côte, méthodologie et limites. Export **Word (.docx)**, **HTML autonome**, **JSON** et **PDF** (impression). |
+| Rapport | Texte annoté, tableau des sources, passages côte à côte, méthodologie et limites. Export **Word (.docx)**, **HTML autonome**, **JSON**, **CSV** et **PDF** (impression). |
+| Analyse forensique | Détection des procédés de camouflage : **homoglyphes** (lettres cyrilliques/grecques déguisées), **caractères invisibles**, marques bidi, et **texte dissimulé dans le .docx** (blanc, masqué `w:vanish`, corps minuscule). |
+| Indices IA | Régularités stylistiques associées à la génération automatique (rythme, tournures, attaques de phrases, lexique). Indices, jamais preuve — avertissement systématique. |
+| Citations | Vérification croisée : références **orphelines** (citées, absentes de la biblio) et entrées **jamais citées**, styles auteur-année et numérique. |
+| Comparaison | Confrontation directe de deux documents (copies, versions), avec couverture croisée et passages communs. |
+| Empreintes | Signatures partageables d'une source (corrigé, anciennes copies) : vérifier un document contre elles **sans divulguer le texte** de la source. |
+| Historique | Analyses conservées localement, réouvrables ; décamoufleur de texte ; réglages de sensibilité (stricte / normale / large). |
 | Humanisation | Réécriture déterministe : tournures stéréotypées, périphrases nominales, connecteurs, synonymes contextuels, découpage et fusion de phrases, voix passive, typographie française. Citations, formules, références, URL et code sont préservés. |
 
 ### Ce qu'elle ne fait pas
@@ -81,8 +87,9 @@ lisible et vérifiable.
 ### Tests
 
 ```bash
-npm test                 # 90 tests : ZIP, DOCX, texte, correspondance,
-                         # pipeline, humanisation, rapport et exports
+npm test                 # 104 tests : ZIP, DOCX, texte, correspondance,
+                         # pipeline, humanisation, forensique, IA,
+                         # citations, comparaison, rapport et exports
 ```
 
 ---
@@ -91,7 +98,7 @@ npm test                 # 90 tests : ZIP, DOCX, texte, correspondance,
 
 ```
 plagiat/
-├── index.html                 application (onglets Analyse, Humanisation, Réglages, Aide)
+├── index.html                 application (onglets Analyse, Humanisation, Outils, Réglages, Aide)
 ├── css/app.css                thèmes clair et sombre, impression, responsive
 └── js/
     ├── app.js                 contrôleur : état, onglets, câblage
@@ -108,7 +115,11 @@ plagiat/
     │   ├── net.js             file d'attente, régulation, erreurs typées
     │   ├── store.js           IndexedDB : réglages, cache, corpus, rapports
     │   ├── humanizer.js       réécriture stylistique
-    │   ├── report.js          rapport HTML, Word et JSON
+    │   ├── forensics.js       détection de camouflage (homoglyphes, texte caché)
+    │   ├── ai-detector.js     indices stylistiques de rédaction par IA
+    │   ├── citations.js       vérification croisée citations / bibliographie
+    │   ├── compare.js         comparaison de documents et empreintes
+    │   ├── report.js          rapport HTML, Word, JSON et CSV
     │   ├── runner.js          worker avec repli sur le fil principal
     │   └── errors.js          sérialisation des erreurs
     ├── data/synonyms.js       lexique annoté (catégorie grammaticale, contraintes)

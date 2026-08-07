@@ -260,6 +260,12 @@ export const DEFAULT_SETTINGS = {
   excludeBibliography: true,
   detectInternalDuplication: true,
   minPassageWords: 10,
+  /** Sensibilité de la correspondance : stricte | normale | large. */
+  sensitivity: 'normale',
+  /** Analyses complémentaires. */
+  detectAI: true,
+  forensics: true,
+  checkCitations: true,
   theme: 'auto',
   /** Clés d'API : conservées uniquement dans ce navigateur. */
   keys: {

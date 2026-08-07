@@ -140,6 +140,30 @@ export class WordScanner {
     this.level = 0;
     this.kind = 'body';
     this.pendingSeparator = '';
+
+    // Détection du texte dissimulé (blanc, masqué, corps quasi nul).
+    this.runSeq = 0;
+    this.runFlags = { hidden: false, white: false, tiny: false };
+    /** @type {{type: string, text: string, seq: number}[]} */
+    this.suspicious = [];
+  }
+
+  /**
+   * Consigne un fragment de texte, et le verse au relevé forensique si le
+   * run courant est dissimulé.
+   * @param {string} str
+   */
+  #capture(str) {
+    this.chunks.push(str);
+    const f = this.runFlags;
+    if (!f.hidden && !f.white && !f.tiny) return;
+    const type = f.hidden ? 'masque' : f.white ? 'blanc' : 'minuscule';
+    const last = this.suspicious[this.suspicious.length - 1];
+    if (last && last.seq === this.runSeq && last.type === type) {
+      if (last.text.length < 500) last.text += str;
+    } else if (this.suspicious.length < 200) {
+      this.suspicious.push({ type, text: str, seq: this.runSeq });
+    }
   }
 
   /** Vrai lorsque les données textuelles courantes doivent être conservées. */
@@ -205,6 +229,32 @@ export class WordScanner {
     }
 
     switch (name) {
+      case 'w:r':
+        // Nouveau run : réinitialise l'état de dissimulation.
+        this.runSeq++;
+        this.runFlags.hidden = false;
+        this.runFlags.white = false;
+        this.runFlags.tiny = false;
+        break;
+      case 'w:vanish':
+      case 'w:webHidden': {
+        const val = attr(body, 'w:val');
+        if (val !== 'false' && val !== '0') this.runFlags.hidden = true;
+        break;
+      }
+      case 'w:color': {
+        const val = (attr(body, 'w:val') || '').toUpperCase();
+        if (val === 'FFFFFF' || val === 'FFFFFE' || val === 'FEFEFE') {
+          this.runFlags.white = true;
+        }
+        break;
+      }
+      case 'w:sz': {
+        // Taille en demi-points : 4 = 2 pt, illisible à l'impression.
+        const val = parseInt(attr(body, 'w:val') || '', 10);
+        if (Number.isFinite(val) && val > 0 && val <= 4) this.runFlags.tiny = true;
+        break;
+      }
       case 'w:tbl':
         this.tableDepth++;
         break;
@@ -283,14 +333,14 @@ export class WordScanner {
         // une entité (`&#233;`) peut être coupée entre deux fragments.
         if (!isFinal) break;
         if (this.capturing) {
-          this.chunks.push(decodeXmlEntities(buf.slice(pos)));
+          this.#capture(decodeXmlEntities(buf.slice(pos)));
         }
         pos = len;
         break;
       }
 
       if (lt > pos && this.capturing) {
-        this.chunks.push(decodeXmlEntities(buf.slice(pos, lt)));
+        this.#capture(decodeXmlEntities(buf.slice(pos, lt)));
       }
       // Le texte qui précède la balise est consommé : si la balise est
       // incomplète, seul le fragment `<…` restera dans le tampon.
@@ -315,7 +365,7 @@ export class WordScanner {
           break;
         }
         if (this.capturing) {
-          this.chunks.push(buf.slice(lt + 9, end));
+          this.#capture(buf.slice(lt + 9, end));
         }
         pos = end + 3;
         continue;
@@ -571,15 +621,33 @@ export async function readDocx(file, options = {}) {
     offset += text.length + 1; // séparateur '\n' ajouté au join
   };
 
-  await feedPartWith(zip, parts.main, makeSink('document'));
+  /** @type {{type: string, text: string, part: string}[]} */
+  const suspiciousRuns = [];
+  /** @param {{type: string, text: string}[]} runs @param {string} partLabel */
+  const collect = (runs, partLabel) => {
+    for (const run of runs) {
+      if (suspiciousRuns.length >= 100) break;
+      suspiciousRuns.push({ type: run.type, text: run.text.trim(), part: partLabel });
+    }
+  };
+
+  collect(await feedPartWith(zip, parts.main, makeSink('document')), 'document');
 
   if (opts.includeNotes) {
-    for (const p of parts.footnotes) await feedPartWith(zip, p, makeSink('footnotes'));
-    for (const p of parts.endnotes) await feedPartWith(zip, p, makeSink('endnotes'));
+    for (const p of parts.footnotes) {
+      collect(await feedPartWith(zip, p, makeSink('footnotes')), 'footnotes');
+    }
+    for (const p of parts.endnotes) {
+      collect(await feedPartWith(zip, p, makeSink('endnotes')), 'endnotes');
+    }
   }
   if (opts.includeHeadersFooters) {
-    for (const p of parts.headers) await feedPartWith(zip, p, makeSink('headers'));
-    for (const p of parts.footers) await feedPartWith(zip, p, makeSink('footers'));
+    for (const p of parts.headers) {
+      collect(await feedPartWith(zip, p, makeSink('headers')), 'headers');
+    }
+    for (const p of parts.footers) {
+      collect(await feedPartWith(zip, p, makeSink('footers')), 'footers');
+    }
   }
 
   const text = pieces.join('\n');
@@ -590,6 +658,7 @@ export async function readDocx(file, options = {}) {
     paragraphs,
     meta,
     truncated,
+    suspiciousRuns: suspiciousRuns.filter((r) => r.text),
     stats: {
       characters: text.length,
       words,
@@ -613,11 +682,13 @@ export async function readDocx(file, options = {}) {
  * @param {ZipArchive} zip
  * @param {string} partName
  * @param {(p: {text: string, kind: string, level: number}) => void} sink
+ * @returns {Promise<{type: string, text: string}[]>} runs dissimulés relevés
  */
 async function feedPartWith(zip, partName, sink) {
   const scanner = new WordScanner(sink);
   await feedPart(zip, partName, scanner);
   scanner.end();
+  return scanner.suspicious;
 }
 
 /**

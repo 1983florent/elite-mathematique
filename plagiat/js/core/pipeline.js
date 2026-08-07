@@ -38,6 +38,10 @@ import {
   fetchPageText,
 } from './providers.js';
 import { ResponseCache } from './store.js';
+import { scanForensics } from './forensics.js';
+import { analyzeAiSignals } from './ai-detector.js';
+import { checkCitations } from './citations.js';
+import { matchFingerprint, validateFingerprint } from './compare.js';
 
 /** Profils d'analyse : compromis entre exhaustivité et nombre de requêtes. */
 export const DEPTH_PROFILES = {
@@ -409,6 +413,9 @@ export async function analyzeDocument(input, settings, hooks = {}) {
   };
 
   const profile = DEPTH_PROFILES[settings.depth] || DEPTH_PROFILES.standard;
+  /** Sensibilité de correspondance : seuil de similarité minimal. */
+  const SENSITIVITY = { stricte: 0.45, normale: 0.34, large: 0.28 };
+  const minSimilarity = SENSITIVITY[settings.sensitivity] ?? SENSITIVITY.normale;
 
   /* --- 1. Lecture du document ---------------------------------------- */
   report('lecture', 'Ouverture du document…', 0.1);
@@ -462,14 +469,11 @@ export async function analyzeDocument(input, settings, hooks = {}) {
 
   /** @type {{start: number, end: number}[]} */
   const excludedTokenRanges = [];
-  let bibliography = null;
-  if (settings.excludeBibliography) {
-    bibliography = findBibliographySection(doc.paragraphs, doc.text.length);
-    if (bibliography) {
-      excludedTokenRanges.push(
-        charRangeToTokens(tokens, bibliography.start, bibliography.end),
-      );
-    }
+  const bibliography = findBibliographySection(doc.paragraphs, doc.text.length);
+  if (settings.excludeBibliography && bibliography) {
+    excludedTokenRanges.push(
+      charRangeToTokens(tokens, bibliography.start, bibliography.end),
+    );
   }
   let quotedRanges = [];
   if (settings.excludeQuotes) {
@@ -662,6 +666,7 @@ export async function analyzeDocument(input, settings, hooks = {}) {
     const sourceTokens = tokenize(candidate.text);
     const matches = matchSource(docIndex, sourceTokens, {
       minTokensExact: Math.max(6, settings.minPassageWords || 10),
+      minSimilarity,
     });
 
     if (matches.length) {
@@ -705,6 +710,49 @@ export async function analyzeDocument(input, settings, hooks = {}) {
     );
   }
 
+  /* --- 6 bis. Empreintes locales --------------------------------------- */
+  for (const [fpIndex, entry] of (input.fingerprints || []).entries()) {
+    checkAbort();
+    const check = validateFingerprint(entry.fp ?? entry);
+    if (!check.ok) {
+      warnings.push(`Empreinte « ${entry.name || fpIndex + 1} » ignorée : ${check.error}`);
+      continue;
+    }
+    const fp = check.fp;
+    const result = matchFingerprint(tokens, fp);
+    if (!result.ranges.length) continue;
+    const key = `empreinte:${fpIndex}`;
+    const passages = result.ranges.map((r) => ({
+      sourceKey: key,
+      qStart: r.start,
+      qEnd: r.end,
+      similarity: 1,
+      type: 'identique',
+      typeLabel: 'Copie littérale',
+      mode: 'empreinte',
+      words: r.end - r.start,
+      documentText: spanText(tokens, r.start, r.end),
+      sourceText: '(le texte de la source n’est pas inclus dans l’empreinte)',
+      charStart: tokens.start[r.start],
+      charEnd: tokens.end[Math.min(tokens.count - 1, r.end - 1)],
+    }));
+    allPassages.push(...passages);
+    sourceReports.push({
+      key,
+      title: fp.name || entry.name || `Empreinte ${fpIndex + 1}`,
+      url: '',
+      provider: 'empreinte',
+      providerName: 'Empreinte locale',
+      kind: 'empreinte',
+      words: fp.words || 0,
+      snippet: 'Comparaison par empreinte : le texte de la source reste confidentiel.',
+      meta: { createdAt: fp.createdAt },
+      passages,
+      matchedWords: result.covered,
+      maxSimilarity: 1,
+    });
+  }
+
   /* --- 7. Répétitions internes ---------------------------------------- */
   let internal = [];
   if (settings.detectInternalDuplication !== false) {
@@ -733,6 +781,34 @@ export async function analyzeDocument(input, settings, hooks = {}) {
     );
   }
   sourceReports.sort((a, b) => b.percent - a.percent || b.matchedWords - a.matchedWords);
+
+  /* --- 8 bis. Analyses complémentaires --------------------------------- */
+  let forensics = null;
+  if (settings.forensics !== false) {
+    report('synthese', 'Analyse forensique…', 0.7);
+    forensics = scanForensics(doc.text, { hiddenRuns: doc.suspiciousRuns || [] });
+    if (forensics.severity === 'alerte') {
+      warnings.push(
+        'Des procédés de camouflage ont été relevés (voir la section forensique) : le taux de similitude peut être artificiellement abaissé.',
+      );
+    }
+  }
+
+  let ai = null;
+  if (settings.detectAI !== false) {
+    report('synthese', 'Indices stylistiques…', 0.8);
+    ai = analyzeAiSignals(doc.text);
+  }
+
+  let citations = null;
+  if (settings.checkCitations !== false) {
+    report('synthese', 'Vérification des citations…', 0.9);
+    citations = checkCitations(
+      doc.text,
+      doc.paragraphs,
+      bibliography ? { start: bibliography.start, end: bibliography.end } : null,
+    );
+  }
 
   // Le rapport doit rester sérialisable en JSON : la table d'attribution
   // devient un objet simple une fois les pourcentages reportés sur les sources.
@@ -780,6 +856,9 @@ export async function analyzeDocument(input, settings, hooks = {}) {
     sources: sourceReports,
     passages: allPassages.sort((a, b) => a.qStart - b.qStart),
     internal,
+    forensics,
+    ai,
+    citations,
     warnings,
     errors,
   };

@@ -35,6 +35,7 @@
 <nav class="onglets conteneur" role="tablist" aria-label="Sections de l'application">
   <button role="tab" id="onglet-analyse" aria-controls="panneau-analyse" aria-selected="true" class="onglet actif">Analyse de plagiat</button>
   <button role="tab" id="onglet-humanisation" aria-controls="panneau-humanisation" aria-selected="false" class="onglet">Humanisation</button>
+  <button role="tab" id="onglet-outils" aria-controls="panneau-outils" aria-selected="false" class="onglet">Outils</button>
   <button role="tab" id="onglet-reglages" aria-controls="panneau-reglages" aria-selected="false" class="onglet">Réglages</button>
   <button role="tab" id="onglet-aide" aria-controls="panneau-aide" aria-selected="false" class="onglet">Aide &amp; méthode</button>
 </nav>
@@ -79,6 +80,13 @@
           <p class="discret">Ajoutez d'autres documents (.docx, .txt, .md) pour détecter les emprunts entre vos propres travaux, les copies entre étudiants ou les sources fournies par votre encadrant. Cette comparaison fonctionne sans connexion.</p>
           <input type="file" id="fichiers-corpus" multiple accept=".docx,.txt,.md,.csv,.odt">
           <ul id="liste-corpus" class="liste-fichiers"></ul>
+        </details>
+
+        <details class="repli">
+          <summary>Empreintes de référence <span class="discret">(sources confidentielles)</span></summary>
+          <p class="discret">Chargez des fichiers d'empreinte (.json) créés dans l'onglet Outils. Ils permettent de comparer votre document à une source — un corrigé, d'anciennes copies — sans jamais en révéler le texte.</p>
+          <input type="file" id="fichiers-empreintes" multiple accept=".json,application/json">
+          <ul id="liste-empreintes" class="liste-fichiers"></ul>
         </details>
       </div>
 
@@ -182,6 +190,77 @@
     </div>
   </section>
 
+  <!-- ============================= OUTILS ============================= -->
+  <section id="panneau-outils" role="tabpanel" aria-labelledby="onglet-outils" class="panneau" hidden>
+
+    <div class="carte">
+      <h2>Comparer deux documents</h2>
+      <p class="discret">Confrontez directement deux fichiers — deux copies d'étudiants, deux versions d'un même mémoire, un brouillon et sa source. Tout se passe hors ligne, dans votre navigateur.</p>
+      <div class="grille-2">
+        <label class="champ">
+          <span>Document A</span>
+          <input type="file" id="compare-a" accept=".docx,.docm,.txt,.md,.odt">
+          <textarea id="compare-a-texte" rows="6" placeholder="… ou collez le texte A ici"></textarea>
+        </label>
+        <label class="champ">
+          <span>Document B</span>
+          <input type="file" id="compare-b" accept=".docx,.docm,.txt,.md,.odt">
+          <textarea id="compare-b-texte" rows="6" placeholder="… ou collez le texte B ici"></textarea>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" class="bouton bouton--primaire" id="btn-comparer">Comparer</button>
+      </div>
+      <div id="resultat-comparaison"></div>
+    </div>
+
+    <div class="carte">
+      <h2>Créer une empreinte partageable</h2>
+      <p class="discret">Une empreinte est une liste de signatures numériques d'un texte. Elle permet de vérifier qu'un document n'en recopie pas la source — <strong>sans jamais divulguer le texte lui-même</strong>. Idéal pour publier un corrigé ou mutualiser d'anciennes copies sans les diffuser.</p>
+      <div class="grille-2">
+        <label class="champ">
+          <span>Nom de la source</span>
+          <input type="text" id="empreinte-nom" placeholder="Corrigé 2024, Sujet A…">
+        </label>
+        <label class="champ">
+          <span>Document source</span>
+          <input type="file" id="empreinte-fichier" accept=".docx,.docm,.txt,.md,.odt">
+        </label>
+      </div>
+      <label class="champ">
+        <span>… ou collez le texte source</span>
+        <textarea id="empreinte-texte" rows="5" placeholder="Texte à transformer en empreinte"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="bouton bouton--primaire" id="btn-creer-empreinte">Générer l'empreinte (.json)</button>
+      </div>
+      <p class="discret" id="etat-empreinte"></p>
+    </div>
+
+    <div class="carte">
+      <h2>Décamoufler un texte</h2>
+      <p class="discret">Collez un texte suspect : les lettres d'autres alphabets sont ramenées au latin, les caractères invisibles retirés. Utile pour voir ce qu'un détecteur « voit » réellement.</p>
+      <label class="champ">
+        <textarea id="decloak-source" rows="5" placeholder="Texte potentiellement camouflé"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="bouton bouton--primaire" id="btn-decloak">Nettoyer</button>
+        <button type="button" class="bouton bouton--discret" id="btn-decloak-copier" disabled>Copier</button>
+      </div>
+      <p class="discret" id="etat-decloak"></p>
+      <textarea id="decloak-resultat" rows="5" placeholder="Texte nettoyé" readonly></textarea>
+    </div>
+
+    <div class="carte">
+      <h2>Historique des analyses</h2>
+      <p class="discret">Les analyses menées dans ce navigateur sont conservées localement. Cliquez sur une ligne pour en rouvrir le rapport.</p>
+      <div id="liste-historique"></div>
+      <div class="actions">
+        <button type="button" class="bouton bouton--danger" id="btn-vider-historique">Vider l'historique</button>
+      </div>
+    </div>
+  </section>
+
   <!-- =========================== RÉGLAGES =========================== -->
   <section id="panneau-reglages" role="tabpanel" aria-labelledby="onglet-reglages" class="panneau" hidden>
 
@@ -217,6 +296,17 @@
           <input type="email" id="email-contact" placeholder="vous@exemple.org">
         </label>
       </div>
+      <div class="grille-3">
+        <label class="champ">
+          <span>Sensibilité de détection</span>
+          <select id="sensibilite">
+            <option value="stricte">Stricte — seules les copies nettes</option>
+            <option value="normale" selected>Normale — équilibrée</option>
+            <option value="large">Large — repère aussi les paraphrases ténues</option>
+          </select>
+          <small class="discret">Une sensibilité large augmente le taux, au prix de faux positifs à vérifier.</small>
+        </label>
+      </div>
       <div class="cases">
         <label><input type="checkbox" id="exclure-citations" checked> Exclure les citations entre guillemets du taux net</label>
         <label><input type="checkbox" id="exclure-biblio" checked> Exclure la bibliographie du taux net</label>
@@ -224,6 +314,12 @@
         <label><input type="checkbox" id="inclure-entetes"> Analyser les en-têtes et pieds de page</label>
         <label><input type="checkbox" id="detecter-interne" checked> Détecter les répétitions internes au document</label>
         <label><input type="checkbox" id="cache-actif" checked> Mettre en cache les réponses des moteurs</label>
+      </div>
+      <h3>Analyses complémentaires</h3>
+      <div class="cases">
+        <label><input type="checkbox" id="analyse-forensique" checked> Analyse forensique (homoglyphes, texte caché, camouflage)</label>
+        <label><input type="checkbox" id="analyse-ia" checked> Indices de rédaction assistée par IA</label>
+        <label><input type="checkbox" id="analyse-citations" checked> Vérification croisée des citations et de la bibliographie</label>
       </div>
     </div>
 
@@ -250,6 +346,17 @@
         <li><strong>Comparaison locale.</strong> Le document est indexé une fois sous forme d'empreintes de n-grammes. Chaque source est ensuite balayée contre cet index : les correspondances sont chaînées par diagonale, puis vérifiées par alignement. Deux passes coexistent — une passe littérale sur tous les mots, une passe « paraphrase » sur les mots pleins racinisés.</li>
         <li><strong>Calcul du taux.</strong> Le taux brut est la part du document couverte par au moins un passage. Le taux net retire les citations encadrées et la bibliographie.</li>
       </ol>
+    </div>
+
+    <div class="carte">
+      <h2>Analyses complémentaires</h2>
+      <p>En plus du taux de similitude, chaque analyse produit&nbsp;:</p>
+      <ul>
+        <li><strong>Une analyse forensique</strong> qui repère les procédés de camouflage&nbsp;: lettres d'autres alphabets déguisées en latines (homoglyphes), caractères invisibles, et surtout le <em>texte dissimulé dans le fichier Word</em> — écrit en blanc, masqué ou en corps minuscule — invisible à l'impression mais lu par les détecteurs.</li>
+        <li><strong>Des indices de rédaction assistée par IA</strong>&nbsp;: rythme des phrases, tournures stéréotypées, attaques répétitives, richesse lexicale. Ce sont des <em>indices de style</em>, jamais une preuve d'origine.</li>
+        <li><strong>Une vérification des citations</strong>&nbsp;: appels du texte sans entrée bibliographique (références orphelines) et entrées jamais citées.</li>
+      </ul>
+      <p>L'onglet <strong>Outils</strong> ajoute la comparaison directe de deux documents, la création d'<strong>empreintes</strong> (pour vérifier un document contre une source sans en divulguer le texte), un décamoufleur, et l'historique de vos analyses. Tous ces traitements sont locaux, et se règlent dans l'onglet Réglages (sensibilité, activation des analyses).</p>
     </div>
 
     <div class="carte">

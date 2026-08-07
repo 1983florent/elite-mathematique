@@ -430,6 +430,10 @@ export function renderReportHtml(report, options = {}) {
       : ''
   }
 
+  ${forensicsHtml(report)}
+  ${aiHtml(report)}
+  ${citationsHtml(report)}
+
   <section class="card">
     <h2>Méthodologie et paramètres</h2>
     <table>
@@ -466,6 +470,90 @@ export function renderReportHtml(report, options = {}) {
 <footer class="report">Rapport produit localement par ELITE MATHEMATIQUE — aucun document n'a été transmis à un serveur.</footer>
 </body>
 </html>`;
+}
+
+/** Section forensique du rapport HTML. */
+function forensicsHtml(report) {
+  const f = report.forensics;
+  if (!f) return '';
+  if (f.severity === 'aucun') {
+    return `<section class="card"><h2>Analyse forensique</h2>
+      <p class="muted">Aucun procédé de camouflage détecté : pas d'homoglyphes, de caractères invisibles ni de texte dissimulé dans le fichier.</p></section>`;
+  }
+  const findings = f.findings.map((x) => `<div class="${f.severity === 'alerte' ? 'err' : 'warn'}">${escapeHtml(x)}</div>`).join('');
+  const mixed = f.mixedWords.length
+    ? `<h3>Mots à alphabets mélangés</h3><p class="muted">${f.mixedWords
+        .slice(0, 20)
+        .map((w) => `« ${escapeHtml(w.word)} » → « ${escapeHtml(w.cleaned)} »`)
+        .join(' · ')}</p>`
+    : '';
+  const hidden = f.hiddenRuns.length
+    ? `<h3>Texte dissimulé dans le fichier Word</h3><table><thead><tr><th>Procédé</th><th>Contenu</th></tr></thead><tbody>${f.hiddenRuns
+        .slice(0, 20)
+        .map(
+          (r) =>
+            `<tr><td>${escapeHtml(r.type)}</td><td>${escapeHtml(r.text.slice(0, 300))}</td></tr>`,
+        )
+        .join('')}</tbody></table>`
+    : '';
+  return `<section class="card"><h2>Analyse forensique — procédés de camouflage</h2>${findings}${mixed}${hidden}</section>`;
+}
+
+/** Section « indices IA » du rapport HTML. */
+function aiHtml(report) {
+  const ai = report.ai;
+  if (!ai) return '';
+  if (!ai.indicators.length) {
+    return `<section class="card"><h2>Indices de rédaction assistée par IA</h2><p class="muted">${escapeHtml(ai.disclaimer)}</p></section>`;
+  }
+  const rows = ai.indicators
+    .map(
+      (i) =>
+        `<tr><td>${escapeHtml(i.label)}</td><td>${escapeHtml(i.detail)}</td><td class="num">${Math.round(i.value * 100)}</td></tr>`,
+    )
+    .join('');
+  const paragraphs = ai.paragraphs.length
+    ? `<h3>Paragraphes les plus typés</h3>${ai.paragraphs
+        .map(
+          (p) =>
+            `<div class="warn"><strong>Paragraphe ${p.index + 1}</strong> (${escapeHtml(p.reasons.join(', '))})<br>${escapeHtml(p.excerpt)}</div>`,
+        )
+        .join('')}`
+    : '';
+  return `<section class="card"><h2>Indices de rédaction assistée par IA</h2>
+    <div class="summary">${gaugeSvg(ai.score, ai.band.color, 'Indices IA')}
+    <div class="figures"><p><strong style="color:${ai.band.color}">${escapeHtml(ai.band.label)}</strong>${ai.reliable ? '' : ' — échantillon court, fiabilité réduite'}</p>
+    <table><thead><tr><th>Indicateur</th><th>Mesure</th><th class="num">/100</th></tr></thead><tbody>${rows}</tbody></table>
+    </div></div>${paragraphs}
+    <p class="muted">${escapeHtml(ai.disclaimer)}</p></section>`;
+}
+
+/** Section citations du rapport HTML. */
+function citationsHtml(report) {
+  const c = report.citations;
+  if (!c) return '';
+  if (c.style === 'aucune') {
+    return `<section class="card"><h2>Citations et bibliographie</h2>
+      <p class="muted">Aucun appel de citation détecté dans le corps du texte${c.hasBibliography ? ', alors qu’une bibliographie existe' : ''}.</p></section>`;
+  }
+  const orphans = c.orphans.length
+    ? `<h3>Références orphelines (${c.orphans.length})</h3><table><thead><tr><th>Appel</th><th>Contexte</th></tr></thead><tbody>${c.orphans
+        .slice(0, 20)
+        .map((o) => `<tr><td>${escapeHtml(o.author)}, ${escapeHtml(o.year)}</td><td class="muted">${escapeHtml(o.context)}</td></tr>`)
+        .join('')}</tbody></table>`
+    : '';
+  const uncited = c.uncited.length
+    ? `<h3>Entrées jamais citées (${c.uncited.length})</h3>${c.uncited
+        .slice(0, 20)
+        .map((u) => `<div class="warn">${escapeHtml(u.text)}</div>`)
+        .join('')}`
+    : '';
+  const numeric = c.numericIssues.map((i) => `<div class="err">${escapeHtml(i)}</div>`).join('');
+  return `<section class="card"><h2>Citations et bibliographie</h2>
+    <p>Style détecté : <strong>${escapeHtml(c.style)}</strong> — ${c.inTextCount} appel(s) dans le texte, ${c.entryCount} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.</p>
+    ${orphans}${uncited}${numeric}
+    ${!c.orphans.length && !c.uncited.length && !c.numericIssues.length ? '<p class="muted">Appels et bibliographie concordent.</p>' : ''}
+  </section>`;
 }
 
 /** @param {{lang: string, confidence: number}} language */
@@ -635,6 +723,63 @@ export async function buildReportDocx(report, options = {}) {
     );
   }
 
+  // Analyses complémentaires.
+  if (report.forensics && report.forensics.severity !== 'aucun') {
+    builder.heading('Analyse forensique — procédés de camouflage', 2);
+    for (const f of report.forensics.findings) {
+      builder.paragraph([{ text: '• ' }, { text: f }], { spacingAfter: 60 });
+    }
+    if (report.forensics.hiddenRuns.length) {
+      builder.table(
+        [
+          ['Procédé', 'Contenu dissimulé'],
+          ...report.forensics.hiddenRuns.slice(0, 20).map((r) => [r.type, truncateText(r.text, 400)]),
+        ],
+        { widths: [2000, 7000] },
+      );
+    }
+  }
+
+  if (report.ai && report.ai.indicators.length) {
+    builder.heading('Indices de rédaction assistée par IA', 2);
+    builder.paragraph([
+      { text: `${report.ai.score} / 100 — ${report.ai.band.label}. `, bold: true },
+      { text: report.ai.disclaimer, italic: true },
+    ]);
+    builder.table(
+      [
+        ['Indicateur', 'Mesure', '/100'],
+        ...report.ai.indicators.map((i) => [i.label, truncateText(i.detail, 200), String(Math.round(i.value * 100))]),
+      ],
+      { widths: [3000, 5000, 1000] },
+    );
+  }
+
+  if (report.citations && report.citations.style !== 'aucune') {
+    builder.heading('Citations et bibliographie', 2);
+    builder.paragraph(
+      `Style ${report.citations.style} — ${report.citations.inTextCount} appel(s), ` +
+        `${report.citations.entryCount} entrée(s), ` +
+        `${Math.round(report.citations.matchedRatio * 100)} % appariés.`,
+    );
+    if (report.citations.orphans.length) {
+      builder.heading('Références orphelines', 3);
+      builder.table(
+        [
+          ['Appel', 'Contexte'],
+          ...report.citations.orphans.slice(0, 25).map((o) => [`${o.author}, ${o.year}`, truncateText(o.context, 300)]),
+        ],
+        { widths: [2500, 6500] },
+      );
+    }
+    if (report.citations.uncited.length) {
+      builder.heading('Entrées jamais citées', 3);
+      for (const u of report.citations.uncited.slice(0, 25)) {
+        builder.paragraph(truncateText(u.text, 400), { style: 'Citation' });
+      }
+    }
+  }
+
   builder.pageBreak();
   builder.heading('Méthodologie et paramètres', 2);
   builder.table(
@@ -701,6 +846,39 @@ export function reportToJson(report, options = {}) {
 }
 
 /**
+ * Export CSV des passages détectés (séparateur point-virgule, tableur français).
+ * @param {any} report
+ * @returns {string}
+ */
+export function reportToCsv(report) {
+  const echapper = (v) => {
+    const s = String(v ?? '').replace(/\r?\n/g, ' ');
+    return /[";]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lignes = [
+    ['n', 'source', 'moteur', 'url', 'type', 'similarite_pct', 'mots', 'extrait_document', 'extrait_source'],
+  ];
+  const rang = new Map(report.sources.map((src, i) => [src.key, i + 1]));
+  report.passages.forEach((p, i) => {
+    const src = report.sources.find((x) => x.key === p.sourceKey);
+    lignes.push([
+      i + 1,
+      src?.title || '',
+      src?.providerName || src?.provider || '',
+      src?.url || '',
+      p.typeLabel || p.type,
+      Math.round(p.similarity * 100),
+      p.words,
+      p.documentText,
+      p.sourceText,
+      rang.get(p.sourceKey) ?? '',
+    ]);
+  });
+  // BOM pour qu'Excel reconnaisse l'UTF-8.
+  return '\ufeff' + lignes.map((l) => l.map(echapper).join(';')).join('\r\n');
+}
+
+/**
  * Résumé compact destiné à l'historique local.
  * @param {any} report
  */
@@ -715,5 +893,10 @@ export function summarize(report) {
     niveau: report.scores.niveau.code,
     sources: report.scores.sourcesTotal,
     durationMs: report.durationMs,
+    aiScore: report.ai ? report.ai.score : null,
+    forensicSeverity: report.forensics ? report.forensics.severity : null,
+    citationIssues: report.citations
+      ? report.citations.orphans.length + report.citations.uncited.length
+      : null,
   };
 }

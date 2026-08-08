@@ -28,6 +28,23 @@ import { userMessage } from './core/errors.js';
 import { compareTexts, createFingerprint, validateFingerprint } from './core/compare.js';
 import { decloakText } from './core/forensics.js';
 import { setupPwa } from './ui/pwa.js';
+import { BRAND } from './core/branding.js';
+import {
+  t,
+  setLanguage,
+  detectLanguage,
+  availableLanguages,
+  onLanguageChange,
+  applyDom,
+} from './core/i18n.js';
+import { hasAccess, consumeTrial, getEntitlement } from './core/license.js';
+import { showPaywall, renderEntitlementBadge } from './ui/paywall.js';
+import {
+  buildCertificate,
+  renderCertificateHtml,
+  verifyCertificate,
+  CERT_STRINGS,
+} from './core/certificate.js';
 import { put as storePut, all as storeAll, remove as storeRemove, clear as storeClear } from './core/store.js';
 
 /* ------------------------------------------------------------------ *
@@ -417,6 +434,12 @@ async function runAnalysis() {
   const pasted = $('#texte-colle').value.trim();
   if (!state.prepared && !pasted) return;
 
+  // Mur d'accès : une analyse d'essai gratuite, puis abonnement requis.
+  if (!(await hasAccess())) {
+    showPaywall({ onUnlocked: () => { refreshEntitlementBadge(); runAnalysis(); } });
+    return;
+  }
+
   state.analyzing = true;
   $('#btn-analyser').disabled = true;
   $('#btn-annuler').hidden = false;
@@ -453,6 +476,9 @@ async function runAnalysis() {
       },
     });
     state.report = report;
+    // Décompter une analyse d'essai (sans effet si un abonnement est actif).
+    await consumeTrial();
+    refreshEntitlementBadge();
     saveToHistory(report);
     renderResults($('#resultats'), report, {
       onExport: exportReport,
@@ -527,9 +553,93 @@ async function exportReport(format) {
           /* fenêtre déjà fermée */
         }
       }, 700);
+      return;
+    }
+    if (format === 'certificate' || format === 'certificate-print') {
+      notify(t('cert.building'));
+      const plan = (await getEntitlement()).plan || null;
+      const cert = await buildCertificate(report, { plan, sign: true });
+      const html = renderCertificateHtml(cert, { strings: certificateStrings() });
+      // On conserve le certificat scellé dans l'historique local.
+      try {
+        await storePut('certificats', { id: cert.certId, ...cert });
+      } catch {
+        /* stockage optionnel */
+      }
+      if (format === 'certificate-print') {
+        const win = window.open('', '_blank');
+        if (!win) {
+          notify("Le navigateur a bloqué l'ouverture de la fenêtre.", 'erreur');
+          return;
+        }
+        win.document.write(html);
+        win.document.close();
+        win.addEventListener('load', () => win.print(), { once: true });
+        setTimeout(() => {
+          try {
+            if (win.document.readyState === 'complete') win.print();
+          } catch {
+            /* fenêtre déjà fermée */
+          }
+        }, 700);
+      } else {
+        download(html, `certificat-${base}.html`, 'text/html;charset=utf-8');
+        download(JSON.stringify(cert, null, 2), `certificat-${base}.json`, 'application/json');
+      }
+      notify(t('cert.ready'), 'succes');
+      return;
     }
   } catch (err) {
     notify(`Export impossible : ${userMessage(err)}`, 'erreur');
+  }
+}
+
+/**
+ * Traduit les libellés du certificat via i18n, avec repli sur les libellés FR
+ * embarqués dans le module `certificate`.
+ * @returns {Record<string,string>}
+ */
+function certificateStrings() {
+  const out = {};
+  for (const key of Object.keys(CERT_STRINGS)) {
+    const translated = t('cert.doc.' + key);
+    out[key] = translated === 'cert.doc.' + key ? CERT_STRINGS[key] : translated;
+  }
+  return out;
+}
+
+/**
+ * Affiche le verdict de vérification d'un certificat.
+ * @param {HTMLElement} box
+ * @param {{valid:boolean, reason?:string, signed:boolean, attestation?:any, cert?:any}} res
+ */
+function renderCertVerdict(box, res) {
+  clear(box);
+  if (res.valid) {
+    box.className = 'cert-resultat cert-resultat--ok';
+    const a = res.attestation;
+    const orig = a?.results?.originalityScore;
+    box.append(
+      el('p', { class: 'cert-resultat__titre' },
+        (res.signed ? '✔ ' : '● ') + t(res.signed ? 'cert.verify.validSigned' : 'cert.verify.validSealed')),
+      el('dl', { class: 'cert-resultat__details' }, [
+        el('dt', {}, t('cert.doc.rowDocument')), el('dd', {}, a?.document?.name || '—'),
+        el('dt', {}, 'Certificat'), el('dd', {}, res.cert?.certId || '—'),
+        el('dt', {}, t('cert.doc.originality')), el('dd', {}, orig != null ? orig + ' %' : '—'),
+        el('dt', {}, 'Code'), el('dd', {}, res.cert?.code || '—'),
+      ]),
+    );
+  } else {
+    box.className = 'cert-resultat cert-resultat--erreur';
+    const reasons = {
+      format: t('cert.verify.badFormat'),
+      seal: t('cert.verify.badSeal'),
+      signature: t('cert.verify.badSignature'),
+    };
+    box.append(
+      el('p', { class: 'cert-resultat__titre' }, '✖ ' + t('cert.verify.invalid')),
+      el('p', {}, reasons[res.reason] || res.reason || ''),
+    );
   }
 }
 
@@ -1018,6 +1128,35 @@ function setupTools() {
     notify(ok ? 'Texte copié.' : 'Copie impossible.', ok ? 'succes' : 'erreur');
   });
 
+  // Vérification d'un certificat d'originalité.
+  const certFile = $('#cert-fichier');
+  if (certFile) {
+    certFile.addEventListener('change', async () => {
+      const f = certFile.files?.[0];
+      if (!f) return;
+      try {
+        $('#cert-source').value = await f.text();
+      } catch {
+        notify('Lecture du fichier impossible.', 'erreur');
+      }
+    });
+  }
+  const btnCert = $('#btn-verifier-cert');
+  if (btnCert) {
+    btnCert.addEventListener('click', async () => {
+      const raw = $('#cert-source').value.trim();
+      const box = $('#cert-resultat');
+      box.hidden = false;
+      if (!raw) {
+        box.className = 'cert-resultat cert-resultat--erreur';
+        box.textContent = t('cert.verify.empty');
+        return;
+      }
+      const res = await verifyCertificate(raw);
+      renderCertVerdict(box, res);
+    });
+  }
+
   $('#btn-vider-historique').addEventListener('click', async () => {
     if (!confirm('Effacer tout l’historique des analyses de ce navigateur ?')) return;
     await storeClear('reports');
@@ -1194,6 +1333,49 @@ function reopenReport(json) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Langues (internationalisation)
+ * ------------------------------------------------------------------ */
+
+function setupI18n() {
+  // Nom de marque centralisé.
+  const marque = $('#marque-nom');
+  if (marque) marque.textContent = BRAND.name;
+
+  // Langue de départ : préférence enregistrée, sinon langue de la machine.
+  const lang = detectLanguage(state.settings.language);
+
+  const select = $('#selecteur-langue');
+  if (select) {
+    clear(select);
+    for (const l of availableLanguages()) {
+      select.append(
+        el('option', { value: l.code, selected: l.code === lang }, l.name),
+      );
+    }
+    select.addEventListener('change', () => {
+      state.settings.language = select.value;
+      persist();
+      setLanguage(select.value);
+    });
+  }
+
+  // Applique la langue (traduit le DOM, gère l'écriture droite-à-gauche).
+  setLanguage(lang);
+
+  // À chaque changement de langue, rafraîchir les éléments dynamiques.
+  onLanguageChange(() => {
+    updateAnalysisSummary();
+    refreshEntitlementBadge();
+  });
+
+  refreshEntitlementBadge();
+}
+
+function refreshEntitlementBadge() {
+  renderEntitlementBadge($('#badge-abonnement')).catch(() => {});
+}
+
+/* ------------------------------------------------------------------ *
  * Installation (PWA)
  * ------------------------------------------------------------------ */
 
@@ -1223,6 +1405,7 @@ async function start() {
   setupTabs();
   setupDropZone();
   setupCorpus();
+  setupI18n();
   setupProfiles();
   setupAnalysis();
   setupHumanize();

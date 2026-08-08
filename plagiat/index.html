@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analyseur de plagiat & humanisation — ELITE MATHEMATIQUE</title>
+<title>Veritex — Analyseur de plagiat & authenticité</title>
 <meta name="description" content="Analysez un document Word (.docx) pour calculer son taux de plagiat, humanisez votre texte et générez un rapport détaillé. Tout se passe dans votre navigateur.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1e2a78">
@@ -20,29 +20,34 @@
 <header class="entete">
   <div class="conteneur entete__barre">
     <a class="entete__marque" href="../index.html">
-      <img src="../logo.png" alt="" width="34" height="34">
-      <span>ELITE MATHEMATIQUE</span>
+      <span class="entete__logo" aria-hidden="true">V</span>
+      <span id="marque-nom">Veritex</span>
     </a>
     <div class="entete__actions">
-      <button type="button" id="btn-installer" class="bouton bouton--discret" hidden title="Installer l'application sur cet ordinateur">⤓ Installer</button>
+      <span id="badge-abonnement" class="badge-abonnement"></span>
+      <label class="selecteur-langue" title="Langue">
+        <span class="selecteur-langue__icone" aria-hidden="true">🌐</span>
+        <select id="selecteur-langue" aria-label="Langue"></select>
+      </label>
+      <button type="button" id="btn-installer" class="bouton bouton--discret" hidden data-i18n="header.install" title="Installer l'application sur cet ordinateur">Installer</button>
       <button type="button" id="btn-theme" class="bouton bouton--discret" aria-label="Changer de thème" title="Thème clair / sombre">
         <span aria-hidden="true" id="icone-theme">◐</span>
       </button>
-      <span class="etiquette etiquette--info" title="Aucun document n'est envoyé sur un serveur">100 % dans votre navigateur</span>
     </div>
   </div>
   <div class="conteneur entete__titre">
-    <h1>Analyseur de plagiat &amp; humanisation de texte</h1>
-    <p>Déposez un document Word, obtenez un taux de similitude, un rapport détaillé et une réécriture assistée. Le fichier ne quitte jamais votre ordinateur&nbsp;; seules de courtes requêtes de recherche partent vers les moteurs que vous activez.</p>
+    <span class="etiquette etiquette--info" data-i18n="header.badge" title="Aucun document n'est envoyé sur un serveur">100 % dans votre navigateur</span>
+    <h1 data-i18n="hero.title">Analyseur de plagiat &amp; authenticité</h1>
+    <p data-i18n="hero.subtitle">Déposez un document Word, obtenez un taux de similitude, un rapport détaillé, une détection des fraudes et une réécriture assistée. Le fichier ne quitte jamais votre ordinateur.</p>
   </div>
 </header>
 
 <nav class="onglets conteneur" role="tablist" aria-label="Sections de l'application">
-  <button role="tab" id="onglet-analyse" aria-controls="panneau-analyse" aria-selected="true" class="onglet actif">Analyse de plagiat</button>
-  <button role="tab" id="onglet-humanisation" aria-controls="panneau-humanisation" aria-selected="false" class="onglet">Humanisation</button>
-  <button role="tab" id="onglet-outils" aria-controls="panneau-outils" aria-selected="false" class="onglet">Outils</button>
-  <button role="tab" id="onglet-reglages" aria-controls="panneau-reglages" aria-selected="false" class="onglet">Réglages</button>
-  <button role="tab" id="onglet-aide" aria-controls="panneau-aide" aria-selected="false" class="onglet">Aide &amp; méthode</button>
+  <button role="tab" id="onglet-analyse" aria-controls="panneau-analyse" aria-selected="true" class="onglet actif" data-i18n="nav.analyse">Analyse</button>
+  <button role="tab" id="onglet-humanisation" aria-controls="panneau-humanisation" aria-selected="false" class="onglet" data-i18n="nav.humanisation">Humanisation</button>
+  <button role="tab" id="onglet-outils" aria-controls="panneau-outils" aria-selected="false" class="onglet" data-i18n="nav.outils">Outils</button>
+  <button role="tab" id="onglet-reglages" aria-controls="panneau-reglages" aria-selected="false" class="onglet" data-i18n="nav.reglages">Réglages</button>
+  <button role="tab" id="onglet-aide" aria-controls="panneau-aide" aria-selected="false" class="onglet" data-i18n="nav.aide">Aide</button>
 </nav>
 
 <main id="contenu" class="conteneur">
@@ -59,8 +64,8 @@
           <svg viewBox="0 0 24 24" width="42" height="42" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
             <path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
           </svg>
-          <p><strong>Déposez votre fichier .docx ici</strong></p>
-          <p class="discret">ou cliquez pour le choisir — aucune limite de taille ni de pages</p>
+          <p><strong data-i18n="analyse.drop.title">Déposez votre fichier .docx ici</strong></p>
+          <p class="discret" data-i18n="analyse.drop.hint">ou cliquez pour le choisir — aucune limite de taille ni de pages</p>
           <input type="file" id="fichier" accept=".docx,.docm,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
         </div>
 
@@ -104,8 +109,8 @@
         </div>
 
         <div class="actions">
-          <button type="button" id="btn-analyser" class="bouton bouton--primaire" disabled>Lancer l'analyse</button>
-          <button type="button" id="btn-annuler" class="bouton bouton--danger" hidden>Interrompre</button>
+          <button type="button" id="btn-analyser" class="bouton bouton--primaire" disabled data-i18n="analyse.run">Lancer l'analyse</button>
+          <button type="button" id="btn-annuler" class="bouton bouton--danger" hidden data-i18n="analyse.cancel">Interrompre</button>
         </div>
 
         <p class="discret" id="etat-moteurs"></p>
@@ -254,6 +259,21 @@
       </div>
       <p class="discret" id="etat-decloak"></p>
       <textarea id="decloak-resultat" rows="5" placeholder="Texte nettoyé" readonly></textarea>
+    </div>
+
+    <div class="carte">
+      <h2 data-i18n="cert.verify.title">Vérifier un certificat d'originalité</h2>
+      <p class="discret" data-i18n="cert.verify.hint">Collez le contenu d'un fichier certificat (.json), ou déposez-le : Veritex recalcule le sceau SHA-256 et confirme si le certificat est authentique et intact.</p>
+      <label class="champ">
+        <input type="file" id="cert-fichier" accept=".json,application/json">
+      </label>
+      <label class="champ">
+        <textarea id="cert-source" rows="5" placeholder="{ &quot;app&quot;: &quot;Veritex&quot;, &quot;seal&quot;: … }"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="bouton bouton--primaire" id="btn-verifier-cert" data-i18n="cert.verify.run">Vérifier le certificat</button>
+      </div>
+      <div id="cert-resultat" class="cert-resultat" hidden></div>
     </div>
 
     <div class="carte">

@@ -16,6 +16,7 @@ import {
   domainOf,
   gaugeSvg,
 } from '../core/report.js';
+import { t } from '../core/i18n.js';
 
 /** Nombre de caractères rendus par lot dans le texte annoté. */
 const RENDER_BATCH = 60_000;
@@ -106,7 +107,10 @@ function synthesisCard(report, actions) {
     kpiBox('Durée', formatDuration(report.durationMs)),
   ]);
 
+  const certLabel = t('cert.generate') === 'cert.generate' ? "Certificat d'originalité" : t('cert.generate');
   const exportButtons = el('div', { class: 'actions' }, [
+    el('button', { type: 'button', class: 'bouton bouton--premium', title: certLabel,
+      onclick: () => actions.onExport('certificate') }, '✦ ' + certLabel),
     el('button', { type: 'button', class: 'bouton bouton--primaire',
       onclick: () => actions.onExport('docx') }, 'Rapport Word (.docx)'),
     el('button', { type: 'button', class: 'bouton bouton--discret',

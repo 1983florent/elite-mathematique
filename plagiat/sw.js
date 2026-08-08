@@ -9,7 +9,7 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'elite-plagiat-ee92d2acf147';
+const CACHE = 'elite-plagiat-411b5a1513b8';
 
 const PRECACHE = [
   "./",
@@ -22,6 +22,8 @@ const PRECACHE = [
   "./index.html",
   "./js/app.js",
   "./js/core/ai-detector.js",
+  "./js/core/branding.js",
+  "./js/core/certificate.js",
   "./js/core/citations.js",
   "./js/core/compare.js",
   "./js/core/docx-reader.js",
@@ -29,7 +31,9 @@ const PRECACHE = [
   "./js/core/errors.js",
   "./js/core/forensics.js",
   "./js/core/humanizer.js",
+  "./js/core/i18n.js",
   "./js/core/inflate.js",
+  "./js/core/license.js",
   "./js/core/matcher.js",
   "./js/core/net.js",
   "./js/core/pipeline.js",
@@ -40,8 +44,10 @@ const PRECACHE = [
   "./js/core/text.js",
   "./js/core/zip-reader.js",
   "./js/core/zip-writer.js",
+  "./js/data/locales.js",
   "./js/data/synonyms.js",
   "./js/ui/dom.js",
+  "./js/ui/paywall.js",
   "./js/ui/pwa.js",
   "./js/ui/results.js",
   "./js/workers/analyzer.worker.js",

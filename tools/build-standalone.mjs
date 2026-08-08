@@ -226,7 +226,7 @@ __req(${JSON.stringify(idOf(ENTRY))});
     '<script type="module" src="js/app.js"></script>',
     `<script>\n${bundle}\n</script>`,
   );
-  // Version autonome : pas de site autour, le logo devient une image intégrée.
+  // Version autonome : pas de site autour, la marque n'est plus un lien.
   out = remplacer(
     out,
     '<a class="entete__marque" href="../index.html">',
@@ -234,8 +234,8 @@ __req(${JSON.stringify(idOf(ENTRY))});
   );
   out = remplacer(
     out,
-    '<img src="../logo.png" alt="" width="34" height="34">\n      <span>ELITE MATHEMATIQUE</span>\n    </a>',
-    `<img src="${LOGO_URI}" alt="" width="34" height="34">\n      <span>ELITE MATHEMATIQUE</span>\n    </span>`,
+    '<span class="entete__logo" aria-hidden="true">V</span>\n      <span id="marque-nom">Veritex</span>\n    </a>',
+    '<span class="entete__logo" aria-hidden="true">V</span>\n      <span id="marque-nom">Veritex</span>\n    </span>',
   );
 
   if (out.includes('href="css/app.css"') || out.includes('src="js/app.js"')) {
@@ -260,7 +260,7 @@ __req(${JSON.stringify(idOf(ENTRY))});
 
 const destination = process.argv[2]
   ? resolve(process.argv[2])
-  : join(ROOT, 'dist/analyseur-plagiat.html');
+  : join(ROOT, 'dist/Veritex.html');
 
 const result = await build(destination);
 console.log(

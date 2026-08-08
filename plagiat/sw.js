@@ -9,16 +9,16 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'veritex-e3ef2388b43e';
+const CACHE = 'veritex-ebf534dd9167';
 
 const PRECACHE = [
   "./",
   "./css/app.css",
-  "./icons/favicon-512.png",
-  "./icons/icon-192-maskable.png",
-  "./icons/icon-192.png",
-  "./icons/icon-512-maskable.png",
-  "./icons/icon-512.png",
+  "./icons/veritex-emblem-192.png",
+  "./icons/veritex-emblem-32.png",
+  "./icons/veritex-emblem-512.png",
+  "./icons/veritex-emblem-64.png",
+  "./icons/veritex-logo-640.png",
   "./index.html",
   "./js/app.js",
   "./js/core/ai-detector.js",

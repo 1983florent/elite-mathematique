@@ -14,6 +14,7 @@
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { dirname, join, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -203,39 +204,38 @@ __req(${JSON.stringify(idOf(ENTRY))});
 
   let out = html;
 
-  // Les ressources propres à la version installable (manifeste PWA, icônes PNG
-  // séparées) n'ont pas de sens dans un fichier unique : on les retire pour
-  // éviter des requêtes vouées à échouer sous file://.
+  // Fichier unique : on retire le manifeste PWA et le bouton « Installer »
+  // s'ils sont encore présents (l'application est désormais 100 % en ligne).
   const retirerSiPresent = (texte, motif) => texte.replace(motif, '');
   out = retirerSiPresent(out, '<link rel="manifest" href="manifest.webmanifest">\n');
-  out = retirerSiPresent(out, '<link rel="apple-touch-icon" href="icons/icon-192.png">\n');
-  // Le bouton « Installer » ne s'applique pas au fichier unique.
   out = retirerSiPresent(
     out,
     /<button type="button" id="btn-installer"[\s\S]*?<\/button>\n\s*/,
   );
 
+  // Autonomie : on intègre chaque icône référencée (favicon, logo d'en-tête)
+  // en data URI, pour que le fichier unique n'ait aucune dépendance externe.
+  out = out.replace(/(src|href)="(icons\/[^"]+\.png)"/g, (m, attr, rel) => {
+    try {
+      const data = readFileSync(join(ROOT, 'plagiat', rel));
+      return `${attr}="data:image/png;base64,${data.toString('base64')}"`;
+    } catch {
+      return m;
+    }
+  });
+
   out = remplacer(out, '<link rel="stylesheet" href="css/app.css">', `<style>\n${css}\n</style>`);
-  out = remplacer(
-    out,
-    '<link rel="icon" type="image/png" sizes="512x512" href="icons/favicon-512.png">',
-    `<link rel="icon" href="${LOGO_URI}">`,
-  );
   out = remplacer(
     out,
     '<script type="module" src="js/app.js"></script>',
     `<script>\n${bundle}\n</script>`,
   );
   // Version autonome : pas de site autour, la marque n'est plus un lien.
+  out = remplacer(out, '<a class="entete__marque" href="./">', '<span class="entete__marque">');
   out = remplacer(
     out,
-    '<a class="entete__marque" href="./">',
-    '<span class="entete__marque">',
-  );
-  out = remplacer(
-    out,
-    '<span class="entete__logo" aria-hidden="true">V</span>\n      <span id="marque-nom">Veritex</span>\n    </a>',
-    '<span class="entete__logo" aria-hidden="true">V</span>\n      <span id="marque-nom">Veritex</span>\n    </span>',
+    '<span id="marque-nom">Veritex</span>\n    </a>',
+    '<span id="marque-nom">Veritex</span>\n    </span>',
   );
 
   if (out.includes('href="css/app.css"') || out.includes('src="js/app.js"')) {

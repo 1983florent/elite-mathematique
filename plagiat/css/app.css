@@ -106,9 +106,8 @@ html[data-theme='sombre'] .entete { background: linear-gradient(135deg, #312e81 
 .entete > * { position: relative; z-index: 1; }
 
 .entete__logo {
-  display: inline-grid; place-items: center; width: 34px; height: 34px;
-  border-radius: 9px; font-weight: 800; font-size: 1.1rem;
-  background: #fff; color: var(--marque);
+  width: 40px; height: 40px; border-radius: 10px;
+  background: #fff; object-fit: contain; padding: 3px;
   box-shadow: 0 2px 10px rgba(0,0,0,.2);
 }
 .entete__marque span:last-child { font-size: 1.12rem; letter-spacing: .01em; }

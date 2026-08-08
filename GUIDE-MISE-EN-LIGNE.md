@@ -72,42 +72,66 @@ hindi, swahili, turc, japonais). Le visiteur peut en changer via le sélecteur
 ## 4. Activer les paiements
 
 Le modèle est **freemium** : `N` analyses d'essai gratuites (par défaut **1**),
-puis un mur d'accès propose l'abonnement. Deux façons de débloquer l'accès :
+puis un mur d'accès propose l'abonnement.
 
-- **A. Redirection vers votre page de paiement** (Stripe, PayPal, Mobile Money).
-- **B. Code d'accès signé** que vous remettez au client après paiement.
+> ⚠️ **Sécurité — à lire.** Une clé secrète de paiement (Stripe `sk_…`) ne doit
+> **jamais** vivre dans le code front-end : n'importe qui l'extrait avec « F12 ».
+> C'est pourquoi Veritex est livré avec un **mini-backend** (dossier `api/`) qui
+> détient seul les secrets, via des variables d'environnement. Le front ne
+> connaît que la clé **publique** et l'URL `/api`.
 
-Les deux se configurent dans **`plagiat/js/core/license.js`** →
-`LICENSE_CONFIG` :
+### Architecture (déjà en place)
+
+```
+Navigateur (front)                     Backend serverless (api/)
+─────────────────                      ─────────────────────────
+« S'abonner »  ── POST /api/creer-session ──▶  crée la session Stripe
+                                               (STRIPE_SECRET_KEY)
+              ◀────────── { url } ───────────
+  redirige vers la page Stripe … paiement …
+  retour: /?paiement=reussi&session_id=…
+              ── GET /api/recuperer-code ───▶  vérifie le paiement chez Stripe,
+                                               signe un code (LICENSE_PRIVATE_KEY)
+              ◀────────── { code } ──────────
+  active l'accès (vérifié par la clé PUBLIQUE)
+```
+
+Aucune base de données : la preuve de paiement est lue directement chez Stripe.
+Le client peut aussi entrer **un code d'accès** que vous lui envoyez à la main
+(voir §5) — utile pour le Mobile Money hors Stripe.
+
+### Ce que vous configurez
+
+**a) Côté front — `plagiat/js/core/license.js` :**
 
 ```js
 export const LICENSE_CONFIG = {
   publicKeySpki: '…',   // ← VOTRE clé publique (voir §5) — REMPLACER la démo
   freeTrials: 1,        // ← nombre d'analyses gratuites
-
-  plans: [              // ← vos offres et prix
-    { id: 'mensuel', priceLabel: '4,99 €',  periodKey: 'paywall.month' },
-    { id: 'annuel',  priceLabel: '39,99 €', periodKey: 'paywall.year', highlight: true },
-  ],
-
-  checkout: {           // ← COLLEZ ICI vos liens de paiement
-    stripe: '',         //   ex. https://buy.stripe.com/xxxxxxxx
-    paypal: '',         //   ex. https://www.paypal.com/ncp/payment/xxxxxxxx
-    mobileMoney: '',    //   ex. votre page Wave / Orange Money
+  plans: [ /* vos offres et prix */ ],
+  backendBaseUrl: '',   // ← vide = backend sur la même origine (recommandé)
+  checkout: {           // ← (optionnel) liens de paiement statiques de secours
+    stripe: '', paypal: '', mobileMoney: '',
   },
-
-  verifyEndpoint: '',   // ← (optionnel) vérification d'abonnement côté serveur
   supportEmail: 'maths.florent@gmail.com',
 };
 ```
 
-**Le plus simple pour démarrer** : créez un *Payment Link* Stripe (ou un bouton
-PayPal), collez son URL dans `checkout.stripe` (ou `checkout.paypal`). Le bouton
-« S'abonner » y redirige. Aucune donnée de carte ne transite jamais par
-Veritex : le paiement se fait sur la page sécurisée du prestataire.
+**b) Côté serveur — variables d'environnement** (dans Vercel/Netlify, voir §8) :
 
-> **Mobile Money (Afrique)** : `checkout.mobileMoney` accepte n'importe quelle
-> URL de paiement (Wave, Orange Money, une page PayDunya/CinetPay, etc.).
+| Variable | Valeur |
+|----------|--------|
+| `STRIPE_SECRET_KEY` | votre clé secrète Stripe (`sk_live_…`) |
+| `STRIPE_PRICE_MENSUEL` | identifiant de prix Stripe de l'offre mensuelle |
+| `STRIPE_PRICE_ANNUEL` | identifiant de prix Stripe de l'offre annuelle |
+| `LICENSE_PRIVATE_KEY` | votre clé privée de signature (PKCS8 base64, §5) |
+
+Modèle complet : `api/.env.example`. Détails : `api/README.md`.
+
+> **Sans backend ?** Si vous ne déployez pas `api/`, renseignez à la place un
+> simple *Payment Link* Stripe dans `checkout.stripe` : le bouton « S'abonner »
+> y redirige et vous délivrez le code d'accès à la main. Moins automatique,
+> mais tout aussi sûr (aucun secret dans le front).
 
 ---
 
@@ -158,10 +182,55 @@ unique par document.
 
 ---
 
-## 7. Vérifier que tout marche
+## 7. Déployer sur Vercel ou Netlify
+
+Le dépôt est **prêt à déployer** : site statique + fonctions de paiement, avec
+`vercel.json` et `netlify.toml` déjà fournis. Le front et le backend sont sur la
+**même origine** (appels `/api` relatifs) — aucune configuration CORS.
+
+> Après déploiement, l'application est à l'adresse **`/plagiat/`**
+> (ex. `https://mondomaine.com/plagiat/`). La page d'accueil du dépôt reste à la
+> racine. Pour mettre Veritex en page d'accueil, ajoutez une redirection
+> `/` → `/plagiat/` (une ligne dans `vercel.json`/`netlify.toml`).
+
+### Vercel
+
+1. Poussez le dépôt sur GitHub (voir §8).
+2. Sur **vercel.com** → *Add New… → Project* → importez le dépôt GitHub.
+3. Framework Preset : **Other** (aucun build). Cliquez *Deploy*.
+4. *Settings → Environment Variables* : ajoutez `STRIPE_SECRET_KEY`,
+   `STRIPE_PRICE_MENSUEL`, `STRIPE_PRICE_ANNUEL`, `LICENSE_PRIVATE_KEY`
+   (cf. §4b). *Redeploy*.
+5. Le dossier `api/` devient automatiquement vos fonctions serverless.
+
+### Netlify
+
+1. Poussez le dépôt sur GitHub (voir §8).
+2. Sur **netlify.com** → *Add new site → Import an existing project* →
+   choisissez le dépôt.
+3. Laissez les réglages par défaut (le `netlify.toml` fait le nécessaire :
+   `publish = .`, fonctions dans `netlify/functions`, redirections `/api/*`).
+4. *Site settings → Environment variables* : mêmes variables qu'en §4b.
+5. *Deploy*.
+
+Dans les deux cas, Vercel/Netlify **redéploie tout seul** à chaque `git push`.
+
+## 8. Déposer sur GitHub
+
+Le code est déjà versionné (git). Pour l'envoyer sur votre dépôt GitHub :
 
 ```bash
-npm test                 # 128 tests (moteur, i18n, licence, certificat…)
+git remote set-url origin https://github.com/VOTRE-COMPTE/VOTRE-DEPOT.git
+git push -u origin <branche>
+```
+
+(Ou créez le dépôt sur github.com puis suivez les instructions « …or push an
+existing repository ».)
+
+## 9. Vérifier que tout marche
+
+```bash
+npm test                 # 134 tests (moteur, i18n, licence, certificat, backend)
 npm run assets           # régénère icônes + service worker
 npm run build            # régénère la version fichier unique (dist/Veritex.html)
 npm run serve            # sert le site en local pour un test navigateur
@@ -171,13 +240,14 @@ npm run serve            # sert le site en local pour un test navigateur
 
 ## Récapitulatif : ce qu'il vous reste à faire
 
-| Étape | Fichier | Action |
-|------|---------|--------|
-| Marque | `js/core/branding.js` | Nom, éditeur, couleurs |
-| Clé | `js/core/license.js` | Coller votre `publicKeySpki` (§5a) |
-| Paiement | `js/core/license.js` | Coller vos liens `checkout.*` (§4) |
-| Prix | `js/core/license.js` | Ajuster `plans` |
-| Codes | `tools/make-license.mjs` | Générer après paiement (§5b) |
+| Étape | Où | Action |
+|------|----|--------|
+| Marque | `plagiat/js/core/branding.js` | Nom, couleurs (éditeur laissé vide) |
+| Clé publique | `plagiat/js/core/license.js` | Coller votre `publicKeySpki` (§5a) |
+| Prix | `plagiat/js/core/license.js` | Ajuster `plans` |
+| Secrets paiement | Vercel/Netlify (variables d'env.) | `STRIPE_SECRET_KEY`, prix, `LICENSE_PRIVATE_KEY` (§4b) |
+| Déploiement | Vercel ou Netlify | Importer le dépôt GitHub (§7) |
+| Codes manuels | `tools/make-license.mjs` | Générer un code à la main si besoin (§5b) |
 
 Tout le reste — design, langues, analyse, humanisation, forensique, IA,
 citations, comparaison, empreintes, certificat, PWA, mode hors ligne — est

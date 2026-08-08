@@ -4,3 +4,10 @@ dist/
 *.log
 desktop/node_modules/
 desktop/dist/
+
+# Secrets — ne jamais committer (seuls les .env.example sont versionnés)
+.env
+.env.*
+!.env.example
+.vercel
+.netlify

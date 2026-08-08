@@ -6,6 +6,7 @@
  */
 
 import { DocxBuilder } from './docx-writer.js';
+import { BRAND } from './branding.js';
 
 /** Palette et libellés associés aux types de correspondance. */
 export const MATCH_STYLES = {
@@ -467,7 +468,7 @@ export function renderReportHtml(report, options = {}) {
   </section>
 
 </div>
-<footer class="report">Rapport produit localement par ELITE MATHEMATIQUE — aucun document n'a été transmis à un serveur.</footer>
+<footer class="report">Rapport produit localement par ${escapeHtml(BRAND.name)} — aucun document n'a été transmis à un serveur.</footer>
 </body>
 </html>`;
 }
@@ -588,7 +589,7 @@ export async function buildReportDocx(report, options = {}) {
   const { scores, document: doc, analysis } = report;
   const builder = new DocxBuilder({
     title: `Rapport de plagiat — ${doc.name}`,
-    creator: 'ELITE MATHEMATIQUE',
+    creator: BRAND.name,
     subject: 'Analyse de similitude',
   });
 

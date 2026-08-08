@@ -17,8 +17,9 @@ export const BRAND = {
     fr: "L'authenticité de vos écrits, prouvée.",
     en: 'The authenticity of your writing, proven.',
   },
-  /** Éditeur (bas de page, métadonnées). */
-  publisher: 'ELITE MATHEMATIQUE',
+  /** Éditeur (bas de page, métadonnées). Vide par défaut : renseignez le nom
+   *  de votre société ici lors de la mise en ligne, ou laissez vide. */
+  publisher: '',
   /** Domaine/URL public (à renseigner lors de la mise en ligne). */
   url: '',
   /** Adresse de support. */

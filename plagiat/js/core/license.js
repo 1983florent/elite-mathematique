@@ -50,6 +50,17 @@ export const LICENSE_CONFIG = {
     mobileMoney: '', // ex. page Wave / Orange Money
   },
 
+  /**
+   * URL de base du mini-backend de paiement (dossier `api/` de ce dépôt,
+   * déployé sur Vercel/Netlify). La clé SECRÈTE Stripe et la clé PRIVÉE de
+   * signature n'y vivent QUE côté serveur — jamais dans ce code front-end.
+   * - Vide (`''`) : le backend est servi sur la MÊME origine que l'app
+   *   (appels relatifs vers `/api/...`). C'est le cas si vous déployez tout
+   *   ensemble (recommandé).
+   * - Sinon, URL absolue du backend, ex. `https://api.mondomaine.com`.
+   */
+  backendBaseUrl: '',
+
   /** Vérification d'abonnement côté serveur (facultative mais recommandée). */
   verifyEndpoint: '', // ex. https://votre-serveur/verifier
 
@@ -251,4 +262,52 @@ export function configuredProviders() {
   return Object.entries(LICENSE_CONFIG.checkout)
     .filter(([, url]) => url && url.trim())
     .map(([name]) => name);
+}
+
+/** Construit une URL vers le mini-backend (`/api/...`). */
+function apiUrl(path) {
+  const base = (LICENSE_CONFIG.backendBaseUrl || '').replace(/\/$/, '');
+  return `${base}/api/${path}`;
+}
+
+/**
+ * Demande au backend de créer une session de paiement sécurisée (la clé
+ * secrète reste côté serveur). Renvoie l'URL de paiement, ou `null` si aucun
+ * backend n'est déployé/configuré.
+ * @param {string} planId
+ * @returns {Promise<string|null>}
+ */
+export async function createBackendCheckout(planId) {
+  try {
+    const res = await fetch(apiUrl('creer-session'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planId, origin: location.origin }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url || null;
+  } catch {
+    return null; // pas de backend joignable → on retombera sur un lien statique
+  }
+}
+
+/**
+ * Après retour du prestataire (`?paiement=reussi&session_id=…`), récupère le
+ * code d'accès signé auprès du backend (qui vérifie le paiement chez Stripe)
+ * et l'active. À appeler au chargement de l'application.
+ * @param {string} sessionId
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+export async function claimCodeAfterPayment(sessionId) {
+  if (!sessionId) return { ok: false, error: 'session_id manquant.' };
+  try {
+    const res = await fetch(apiUrl('recuperer-code') + '?session_id=' + encodeURIComponent(sessionId));
+    if (!res.ok) return { ok: false, error: `Backend : HTTP ${res.status}` };
+    const data = await res.json();
+    if (!data.code) return { ok: false, error: data.error || 'Code non délivré.' };
+    return redeemCode(data.code);
+  } catch (err) {
+    return { ok: false, error: String(err?.message || err) };
+  }
 }

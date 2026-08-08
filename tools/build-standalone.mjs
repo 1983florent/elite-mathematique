@@ -147,7 +147,7 @@ async function collectModules(entry) {
  * Assemblage du document
  * ------------------------------------------------------------------ */
 
-/** Marque ELITE MATHEMATIQUE en SVG, encodée pour rester autonome. */
+/** Logo (favicon) en SVG, encodé pour rester autonome. */
 const LOGO_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
   '<rect width="64" height="64" rx="12" fill="#1e2a78"/>' +

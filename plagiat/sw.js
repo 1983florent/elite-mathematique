@@ -1,5 +1,5 @@
 /**
- * Service worker de l'analyseur ELITE MATHEMATIQUE — GÉNÉRÉ AUTOMATIQUEMENT.
+ * Service worker de Veritex — GÉNÉRÉ AUTOMATIQUEMENT.
  * Ne pas modifier à la main : lancer `node tools/make-sw.mjs`.
  *
  * Stratégie : préchargement de l'intégralité de l'application à l'installation,
@@ -9,7 +9,7 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'elite-plagiat-411b5a1513b8';
+const CACHE = 'elite-plagiat-55752961b405';
 
 const PRECACHE = [
   "./",

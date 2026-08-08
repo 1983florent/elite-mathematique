@@ -407,7 +407,7 @@ export function renderCertificateHtml(cert, options = {}) {
 </style></head><body>
 <div class="sheet">
   <div class="head">
-    <div class="brand"><span class="logo">V</span><b>${esc(cert.app)}</b> · ${esc(a.issuer.publisher)}</div>
+    <div class="brand"><span class="logo">V</span><b>${esc(cert.app)}</b>${a.issuer.publisher ? ' · ' + esc(a.issuer.publisher) : ''}</div>
     <h1>${esc(s.title)}</h1>
     <p class="subtitle">${esc(s.subtitle)}</p>
   </div>

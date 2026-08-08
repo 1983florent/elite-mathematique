@@ -9,6 +9,7 @@
  */
 
 import { createZip } from './zip-writer.js';
+import { BRAND } from './branding.js';
 
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -256,15 +257,15 @@ ${this.links
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <dc:title>${escapeXml(this.meta.title || 'Rapport de plagiat')}</dc:title>
 <dc:subject>${escapeXml(this.meta.subject || '')}</dc:subject>
-<dc:creator>${escapeXml(this.meta.creator || 'ELITE MATHEMATIQUE')}</dc:creator>
-<cp:lastModifiedBy>${escapeXml(this.meta.creator || 'ELITE MATHEMATIQUE')}</cp:lastModifiedBy>
+<dc:creator>${escapeXml(this.meta.creator || BRAND.name)}</dc:creator>
+<cp:lastModifiedBy>${escapeXml(this.meta.creator || BRAND.name)}</cp:lastModifiedBy>
 <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
 <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
 </cp:coreProperties>`;
 
     const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
-<Application>ELITE MATHEMATIQUE - Analyseur de plagiat</Application>
+<Application>${escapeXml(BRAND.name)} - Analyseur de plagiat</Application>
 </Properties>`;
 
     return createZip(

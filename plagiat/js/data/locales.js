@@ -66,6 +66,11 @@ const fr = {
   'paywall.securityNote':
     "Le paiement s'effectue sur une page sécurisée du prestataire. Aucune donnée de carte ne transite par cette application.",
 
+  'pay.confirming': 'Confirmation du paiement…',
+  'pay.success': 'Paiement confirmé. Votre accès est activé, merci !',
+  'pay.failed': 'Le paiement n’a pas pu être confirmé automatiquement.',
+  'pay.canceled': 'Paiement annulé.',
+
   'cert.title': "Certificat d'originalité",
   'cert.generate': "Certificat d'originalité",
   'cert.building': 'Génération du certificat scellé…',
@@ -161,6 +166,11 @@ const en = {
   'paywall.codeAccepted': 'Access activated. Thank you!',
   'paywall.securityNote':
     "Payment happens on the provider's secure page. No card data passes through this app.",
+
+  'pay.confirming': 'Confirming payment…',
+  'pay.success': 'Payment confirmed. Your access is active — thank you!',
+  'pay.failed': 'The payment could not be confirmed automatically.',
+  'pay.canceled': 'Payment canceled.',
 
   'cert.title': 'Originality certificate',
   'cert.generate': 'Originality certificate',

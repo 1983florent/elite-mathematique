@@ -64,7 +64,7 @@ async function main() {
   const precache = ['./', ...assets.map((a) => `./${a}`), ...external];
 
   const sw = `/**
- * Service worker de l'analyseur ELITE MATHEMATIQUE — GÉNÉRÉ AUTOMATIQUEMENT.
+ * Service worker de Veritex — GÉNÉRÉ AUTOMATIQUEMENT.
  * Ne pas modifier à la main : lancer \`node tools/make-sw.mjs\`.
  *
  * Stratégie : préchargement de l'intégralité de l'application à l'installation,

@@ -1,0 +1,23 @@
+# Déploiement Netlify — site statique + fonctions de paiement.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Le front appelle /api/... : on redirige vers les fonctions Netlify.
+[[redirects]]
+  from = "/api/creer-session"
+  to = "/.netlify/functions/creer-session"
+  status = 200
+
+[[redirects]]
+  from = "/api/recuperer-code"
+  to = "/.netlify/functions/recuperer-code"
+  status = 200
+
+[[redirects]]
+  from = "/api/verifier"
+  to = "/.netlify/functions/verifier"
+  status = 200

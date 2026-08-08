@@ -18,6 +18,7 @@ import {
   redeemCode,
   checkoutUrl,
   configuredProviders,
+  createBackendCheckout,
 } from '../core/license.js';
 
 const PROVIDER_LABEL = {
@@ -104,8 +105,15 @@ export async function showPaywall(hooks = {}) {
   }, t('paywall.redeem'));
 
   /** Lance le paiement pour une offre. */
-  function startCheckout(planId) {
-    // Priorité : Stripe, puis Mobile Money, puis PayPal.
+  async function startCheckout(planId) {
+    // 1) Backend sécurisé : crée une session de paiement (clé secrète côté
+    //    serveur). Redirige dans le même onglet pour revenir avec le code.
+    const backendUrl = await createBackendCheckout(planId);
+    if (backendUrl) {
+      window.location.href = backendUrl;
+      return;
+    }
+    // 2) Repli : lien de paiement statique (Stripe/Mobile Money/PayPal).
     for (const p of ['stripe', 'mobileMoney', 'paypal']) {
       const url = checkoutUrl(p, planId);
       if (url) {
@@ -113,6 +121,7 @@ export async function showPaywall(hooks = {}) {
         return;
       }
     }
+    // 3) Rien de configuré : on invite à utiliser un code d'accès.
     notify(
       'Le paiement en ligne n’est pas encore configuré. Utilisez un code d’accès, ou contactez ' +
         LICENSE_CONFIG.supportEmail + '.',

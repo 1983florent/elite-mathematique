@@ -37,7 +37,7 @@ import {
   onLanguageChange,
   applyDom,
 } from './core/i18n.js';
-import { hasAccess, consumeTrial, getEntitlement } from './core/license.js';
+import { hasAccess, consumeTrial, getEntitlement, claimCodeAfterPayment } from './core/license.js';
 import { showPaywall, renderEntitlementBadge } from './ui/paywall.js';
 import {
   buildCertificate,
@@ -702,7 +702,7 @@ function setupHumanize() {
   $('#btn-docx-humanise').addEventListener('click', async () => {
     const text = $('#texte-humanise').value;
     if (!text.trim()) return;
-    const builder = new DocxBuilder({ title: 'Texte humanisé', creator: 'ELITE MATHEMATIQUE' });
+    const builder = new DocxBuilder({ title: 'Texte humanisé', creator: BRAND.name });
     for (const paragraph of text.split('\n')) {
       if (paragraph.trim()) builder.paragraph(paragraph);
       else builder.spacer();
@@ -1337,9 +1337,10 @@ function reopenReport(json) {
  * ------------------------------------------------------------------ */
 
 function setupI18n() {
-  // Nom de marque centralisé.
+  // Nom de marque centralisé : en-tête et tout élément marqué [data-marque].
   const marque = $('#marque-nom');
   if (marque) marque.textContent = BRAND.name;
+  for (const node of $$('[data-marque]')) node.textContent = BRAND.name;
 
   // Langue de départ : préférence enregistrée, sinon langue de la machine.
   const lang = detectLanguage(state.settings.language);
@@ -1373,6 +1374,43 @@ function setupI18n() {
 
 function refreshEntitlementBadge() {
   renderEntitlementBadge($('#badge-abonnement')).catch(() => {});
+}
+
+/**
+ * Retour depuis la page de paiement : `?paiement=reussi&session_id=…`.
+ * Récupère le code d'accès signé auprès du backend et active l'abonnement,
+ * puis nettoie l'URL pour ne pas rejouer l'opération.
+ */
+async function handlePaymentReturn() {
+  let params;
+  try {
+    params = new URLSearchParams(location.search);
+  } catch {
+    return;
+  }
+  const status = params.get('paiement');
+  if (!status) return;
+
+  if (status === 'reussi') {
+    const sessionId = params.get('session_id');
+    notify(t('pay.confirming'));
+    const r = await claimCodeAfterPayment(sessionId);
+    if (r.ok) {
+      notify(t('pay.success'), 'succes', 8000);
+      refreshEntitlementBadge();
+    } else {
+      notify(`${t('pay.failed')} ${r.error || ''}`, 'erreur', 10000);
+    }
+  } else if (status === 'annule') {
+    notify(t('pay.canceled'), 'info');
+  }
+  // Nettoie les paramètres de paiement de l'URL.
+  const clean = location.origin + location.pathname + location.hash;
+  try {
+    history.replaceState(null, '', clean);
+  } catch {
+    /* contexte file:// : on ignore */
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -1414,6 +1452,7 @@ async function start() {
   setupInstall();
   updateAnalysisSummary();
   updateSourceStats();
+  handlePaymentReturn();
 
   window.addEventListener('beforeunload', (event) => {
     if (state.analyzing) {

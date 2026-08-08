@@ -9,7 +9,7 @@
  *
  * Le regroupement est volontairement minimal et ne gère que ce que le projet
  * utilise réellement : imports nommés, exports nommés, imports dynamiques.
- * Il n'y a ni minification ni transformation de syntaxe — le code livré reste
+ * Il n'y a ni minification ni transformation de syntaxe, le code livré reste
  * exactement celui du dépôt, lisible et vérifiable.
  */
 
@@ -264,5 +264,5 @@ const destination = process.argv[2]
 
 const result = await build(destination);
 console.log(
-  `${relative(ROOT, result.path)} — ${result.modules} modules, ${(result.size / 1024).toFixed(0)} Ko`,
+  `${relative(ROOT, result.path)}, ${result.modules} modules, ${(result.size / 1024).toFixed(0)} Ko`,
 );

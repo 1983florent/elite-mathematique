@@ -262,7 +262,7 @@ export function renderReportHtml(report, options = {}) {
       const rank = sourceIndex.get(seg.sourceKey);
       return `<mark style="background:${style.background};border-color:${style.border}" title="${escapeHtml(
         style.label,
-      )}${rank ? ` — source n° ${rank}` : ''}">${escaped}</mark>`;
+      )}${rank ? `, source n° ${rank}` : ''}">${escaped}</mark>`;
     })
     .join('');
 
@@ -281,7 +281,7 @@ export function renderReportHtml(report, options = {}) {
         ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
             source.title || source.url,
           )}</a>`
-        : escapeHtml(source.title || '—');
+        : escapeHtml(source.title || '-');
       return `<tr>
       <td class="num">${i + 1}</td>
       <td>${link}${domain ? `<div class="muted">${escapeHtml(domain)}</div>` : ''}</td>
@@ -304,7 +304,7 @@ export function renderReportHtml(report, options = {}) {
         <span class="pill" style="background:${style.background};color:${style.border}">${escapeHtml(style.label)}</span>
         <span>Similarité ${Math.round(p.similarity * 100)} %</span>
         <span>${p.words} mots</span>
-        <span>Source n° ${rank ?? '—'} : ${escapeHtml(source?.title || 'inconnue')}</span>
+        <span>Source n° ${rank ?? '-'} : ${escapeHtml(source?.title || 'inconnue')}</span>
       </div>
       <div class="side">
         <div><h4>Document analysé</h4>${escapeHtml(truncateText(p.documentText, 900))}</div>
@@ -336,7 +336,7 @@ export function renderReportHtml(report, options = {}) {
       <td>${escapeHtml(e.name)}</td>
       <td class="num">${e.queries}</td>
       <td class="num">${e.results}</td>
-      <td>${e.errors.length ? escapeHtml(e.errors[0]) : '—'}</td>
+      <td>${e.errors.length ? escapeHtml(e.errors[0]) : '-'}</td>
     </tr>`,
     )
     .join('');
@@ -353,13 +353,13 @@ export function renderReportHtml(report, options = {}) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rapport de plagiat — ${escapeHtml(doc.name)}</title>
+<title>Rapport de plagiat, ${escapeHtml(doc.name)}</title>
 <style>${REPORT_CSS}</style>
 </head>
 <body>
 <header class="report"><div class="wrap">
   <h1>Rapport d'analyse de similitude</h1>
-  <p>${escapeHtml(doc.name)} — ${formatDate(report.generatedAt)} — réf. ${escapeHtml(report.id)}</p>
+  <p>${escapeHtml(doc.name)}, ${formatDate(report.generatedAt)}, réf. ${escapeHtml(report.id)}</p>
 </div></header>
 
 <div class="wrap">
@@ -369,7 +369,7 @@ export function renderReportHtml(report, options = {}) {
     <div class="summary">
       ${gaugeSvg(scores.tauxNet, scores.niveau.color, 'Taux de similitude net')}
       <div class="figures">
-        <p><strong style="color:${scores.niveau.color}">${escapeHtml(scores.niveau.label)}</strong> —
+        <p><strong style="color:${scores.niveau.color}">${escapeHtml(scores.niveau.label)}</strong>,
         ${scores.tauxNet} % du texte analysé correspond à des sources identifiées
         (${scores.tauxBrut} % avant exclusion des citations et de la bibliographie).</p>
         ${distributionBar(scores.repartition)}
@@ -468,7 +468,7 @@ export function renderReportHtml(report, options = {}) {
   </section>
 
 </div>
-<footer class="report">Rapport produit localement par ${escapeHtml(BRAND.name)} — aucun document n'a été transmis à un serveur.</footer>
+<footer class="report">Rapport produit localement par ${escapeHtml(BRAND.name)}, aucun document n'a été transmis à un serveur.</footer>
 </body>
 </html>`;
 }
@@ -497,7 +497,7 @@ function forensicsHtml(report) {
         )
         .join('')}</tbody></table>`
     : '';
-  return `<section class="card"><h2>Analyse forensique — procédés de camouflage</h2>${findings}${mixed}${hidden}</section>`;
+  return `<section class="card"><h2>Analyse forensique, procédés de camouflage</h2>${findings}${mixed}${hidden}</section>`;
 }
 
 /** Section « indices IA » du rapport HTML. */
@@ -523,7 +523,7 @@ function aiHtml(report) {
     : '';
   return `<section class="card"><h2>Indices de rédaction assistée par IA</h2>
     <div class="summary">${gaugeSvg(ai.score, ai.band.color, 'Indices IA')}
-    <div class="figures"><p><strong style="color:${ai.band.color}">${escapeHtml(ai.band.label)}</strong>${ai.reliable ? '' : ' — échantillon court, fiabilité réduite'}</p>
+    <div class="figures"><p><strong style="color:${ai.band.color}">${escapeHtml(ai.band.label)}</strong>${ai.reliable ? '' : ', échantillon court, fiabilité réduite'}</p>
     <table><thead><tr><th>Indicateur</th><th>Mesure</th><th class="num">/100</th></tr></thead><tbody>${rows}</tbody></table>
     </div></div>${paragraphs}
     <p class="muted">${escapeHtml(ai.disclaimer)}</p></section>`;
@@ -551,7 +551,7 @@ function citationsHtml(report) {
     : '';
   const numeric = c.numericIssues.map((i) => `<div class="err">${escapeHtml(i)}</div>`).join('');
   return `<section class="card"><h2>Citations et bibliographie</h2>
-    <p>Style détecté : <strong>${escapeHtml(c.style)}</strong> — ${c.inTextCount} appel(s) dans le texte, ${c.entryCount} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.</p>
+    <p>Style détecté : <strong>${escapeHtml(c.style)}</strong>, ${c.inTextCount} appel(s) dans le texte, ${c.entryCount} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.</p>
     ${orphans}${uncited}${numeric}
     ${!c.orphans.length && !c.uncited.length && !c.numericIssues.length ? '<p class="muted">Appels et bibliographie concordent.</p>' : ''}
   </section>`;
@@ -588,7 +588,7 @@ export async function buildReportDocx(report, options = {}) {
   const maxPassages = options.maxPassages ?? 300;
   const { scores, document: doc, analysis } = report;
   const builder = new DocxBuilder({
-    title: `Rapport de plagiat — ${doc.name}`,
+    title: `Rapport de plagiat, ${doc.name}`,
     creator: BRAND.name,
     subject: 'Analyse de similitude',
   });
@@ -605,7 +605,7 @@ export async function buildReportDocx(report, options = {}) {
   builder.heading('Synthèse', 2);
   builder.paragraph([
     { text: `${scores.tauxNet} % `, bold: true, size: 22, color: scores.niveau.color.replace('#', '') },
-    { text: `de similitude nette — ${scores.niveau.label}.` },
+    { text: `de similitude nette, ${scores.niveau.label}.` },
   ]);
   builder.table(
     [
@@ -629,8 +629,8 @@ export async function buildReportDocx(report, options = {}) {
     [
       ['Propriété', 'Valeur'],
       ['Fichier', doc.name],
-      ['Titre', doc.meta.title || '—'],
-      ['Auteur déclaré', doc.meta.creator || '—'],
+      ['Titre', doc.meta.title || '-'],
+      ['Auteur déclaré', doc.meta.creator || '-'],
       [
         'Volume',
         `${doc.stats.words.toLocaleString('fr-FR')} mots · ${doc.stats.pages} page(s)${
@@ -638,7 +638,7 @@ export async function buildReportDocx(report, options = {}) {
         }`,
       ],
       ['Langue détectée', languageLabel(doc.language)],
-      ['Empreinte SHA-256', doc.digest || '—'],
+      ['Empreinte SHA-256', doc.digest || '-'],
       ["Durée de l'analyse", formatDuration(report.durationMs)],
     ],
     { widths: [3000, 6000] },
@@ -653,7 +653,7 @@ export async function buildReportDocx(report, options = {}) {
           String(i + 1),
           s.url
             ? [{ text: s.title || s.url, href: s.url }]
-            : [{ text: s.title || '—' }],
+            : [{ text: s.title || '-' }],
           s.providerName || s.provider || '',
           `${s.percent} %`,
           String(s.passages.length),
@@ -674,7 +674,7 @@ export async function buildReportDocx(report, options = {}) {
       const style = MATCH_STYLES[p.type] || MATCH_STYLES.paraphrase;
       const source = report.sources.find((s) => s.key === p.sourceKey);
       builder.heading(
-        `Passage ${index + 1} — ${style.label} (${Math.round(p.similarity * 100)} %)`,
+        `Passage ${index + 1}, ${style.label} (${Math.round(p.similarity * 100)} %)`,
         3,
       );
       builder.paragraph(
@@ -726,7 +726,7 @@ export async function buildReportDocx(report, options = {}) {
 
   // Analyses complémentaires.
   if (report.forensics && report.forensics.severity !== 'aucun') {
-    builder.heading('Analyse forensique — procédés de camouflage', 2);
+    builder.heading('Analyse forensique, procédés de camouflage', 2);
     for (const f of report.forensics.findings) {
       builder.paragraph([{ text: '• ' }, { text: f }], { spacingAfter: 60 });
     }
@@ -744,7 +744,7 @@ export async function buildReportDocx(report, options = {}) {
   if (report.ai && report.ai.indicators.length) {
     builder.heading('Indices de rédaction assistée par IA', 2);
     builder.paragraph([
-      { text: `${report.ai.score} / 100 — ${report.ai.band.label}. `, bold: true },
+      { text: `${report.ai.score} / 100, ${report.ai.band.label}. `, bold: true },
       { text: report.ai.disclaimer, italic: true },
     ]);
     builder.table(
@@ -759,7 +759,7 @@ export async function buildReportDocx(report, options = {}) {
   if (report.citations && report.citations.style !== 'aucune') {
     builder.heading('Citations et bibliographie', 2);
     builder.paragraph(
-      `Style ${report.citations.style} — ${report.citations.inTextCount} appel(s), ` +
+      `Style ${report.citations.style}, ${report.citations.inTextCount} appel(s), ` +
         `${report.citations.entryCount} entrée(s), ` +
         `${Math.round(report.citations.matchedRatio * 100)} % appariés.`,
     );

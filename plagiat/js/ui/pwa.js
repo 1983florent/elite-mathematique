@@ -31,7 +31,7 @@ export function setupPwa(hooks) {
         // Le chemin est résolu à partir de la racine du scope de la page :
         // `sw.js` vit à côté d'`index.html`. On évite `import.meta.url` car,
         // dans la version en fichier unique, il ne pointe pas vers un vrai
-        // fichier — mais ce cas est déjà écarté par `file://` plus haut.
+        // fichier, mais ce cas est déjà écarté par `file://` plus haut.
         .register('./sw.js', { scope: './' })
         .then((registration) => {
           // Une nouvelle version disponible ? On l'active dès qu'elle est prête.

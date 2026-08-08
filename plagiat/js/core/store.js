@@ -2,7 +2,7 @@
  * Persistance locale : réglages, cache des réponses réseau, corpus de
  * référence et historique des rapports.
  *
- * Tout reste dans le navigateur de l'utilisateur — aucun document, aucune clé
+ * Tout reste dans le navigateur de l'utilisateur, aucun document, aucune clé
  * d'API et aucun rapport ne quitte la machine. IndexedDB est utilisé quand il
  * est disponible (y compris dans les workers) ; sinon un repli mémoire prend
  * le relais sans casser l'application.

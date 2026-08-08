@@ -3,9 +3,9 @@
  *
  * Deux contrôles complémentaires, précieux pour un mémoire :
  *   • chaque appel de citation « (Auteur, année) » du corps du texte doit
- *     correspondre à une entrée de la bibliographie — sinon la référence est
+ *     correspondre à une entrée de la bibliographie, sinon la référence est
  *     **orpheline** ;
- *   • chaque entrée de la bibliographie doit être citée au moins une fois —
+ *   • chaque entrée de la bibliographie doit être citée au moins une fois,
  *     sinon elle est **jamais citée** (bourrage de bibliographie).
  *
  * Le style numérique « [12] » est également contrôlé par bornes.

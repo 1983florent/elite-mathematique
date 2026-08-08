@@ -2,9 +2,9 @@
  * Fournisseurs de sources interrogés sur internet.
  *
  * Deux familles :
- *   • **ouverts** — utilisables immédiatement, sans clé, et qui autorisent les
+ *   • **ouverts**, utilisables immédiatement, sans clé, et qui autorisent les
  *     appels directs depuis un navigateur (en-têtes CORS permissifs) ;
- *   • **moteurs à clé** — l'utilisateur fournit sa propre clé d'API, stockée
+ *   • **moteurs à clé**, l'utilisateur fournit sa propre clé d'API, stockée
  *     uniquement dans son navigateur et envoyée directement au service.
  *
  * Chaque fournisseur expose `search()` et, quand c'est possible, `fetchText()`
@@ -741,7 +741,7 @@ export async function testProvider(provider, ctx) {
       ok: true,
       count: results.length,
       message: results.length
-        ? `Connexion établie — ${results.length} résultat(s).`
+        ? `Connexion établie, ${results.length} résultat(s).`
         : 'Connexion établie, mais aucun résultat pour la requête de test.',
     };
   } catch (err) {

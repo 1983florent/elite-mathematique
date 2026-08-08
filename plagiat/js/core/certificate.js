@@ -1,5 +1,5 @@
 /**
- * Certificat d'originalité — le différenciateur de Veritex.
+ * Certificat d'originalité, le différenciateur de Veritex.
  *
  * À partir d'un rapport d'analyse, on produit une attestation canonique
  * (nom du document, empreinte SHA-256 du fichier, taux d'originalité, score IA,
@@ -335,21 +335,21 @@ export function renderCertificateHtml(cert, options = {}) {
   const gaugeColor = orig >= 85 ? '#16a34a' : orig >= 65 ? '#f59e0b' : '#dc2626';
   const issued = new Date(cert.issuedAt);
   const dateStr = isNaN(issued) ? cert.issuedAt : issued.toLocaleString();
-  const engines = (a.analysis.engines || []).join(', ') || '—';
+  const engines = (a.analysis.engines || []).join(', ') || '-';
   const signedBadge = cert.signature
     ? `<span class="badge badge--signed">${esc(s.signed)}</span>`
     : `<span class="badge badge--sealed">${esc(s.sealed)}</span>`;
 
   const rows = [
     [s.rowDocument, esc(a.document.name)],
-    [s.rowFingerprint, `<code>${esc(a.document.digestSha256 || '—')}</code>`],
-    [s.rowWords, a.document.words != null ? formatInt(a.document.words) : '—'],
-    [s.rowLanguage, esc(a.document.language || '—')],
-    [s.rowMatch, r.matchRateNet != null ? r.matchRateNet + ' %' : '—'],
+    [s.rowFingerprint, `<code>${esc(a.document.digestSha256 || '-')}</code>`],
+    [s.rowWords, a.document.words != null ? formatInt(a.document.words) : '-'],
+    [s.rowLanguage, esc(a.document.language || '-')],
+    [s.rowMatch, r.matchRateNet != null ? r.matchRateNet + ' %' : '-'],
     [s.rowSources, formatInt(r.sourcesRetained || 0)],
-    [s.rowAi, r.aiLikelihood != null ? Math.round(r.aiLikelihood) + ' %' : '—'],
+    [s.rowAi, r.aiLikelihood != null ? Math.round(r.aiLikelihood) + ' %' : '-'],
     [s.rowEngines, esc(engines)],
-    [s.rowDepth, esc(a.analysis.depth || '—')],
+    [s.rowDepth, esc(a.analysis.depth || '-')],
     [s.rowAnalyzedAt, esc(a.analysis.analyzedAt ? new Date(a.analysis.analyzedAt).toLocaleString() : dateStr)],
   ]
     .map(([k, v]) => `<tr><th>${esc(k)}</th><td>${v}</td></tr>`)
@@ -363,7 +363,7 @@ export function renderCertificateHtml(cert, options = {}) {
 
   return `<!doctype html><html lang="${esc(a.document.language || 'fr')}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(s.title)} — ${esc(a.document.name)}</title>
+<title>${esc(s.title)}, ${esc(a.document.name)}</title>
 <style>
   :root{--p:${BRAND.colors.primary};--a:${BRAND.colors.accent};--ink:#1f2430;--muted:#6b7280;--line:#e5e7eb;}
   *{box-sizing:border-box;}

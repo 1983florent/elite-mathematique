@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Veritex — Analyseur de plagiat & authenticité</title>
+<title>Veritex, Analyseur de plagiat & authenticité</title>
 <meta name="description" content="Analysez un document Word (.docx) pour calculer son taux de plagiat, humanisez votre texte et générez un rapport détaillé. Tout se passe dans votre navigateur.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1e2a78">
@@ -65,7 +65,7 @@
             <path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
           </svg>
           <p><strong data-i18n="analyse.drop.title">Déposez votre fichier .docx ici</strong></p>
-          <p class="discret" data-i18n="analyse.drop.hint">ou cliquez pour le choisir — aucune limite de taille ni de pages</p>
+          <p class="discret" data-i18n="analyse.drop.hint">ou cliquez pour le choisir, aucune limite de taille ni de pages</p>
           <input type="file" id="fichier" accept=".docx,.docm,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
         </div>
 
@@ -94,7 +94,7 @@
 
         <details class="repli">
           <summary>Empreintes de référence <span class="discret">(sources confidentielles)</span></summary>
-          <p class="discret">Chargez des fichiers d'empreinte (.json) créés dans l'onglet Outils. Ils permettent de comparer votre document à une source — un corrigé, d'anciennes copies — sans jamais en révéler le texte.</p>
+          <p class="discret">Chargez des fichiers d'empreinte (.json) créés dans l'onglet Outils. Ils permettent de comparer votre document à une source, un corrigé, d'anciennes copies, sans jamais en révéler le texte.</p>
           <input type="file" id="fichiers-empreintes" multiple accept=".json,application/json">
           <ul id="liste-empreintes" class="liste-fichiers"></ul>
         </details>
@@ -205,7 +205,7 @@
 
     <div class="carte">
       <h2>Comparer deux documents</h2>
-      <p class="discret">Confrontez directement deux fichiers — deux copies d'étudiants, deux versions d'un même mémoire, un brouillon et sa source. Tout se passe hors ligne, dans votre navigateur.</p>
+      <p class="discret">Confrontez directement deux fichiers, deux copies d'étudiants, deux versions d'un même mémoire, un brouillon et sa source. Tout se passe hors ligne, dans votre navigateur.</p>
       <div class="grille-2">
         <label class="champ">
           <span>Document A</span>
@@ -226,7 +226,7 @@
 
     <div class="carte">
       <h2>Créer une empreinte partageable</h2>
-      <p class="discret">Une empreinte est une liste de signatures numériques d'un texte. Elle permet de vérifier qu'un document n'en recopie pas la source — <strong>sans jamais divulguer le texte lui-même</strong>. Idéal pour publier un corrigé ou mutualiser d'anciennes copies sans les diffuser.</p>
+      <p class="discret">Une empreinte est une liste de signatures numériques d'un texte. Elle permet de vérifier qu'un document n'en recopie pas la source, <strong>sans jamais divulguer le texte lui-même</strong>. Idéal pour publier un corrigé ou mutualiser d'anciennes copies sans les diffuser.</p>
       <div class="grille-2">
         <label class="champ">
           <span>Nom de la source</span>
@@ -325,9 +325,9 @@
         <label class="champ">
           <span>Sensibilité de détection</span>
           <select id="sensibilite">
-            <option value="stricte">Stricte — seules les copies nettes</option>
-            <option value="normale" selected>Normale — équilibrée</option>
-            <option value="large">Large — repère aussi les paraphrases ténues</option>
+            <option value="stricte">Stricte, seules les copies nettes</option>
+            <option value="normale" selected>Normale, équilibrée</option>
+            <option value="large">Large, repère aussi les paraphrases ténues</option>
           </select>
           <small class="discret">Une sensibilité large augmente le taux, au prix de faux positifs à vérifier.</small>
         </label>
@@ -368,7 +368,7 @@
         <li><strong>Découpage.</strong> Le texte est segmenté en phrases (abréviations, initiales et décimales gérées), puis regroupé en blocs d'une trentaine de mots.</li>
         <li><strong>Sélection des requêtes.</strong> Le document est divisé en autant de tranches que de requêtes autorisées, et le bloc le plus distinctif de chaque tranche est envoyé aux moteurs. La couverture reste donc uniforme du début à la fin, quelle que soit la longueur.</li>
         <li><strong>Récupération des sources.</strong> Wikipédia et les bases académiques renvoient le texte intégral ou le résumé ; pour les résultats web, un lecteur de page peut être activé.</li>
-        <li><strong>Comparaison locale.</strong> Le document est indexé une fois sous forme d'empreintes de n-grammes. Chaque source est ensuite balayée contre cet index : les correspondances sont chaînées par diagonale, puis vérifiées par alignement. Deux passes coexistent — une passe littérale sur tous les mots, une passe « paraphrase » sur les mots pleins racinisés.</li>
+        <li><strong>Comparaison locale.</strong> Le document est indexé une fois sous forme d'empreintes de n-grammes. Chaque source est ensuite balayée contre cet index : les correspondances sont chaînées par diagonale, puis vérifiées par alignement. Deux passes coexistent, une passe littérale sur tous les mots, une passe « paraphrase » sur les mots pleins racinisés.</li>
         <li><strong>Calcul du taux.</strong> Le taux brut est la part du document couverte par au moins un passage. Le taux net retire les citations encadrées et la bibliographie.</li>
       </ol>
     </div>
@@ -377,7 +377,7 @@
       <h2>Analyses complémentaires</h2>
       <p>En plus du taux de similitude, chaque analyse produit&nbsp;:</p>
       <ul>
-        <li><strong>Une analyse forensique</strong> qui repère les procédés de camouflage&nbsp;: lettres d'autres alphabets déguisées en latines (homoglyphes), caractères invisibles, et surtout le <em>texte dissimulé dans le fichier Word</em> — écrit en blanc, masqué ou en corps minuscule — invisible à l'impression mais lu par les détecteurs.</li>
+        <li><strong>Une analyse forensique</strong> qui repère les procédés de camouflage&nbsp;: lettres d'autres alphabets déguisées en latines (homoglyphes), caractères invisibles, et surtout le <em>texte dissimulé dans le fichier Word</em>, écrit en blanc, masqué ou en corps minuscule, invisible à l'impression mais lu par les détecteurs.</li>
         <li><strong>Des indices de rédaction assistée par IA</strong>&nbsp;: rythme des phrases, tournures stéréotypées, attaques répétitives, richesse lexicale. Ce sont des <em>indices de style</em>, jamais une preuve d'origine.</li>
         <li><strong>Une vérification des citations</strong>&nbsp;: appels du texte sans entrée bibliographique (références orphelines) et entrées jamais citées.</li>
       </ul>
@@ -406,7 +406,7 @@
 
     <div class="carte">
       <h2>Confidentialité</h2>
-      <p>Le document est lu et analysé <strong>dans votre navigateur</strong>. Il n'est envoyé à aucun serveur, y compris le nôtre. Ce qui circule sur le réseau se limite aux courtes requêtes de recherche adressées aux moteurs que vous avez activés — c'est-à-dire quelques phrases, jamais le fichier.</p>
+      <p>Le document est lu et analysé <strong>dans votre navigateur</strong>. Il n'est envoyé à aucun serveur, y compris le nôtre. Ce qui circule sur le réseau se limite aux courtes requêtes de recherche adressées aux moteurs que vous avez activés, c'est-à-dire quelques phrases, jamais le fichier.</p>
       <p>Vos clés d'API, vos réglages, le cache et l'historique restent dans le stockage local de ce navigateur, et le bouton « Effacer toutes mes données » les supprime définitivement.</p>
     </div>
 
@@ -430,7 +430,7 @@
 
 <footer class="pied">
   <div class="conteneur">
-    <p><span data-marque>Veritex</span> — outil d'analyse de similitude et d'aide à la rédaction.</p>
+    <p><span data-marque>Veritex</span>, outil d'analyse de similitude et d'aide à la rédaction.</p>
     <p class="discret">Analyse effectuée localement. Aucun document transmis.</p>
   </div>
 </footer>

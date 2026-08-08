@@ -9,7 +9,7 @@
  * @module data/locales
  */
 
-/* Français — base complète. */
+/* Français, base complète. */
 const fr = {
   'app.tagline': "L'authenticité de vos écrits, prouvée.",
   'header.badge': '100 % dans votre navigateur',
@@ -29,7 +29,7 @@ const fr = {
 
   'analyse.doc': 'Document à analyser',
   'analyse.drop.title': 'Déposez votre fichier .docx ici',
-  'analyse.drop.hint': 'ou cliquez pour le choisir — aucune limite de taille',
+  'analyse.drop.hint': 'ou cliquez pour le choisir, aucune limite de taille',
   'analyse.paste': 'Ou coller directement du texte',
   'analyse.depth': "Profondeur d'analyse",
   'analyse.run': "Lancer l'analyse",
@@ -110,7 +110,7 @@ const fr = {
   'cert.doc.embedded': 'Données vérifiables intégrées (JSON)',
 };
 
-/* Anglais — repli principal, complet pour le noyau. */
+/* Anglais, repli principal, complet pour le noyau. */
 const en = {
   'app.tagline': 'The authenticity of your writing, proven.',
   'header.badge': '100% in your browser',
@@ -130,7 +130,7 @@ const en = {
 
   'analyse.doc': 'Document to analyze',
   'analyse.drop.title': 'Drop your .docx file here',
-  'analyse.drop.hint': 'or click to choose it — no size limit',
+  'analyse.drop.hint': 'or click to choose it, no size limit',
   'analyse.paste': 'Or paste text directly',
   'analyse.depth': 'Analysis depth',
   'analyse.run': 'Start analysis',
@@ -168,7 +168,7 @@ const en = {
     "Payment happens on the provider's secure page. No card data passes through this app.",
 
   'pay.confirming': 'Confirming payment…',
-  'pay.success': 'Payment confirmed. Your access is active — thank you!',
+  'pay.success': 'Payment confirmed. Your access is active, thank you!',
   'pay.failed': 'The payment could not be confirmed automatically.',
   'pay.canceled': 'Payment canceled.',
 
@@ -223,7 +223,7 @@ const es = {
   'hero.subtitle':
     'Sube un documento Word para obtener un índice de similitud, un informe detallado, detección de fraudes y reescritura asistida. Tu archivo nunca sale de tu ordenador.',
   'analyse.drop.title': 'Suelta tu archivo .docx aquí',
-  'analyse.drop.hint': 'o haz clic para elegirlo — sin límite de tamaño',
+  'analyse.drop.hint': 'o haz clic para elegirlo, sin límite de tamaño',
   'analyse.run': 'Iniciar análisis',
   'analyse.cancel': 'Detener',
   'action.copy': 'Copiar',

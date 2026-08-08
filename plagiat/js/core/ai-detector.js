@@ -1,7 +1,7 @@
 /**
  * Indices stylistiques de rédaction assistée par IA.
  *
- * Aucun détecteur — commercial ou non — ne peut *prouver* qu'un texte a été
+ * Aucun détecteur, commercial ou non, ne peut *prouver* qu'un texte a été
  * écrit par une machine. Ce module ne prétend pas le faire : il mesure des
  * **régularités stylistiques** connues pour être plus fréquentes dans les
  * textes générés (rythme uniforme, charnières stéréotypées, attaques de
@@ -56,7 +56,7 @@ const CONNECTOR_OPENERS = new Set(
     .map((s) => s.trim().replace(/\s+/g, ' ')),
 );
 
-const PUNCT_KINDS = [';', ':', '—', '(', '«', '!', '?', '…'];
+const PUNCT_KINDS = [';', ':', '-', '(', '«', '!', '?', '…'];
 
 /** @param {number} v */
 const clamp01 = (v) => Math.min(1, Math.max(0, v));

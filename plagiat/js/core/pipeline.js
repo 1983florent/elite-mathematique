@@ -581,7 +581,7 @@ export async function analyzeDocument(input, settings, hooks = {}) {
           searchDone++;
           report(
             'recherche',
-            `Recherche ${searchDone}/${totalSearches} — ${candidates.size} sources repérées`,
+            `Recherche ${searchDone}/${totalSearches}, ${candidates.size} sources repérées`,
             searchDone / Math.max(1, totalSearches),
             { current: searchDone, total: totalSearches },
           );
@@ -625,7 +625,7 @@ export async function analyzeDocument(input, settings, hooks = {}) {
       fetched++;
       report(
         'sources',
-        `Source ${fetched}/${candidateList.length} — ${candidate.title?.slice(0, 60) || ''}`,
+        `Source ${fetched}/${candidateList.length}, ${candidate.title?.slice(0, 60) || ''}`,
         fetched / Math.max(1, candidateList.length),
         { current: fetched, total: candidateList.length },
       );

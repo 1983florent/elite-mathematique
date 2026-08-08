@@ -702,7 +702,7 @@ export function countWords(text) {
 }
 
 /**
- * Lit un document OpenDocument (.odt) — utile pour le corpus de référence.
+ * Lit un document OpenDocument (.odt), utile pour le corpus de référence.
  * @param {Blob|File} file
  * @returns {Promise<{text: string, paragraphs: DocxParagraph[]}>}
  */

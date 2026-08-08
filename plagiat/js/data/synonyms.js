@@ -153,7 +153,7 @@ export const ADJECTIVES_FR = {
   récente: ['nouvelle', 'inédite'],
 };
 
-/** Adverbes et locutions adverbiales — les substitutions les plus sûres. */
+/** Adverbes et locutions adverbiales, les substitutions les plus sûres. */
 export const ADVERBS_FR = {
   également: ['aussi', 'de même', 'pareillement'],
   souvent: ['fréquemment', 'régulièrement', 'bien des fois'],

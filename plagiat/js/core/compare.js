@@ -1,13 +1,13 @@
 /**
  * Comparaison directe de deux documents et empreintes partageables.
  *
- * — `compareTexts` confronte deux textes complets (deux copies d'étudiants,
+ * - `compareTexts` confronte deux textes complets (deux copies d'étudiants,
  *   deux versions d'un mémoire) et restitue la couverture croisée et les
  *   passages communs.
  *
- * — Les **empreintes** répondent à un besoin de confidentialité : un
+ * - Les **empreintes** répondent à un besoin de confidentialité : un
  *   enseignant peut publier l'empreinte d'un sujet corrigé ou d'anciennes
- *   copies — une simple liste de hachages — sans jamais diffuser le texte.
+ *   copies, une simple liste de hachages, sans jamais diffuser le texte.
  *   Quiconque possède l'empreinte peut vérifier qu'un document ne recopie pas
  *   la source, mais ne peut pas la reconstituer.
  *
@@ -153,7 +153,7 @@ export function validateFingerprint(data) {
  * Localise dans un document les passages couverts par une empreinte.
  *
  * Le texte de la source restant inconnu, seule la partie « document » des
- * correspondances est restituée — c'est le but du format.
+ * correspondances est restituée, c'est le but du format.
  *
  * @param {import('./text.js').TokenStream} tokens document analysé
  * @param {{k: number, hashes: number[]}} fp

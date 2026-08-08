@@ -3,12 +3,12 @@
  * tromper les détecteurs de plagiat.
  *
  * Trois familles de fraude sont recherchées :
- *   • les **homoglyphes** — lettres cyrilliques ou grecques visuellement
+ *   • les **homoglyphes**, lettres cyrilliques ou grecques visuellement
  *     identiques aux latines (« а » cyrillique dans « analyse ») qui cassent
  *     la correspondance mot à mot ;
- *   • les **caractères invisibles** — espaces de largeur nulle, gluons,
+ *   • les **caractères invisibles**, espaces de largeur nulle, gluons,
  *     marques directionnelles insérés au milieu des mots ;
- *   • le **texte dissimulé** dans le .docx lui-même — texte blanc, masqué
+ *   • le **texte dissimulé** dans le .docx lui-même, texte blanc, masqué
  *     (`w:vanish`) ou en corps minuscule, détecté par le lecteur de document
  *     et transmis ici pour synthèse.
  *
@@ -123,7 +123,7 @@ export function scanForensics(text, extras = {}) {
   const findings = [];
   if (mixedWords.length) {
     findings.push(
-      `${mixedWords.length} mot(s) mêlant alphabets latin et cyrillique/grec — procédé classique pour tromper la comparaison (ex. « ${mixedWords[0].word} »).`,
+      `${mixedWords.length} mot(s) mêlant alphabets latin et cyrillique/grec, procédé classique pour tromper la comparaison (ex. « ${mixedWords[0].word} »).`,
     );
   }
   if (invisibleCount) {
@@ -152,7 +152,7 @@ export function scanForensics(text, extras = {}) {
     findings.push(
       `${hiddenWords} mot(s) dissimulé(s) dans le fichier Word : ${types
         .map((t) => labels[t] || t)
-        .join(', ')}. Ce contenu est invisible à l'impression mais lu par les détecteurs — un procédé de bourrage bien connu.`,
+        .join(', ')}. Ce contenu est invisible à l'impression mais lu par les détecteurs, un procédé de bourrage bien connu.`,
     );
   }
 

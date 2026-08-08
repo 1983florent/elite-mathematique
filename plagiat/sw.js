@@ -1,5 +1,5 @@
 /**
- * Service worker de Veritex — GÉNÉRÉ AUTOMATIQUEMENT.
+ * Service worker de Veritex, GÉNÉRÉ AUTOMATIQUEMENT.
  * Ne pas modifier à la main : lancer `node tools/make-sw.mjs`.
  *
  * Stratégie : préchargement de l'intégralité de l'application à l'installation,
@@ -9,7 +9,7 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'elite-plagiat-55752961b405';
+const CACHE = 'elite-plagiat-838a5bf5e003';
 
 const PRECACHE = [
   "./",

@@ -5,7 +5,7 @@
  * Le service worker rend l'application **installable et pleinement hors ligne** :
  * une fois visitée, elle fonctionne sans connexion, comme une application native.
  * La version change automatiquement dès qu'un fichier change, ce qui déclenche
- * la mise à jour du cache — jamais de version figée.
+ * la mise à jour du cache, jamais de version figée.
  *
  *   node tools/make-sw.mjs
  *
@@ -64,7 +64,7 @@ async function main() {
   const precache = ['./', ...assets.map((a) => `./${a}`), ...external];
 
   const sw = `/**
- * Service worker de Veritex — GÉNÉRÉ AUTOMATIQUEMENT.
+ * Service worker de Veritex, GÉNÉRÉ AUTOMATIQUEMENT.
  * Ne pas modifier à la main : lancer \`node tools/make-sw.mjs\`.
  *
  * Stratégie : préchargement de l'intégralité de l'application à l'installation,
@@ -150,7 +150,7 @@ self.addEventListener('message', (event) => {
 `;
 
   await writeFile(join(APP, 'sw.js'), sw, 'utf8');
-  console.log(`plagiat/sw.js — version ${version}, ${precache.length} ressources préchargées`);
+  console.log(`plagiat/sw.js, version ${version}, ${precache.length} ressources préchargées`);
 }
 
 main();

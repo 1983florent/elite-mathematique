@@ -2,7 +2,7 @@
  * Écriture d'archives ZIP (utilisée pour produire le rapport au format .docx).
  *
  * Compression `deflate` via `CompressionStream` quand le navigateur la
- * propose, sinon stockage sans compression — les deux sont conformes à la
+ * propose, sinon stockage sans compression, les deux sont conformes à la
  * spécification ZIP et Word ouvre indifféremment les deux.
  *
  * @module core/zip-writer

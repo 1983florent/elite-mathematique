@@ -1,14 +1,14 @@
 /**
- * Accès payant — droits d'utilisation et vérification des codes d'accès.
+ * Accès payant, droits d'utilisation et vérification des codes d'accès.
  *
  * Modèle : **freemium**. L'utilisateur dispose d'un nombre d'analyses d'essai
  * gratuites, puis doit activer un abonnement pour continuer. L'activation se
  * fait soit par un **code d'accès signé** (vérifiable hors ligne grâce à une
- * clé publique embarquée — impossible à falsifier sans la clé privée du
+ * clé publique embarquée, impossible à falsifier sans la clé privée du
  * vendeur), soit via une page de paiement du prestataire (Stripe, Mobile
  * Money, PayPal) qui, après paiement, délivre ce code.
  *
- * Sécurité — à lire : la vérification du code est cryptographiquement sûre
+ * Sécurité, à lire : la vérification du code est cryptographiquement sûre
  * (personne ne peut fabriquer un code valide sans votre clé privée). En
  * revanche, un compteur d'essais purement local reste contournable par un
  * utilisateur technique ; pour un contrôle strict des abonnements, doublez-le
@@ -26,7 +26,7 @@ import { get as storeGet, put as storePut } from './store.js';
  */
 export const LICENSE_CONFIG = {
   /** Clé publique ECDSA P-256 (SPKI base64) qui valide les codes d'accès.
-   *  DÉMONSTRATION — à remplacer par votre clé publique en production. */
+   *  DÉMONSTRATION, à remplacer par votre clé publique en production. */
   publicKeySpki:
     'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEo+ydaFNw7r4PEhZlAVh3mb0uUwjkG4Jrk5YGTrbPo3bJ9R9YWL66LlbiBBvZA9Cck0WWZ3wiC8fXsdDteJOTVQ==',
 
@@ -53,7 +53,7 @@ export const LICENSE_CONFIG = {
   /**
    * URL de base du mini-backend de paiement (dossier `api/` de ce dépôt,
    * déployé sur Vercel/Netlify). La clé SECRÈTE Stripe et la clé PRIVÉE de
-   * signature n'y vivent QUE côté serveur — jamais dans ce code front-end.
+   * signature n'y vivent QUE côté serveur, jamais dans ce code front-end.
    * - Vide (`''`) : le backend est servi sur la MÊME origine que l'app
    *   (appels relatifs vers `/api/...`). C'est le cas si vous déployez tout
    *   ensemble (recommandé).

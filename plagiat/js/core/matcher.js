@@ -318,7 +318,7 @@ export function lcsLength(a, b) {
 }
 
 /**
- * Similarité de Dice sur multiensembles — repli économique quand
+ * Similarité de Dice sur multiensembles, repli économique quand
  * l'alignement complet serait trop coûteux.
  * @param {Uint32Array} a
  * @param {Uint32Array} b

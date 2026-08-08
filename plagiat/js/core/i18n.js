@@ -1,5 +1,5 @@
 /**
- * Internationalisation — le moteur qui rend l'application utilisable dans
+ * Internationalisation, le moteur qui rend l'application utilisable dans
  * toutes les langues.
  *
  * Principes :

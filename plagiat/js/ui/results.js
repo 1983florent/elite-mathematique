@@ -132,7 +132,7 @@ function synthesisCard(report, actions) {
       el('div', { class: 'synthese__chiffres' }, [
         el('p', {}, [
           el('strong', { style: { color: scores.niveau.color } }, scores.niveau.label),
-          ` — ${scores.tauxNet} % du texte analysé correspond à des sources identifiées.`,
+          `, ${scores.tauxNet} % du texte analysé correspond à des sources identifiées.`,
         ]),
         repartition,
         legende,
@@ -172,7 +172,7 @@ function documentCard(report) {
       )} page(s)${doc.stats.pagesEstimated ? ' (estimé)' : ''}`,
     ],
     ['Langue détectée', languageLabel(doc.language)],
-    ['Analyse', `${formatDate(report.generatedAt)} — réf. ${report.id}`],
+    ['Analyse', `${formatDate(report.generatedAt)}, réf. ${report.id}`],
     doc.digest && ['Empreinte SHA-256', doc.digest],
   ].filter(Boolean);
 
@@ -224,7 +224,7 @@ function sourcesCard(report) {
         source.url
           ? el('a', { href: source.url, target: '_blank', rel: 'noopener noreferrer' },
               source.title || source.url)
-          : el('span', {}, source.title || '—'),
+          : el('span', {}, source.title || '-'),
         source.url ? el('div', { class: 'discret' }, domainOf(source.url)) : null,
       ]),
       el('td', {}, source.providerName || source.provider || ''),
@@ -296,7 +296,7 @@ function annotatedCard(report) {
             'mark',
             {
               class: segment.type,
-              title: `${style.label}${rank ? ` — source n° ${rank}` : ''}`,
+              title: `${style.label}${rank ? `, source n° ${rank}` : ''}`,
             },
             segment.text,
           ),
@@ -349,7 +349,7 @@ function passagesCard(report) {
             el('span', {}, `Similarité ${Math.round(passage.similarity * 100)} %`),
             el('span', {}, `${passage.words} mots`),
             el('span', {}, [
-              `Source n° ${sourceRank.get(passage.sourceKey) ?? '—'} : `,
+              `Source n° ${sourceRank.get(passage.sourceKey) ?? '-'} : `,
               source?.url
                 ? el('a', { href: source.url, target: '_blank', rel: 'noopener noreferrer' },
                     source.title || source.url)
@@ -488,7 +488,7 @@ function aiCard(report) {
       el('div', { class: 'synthese__chiffres' }, [
         el('p', {}, [
           el('strong', { style: { color: ai.band.color } }, ai.band.label),
-          ai.reliable ? '' : ' — échantillon court, fiabilité réduite',
+          ai.reliable ? '' : ', échantillon court, fiabilité réduite',
         ]),
         el('div', { class: 'tableau-defilant' }, [
           el('table', {}, [
@@ -536,7 +536,7 @@ function citationsCard(report) {
   card.append(
     el('p', {}, [
       'Style détecté : ', el('strong', {}, c.style),
-      ` — ${num(c.inTextCount)} appel(s) dans le texte, ${num(c.entryCount)} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.`,
+      `, ${num(c.inTextCount)} appel(s) dans le texte, ${num(c.entryCount)} entrée(s) en bibliographie, ${Math.round(c.matchedRatio * 100)} % des appels appariés.`,
     ]),
   );
 
@@ -576,7 +576,7 @@ function methodCard(report) {
     ["Profil d'analyse", a.depthLabel || a.depth],
     [
       'Échantillonnage',
-      `${num(a.chunksQueried)} blocs interrogés sur ${num(a.chunksTotal)} — ${Math.round(
+      `${num(a.chunksQueried)} blocs interrogés sur ${num(a.chunksTotal)}, ${Math.round(
         a.samplingRatio * 100,
       )} % du texte soumis aux moteurs`,
     ],
@@ -585,8 +585,8 @@ function methodCard(report) {
     ['Corpus local', `${num(a.corpusDocuments)} document(s)`],
     [
       'Exclusions',
-      `${num(a.excludedWords)} mots exclus${a.bibliography ? ' — bibliographie détectée' : ''}${
-        a.quotedRanges ? ` — ${a.quotedRanges} citation(s)` : ''
+      `${num(a.excludedWords)} mots exclus${a.bibliography ? ', bibliographie détectée' : ''}${
+        a.quotedRanges ? `, ${a.quotedRanges} citation(s)` : ''
       }`,
     ],
   ];
@@ -596,7 +596,7 @@ function methodCard(report) {
       el('td', {}, e.name),
       el('td', { class: 'num' }, String(e.queries)),
       el('td', { class: 'num' }, String(e.results)),
-      el('td', {}, e.errors.length ? e.errors[0] : '—'),
+      el('td', {}, e.errors.length ? e.errors[0] : '-'),
     ]),
   );
 

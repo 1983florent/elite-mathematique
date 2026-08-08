@@ -1,9 +1,9 @@
 /**
  * Humanisation de texte : réécriture stylistique déterministe.
  *
- * L'objectif est de rendre un texte plus vivant et plus personnel — varier les
+ * L'objectif est de rendre un texte plus vivant et plus personnel, varier les
  * charnières, casser les phrases interminables, supprimer les tournures
- * stéréotypées, alterner les longueurs — sans en altérer le sens ni toucher
+ * stéréotypées, alterner les longueurs, sans en altérer le sens ni toucher
  * aux passages qui doivent rester intacts : citations, formules, références,
  * URL et code.
  *

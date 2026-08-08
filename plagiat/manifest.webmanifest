@@ -1,6 +1,6 @@
 {
   "id": "/plagiat/",
-  "name": "Veritex — Analyseur de plagiat & authenticité",
+  "name": "Veritex, Analyseur de plagiat & authenticité",
   "short_name": "Veritex",
   "description": "Veritex analyse le plagiat de vos documents Word, humanise le texte, détecte l'IA, vérifie les citations et délivre un certificat d'originalité signé. Disponible dans toutes les langues.",
   "start_url": "./index.html",

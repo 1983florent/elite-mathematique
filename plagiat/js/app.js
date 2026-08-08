@@ -192,7 +192,7 @@ async function loadDocument(file) {
   state.prepared = null;
   $('#info-fichier').hidden = false;
   $('#nom-fichier').textContent = file.name;
-  $('#details-fichier').textContent = `${bytes(file.size)} — lecture en cours…`;
+  $('#details-fichier').textContent = `${bytes(file.size)}, lecture en cours…`;
 
   try {
     const doc = await readDocx(file, {
@@ -262,7 +262,7 @@ function renderFingerprints() {
   state.fingerprints.forEach((entry, index) => {
     list.append(
       el('li', {}, [
-        el('span', {}, `${entry.name} — ${num(entry.fp.hashes.length)} signatures`),
+        el('span', {}, `${entry.name}, ${num(entry.fp.hashes.length)} signatures`),
         el('button', {
           type: 'button',
           class: 'bouton bouton--discret',
@@ -297,7 +297,7 @@ function renderCorpus() {
   state.corpus.forEach((entry, index) => {
     list.append(
       el('li', {}, [
-        el('span', {}, `${entry.name} — ${num(entry.text.length)} caractères`),
+        el('span', {}, `${entry.name}, ${num(entry.text.length)} caractères`),
         el(
           'button',
           {
@@ -370,7 +370,7 @@ function updateAnalysisSummary() {
 
   $('#etat-moteurs').textContent = activeProviders.length
     ? `Moteurs actifs : ${activeProviders.map((p) => p.name).join(', ')}.`
-    : "Aucun moteur actif — seuls le corpus local et les répétitions internes seront analysés. Activez un moteur dans l'onglet Réglages.";
+    : "Aucun moteur actif, seuls le corpus local et les répétitions internes seront analysés. Activez un moteur dans l'onglet Réglages.";
 
   clear(host);
   if (!hasInput) {
@@ -471,7 +471,7 @@ async function runAnalysis() {
         setProgress(event.ratio, event.message);
         if (event.phase !== lastPhase) {
           lastPhase = event.phase;
-          journal.prepend(el('li', {}, `${PHASE_LABELS[event.phase] || event.phase} — ${event.message}`));
+          journal.prepend(el('li', {}, `${PHASE_LABELS[event.phase] || event.phase}, ${event.message}`));
         }
       },
     });
@@ -509,7 +509,7 @@ function setProgress(ratio, message) {
   const percent = Math.round(Math.min(1, Math.max(0, ratio || 0)) * 100);
   $('#remplissage-progression').style.width = `${percent}%`;
   $('#barre-progression').setAttribute('aria-valuenow', String(percent));
-  $('#message-progression').textContent = `${percent} % — ${message}`;
+  $('#message-progression').textContent = `${percent} %, ${message}`;
 }
 
 /** @param {string} format */
@@ -623,10 +623,10 @@ function renderCertVerdict(box, res) {
       el('p', { class: 'cert-resultat__titre' },
         (res.signed ? '✔ ' : '● ') + t(res.signed ? 'cert.verify.validSigned' : 'cert.verify.validSealed')),
       el('dl', { class: 'cert-resultat__details' }, [
-        el('dt', {}, t('cert.doc.rowDocument')), el('dd', {}, a?.document?.name || '—'),
-        el('dt', {}, 'Certificat'), el('dd', {}, res.cert?.certId || '—'),
-        el('dt', {}, t('cert.doc.originality')), el('dd', {}, orig != null ? orig + ' %' : '—'),
-        el('dt', {}, 'Code'), el('dd', {}, res.cert?.code || '—'),
+        el('dt', {}, t('cert.doc.rowDocument')), el('dd', {}, a?.document?.name || '-'),
+        el('dt', {}, 'Certificat'), el('dd', {}, res.cert?.certId || '-'),
+        el('dt', {}, t('cert.doc.originality')), el('dd', {}, orig != null ? orig + ' %' : '-'),
+        el('dt', {}, 'Code'), el('dd', {}, res.cert?.code || '-'),
       ]),
     );
   } else {
@@ -845,9 +845,9 @@ function renderHumanizeReport(result) {
  * ------------------------------------------------------------------ */
 
 const GROUP_LABELS = {
-  ouvert: 'Bases ouvertes — sans clé',
-  academique: 'Bases académiques — sans clé',
-  moteur: 'Moteurs web — clé personnelle requise',
+  ouvert: 'Bases ouvertes, sans clé',
+  academique: 'Bases académiques, sans clé',
+  moteur: 'Moteurs web, clé personnelle requise',
 };
 
 function setupSettings() {
@@ -1278,7 +1278,7 @@ async function renderHistory() {
       el('tbody', {}, rows.slice(0, 40).map((row) => {
         const s = row.value?.summary || {};
         return el('tr', {}, [
-          el('td', { class: 'discret' }, s.generatedAt ? new Date(s.generatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'),
+          el('td', { class: 'discret' }, s.generatedAt ? new Date(s.generatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '-'),
           el('td', {}, [
             el('a', {
               href: '#',
@@ -1288,8 +1288,8 @@ async function renderHistory() {
               },
             }, s.name || 'document'),
           ]),
-          el('td', { class: 'num' }, s.tauxNet != null ? `${s.tauxNet} %` : '—'),
-          el('td', { class: 'num' }, s.aiScore != null ? `${s.aiScore}` : '—'),
+          el('td', { class: 'num' }, s.tauxNet != null ? `${s.tauxNet} %` : '-'),
+          el('td', { class: 'num' }, s.aiScore != null ? `${s.aiScore}` : '-'),
           el('td', {}, [
             el('button', {
               type: 'button',

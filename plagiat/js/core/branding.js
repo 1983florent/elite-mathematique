@@ -1,5 +1,5 @@
 /**
- * Identité de la marque — **source unique**.
+ * Identité de la marque, **source unique**.
  *
  * Tout le nom, le sous-titre et les couleurs de l'application passent par ici :
  * changer le nom commercial ne demande qu'une seule modification, propagée

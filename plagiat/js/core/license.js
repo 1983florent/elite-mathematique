@@ -26,17 +26,22 @@ import { get as storeGet, put as storePut } from './store.js';
  */
 export const LICENSE_CONFIG = {
   /** Clé publique ECDSA P-256 (SPKI base64) qui valide les codes d'accès.
-   *  DÉMONSTRATION, à remplacer par votre clé publique en production. */
+   *  La clé PRIVÉE correspondante vit uniquement côté serveur
+   *  (variable d'environnement LICENSE_PRIVATE_KEY). */
   publicKeySpki:
-    'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEo+ydaFNw7r4PEhZlAVh3mb0uUwjkG4Jrk5YGTrbPo3bJ9R9YWL66LlbiBBvZA9Cck0WWZ3wiC8fXsdDteJOTVQ==',
+    'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEHCSEADy01ZoevZYs9cjE5XmH2fLucmgxTOzLsjOQc9+xLIyLbn33Z0rFgkw/GBaAkS/O8suZKb/4HiEp7HBPQ==',
 
   /** Nombre d'analyses gratuites avant de demander un paiement. */
   freeTrials: 1,
 
-  /** Offres affichées dans le mur d'accès. Prix purement indicatifs ici. */
+  /**
+   * Offres affichées dans le mur d'accès. Le prix affiché ici doit correspondre
+   * au montant facturé par le backend (variables AMOUNT_MENSUEL / AMOUNT_ANNUEL,
+   * en FCFA). Ajustez les deux ensemble.
+   */
   plans: [
-    { id: 'mensuel', priceLabel: '4,99 €', periodKey: 'paywall.month', highlight: false },
-    { id: 'annuel', priceLabel: '39,99 €', periodKey: 'paywall.year', highlight: true },
+    { id: 'mensuel', priceLabel: '3 000 FCFA', periodKey: 'paywall.month', highlight: false },
+    { id: 'annuel', priceLabel: '25 000 FCFA', periodKey: 'paywall.year', highlight: true },
   ],
 
   /**
@@ -293,16 +298,19 @@ export async function createBackendCheckout(planId) {
 }
 
 /**
- * Après retour du prestataire (`?paiement=reussi&session_id=…`), récupère le
- * code d'accès signé auprès du backend (qui vérifie le paiement chez Stripe)
- * et l'active. À appeler au chargement de l'application.
- * @param {string} sessionId
+ * Après retour du prestataire (`?paiement=reussi&id=…`), récupère le code
+ * d'accès signé auprès du backend (qui vérifie le paiement chez FedaPay) et
+ * l'active. À appeler au chargement de l'application.
+ * @param {string} transaction identifiant de transaction FedaPay
+ * @param {string} [plan]
  * @returns {Promise<{ok: boolean, error?: string}>}
  */
-export async function claimCodeAfterPayment(sessionId) {
-  if (!sessionId) return { ok: false, error: 'session_id manquant.' };
+export async function claimCodeAfterPayment(transaction, plan) {
+  if (!transaction) return { ok: false, error: 'Transaction manquante.' };
   try {
-    const res = await fetch(apiUrl('recuperer-code') + '?session_id=' + encodeURIComponent(sessionId));
+    let url = apiUrl('recuperer-code') + '?transaction=' + encodeURIComponent(transaction);
+    if (plan) url += '&plan=' + encodeURIComponent(plan);
+    const res = await fetch(url);
     if (!res.ok) return { ok: false, error: `Backend : HTTP ${res.status}` };
     const data = await res.json();
     if (!data.code) return { ok: false, error: data.error || 'Code non délivré.' };

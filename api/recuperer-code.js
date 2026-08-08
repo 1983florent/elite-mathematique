@@ -1,7 +1,7 @@
 /**
- * GET /api/recuperer-code?session_id=cs_...
- * Vérifie chez Stripe que la session est payée, puis renvoie un code d'accès
- * signé { code, plan }. Aucune base de données requise.
+ * GET /api/recuperer-code?transaction=<id>&plan=<offre>
+ * Vérifie chez FedaPay que la transaction est approuvée, puis renvoie un code
+ * d'accès signé { code, plan }. Aucune base de données requise.
  * (Wrapper Vercel ; logique dans _lib.js.)
  */
 import { coreRecupererCode, corsHeaders } from './_lib.js';
@@ -13,8 +13,9 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Méthode non autorisée.' });
 
   try {
-    const session_id = (req.query && req.query.session_id) || '';
-    const { status, body: out } = await coreRecupererCode({ session_id });
+    const q = req.query || {};
+    const transaction = q.transaction || q.id || q.session_id || '';
+    const { status, body: out } = await coreRecupererCode({ transaction, plan: q.plan });
     return res.status(status).json(out);
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message || 'Erreur serveur.' });

@@ -2,22 +2,27 @@
  * Cœur du mini-backend de paiement Veritex — logique partagée entre les
  * plateformes (Vercel : dossier `api/` ; Netlify : `netlify/functions/`).
  *
+ * Prestataire : **FedaPay** (Wave, Orange Money, Moov, MTN, cartes — FCFA).
+ *
  * PRINCIPE DE SÉCURITÉ
  * --------------------
- * La **clé secrète Stripe** et la **clé privée de signature** ne vivent QUE
+ * La **clé secrète FedaPay** et la **clé privée de signature** ne vivent QUE
  * côté serveur, dans des variables d'environnement. Le front-end ne connaît
  * que l'URL de ce backend et la clé PUBLIQUE. Personne ne peut donc extraire
  * un secret avec « Inspecter / F12 ».
  *
  * Variables d'environnement attendues :
- *   STRIPE_SECRET_KEY      clé secrète Stripe (sk_live_… ou sk_test_…)
- *   STRIPE_PRICE_MENSUEL   identifiant de prix Stripe pour l'offre « mensuel »
- *   STRIPE_PRICE_ANNUEL    identifiant de prix Stripe pour l'offre « annuel »
- *   LICENSE_PRIVATE_KEY    clé privée ECDSA P-256 (PKCS8, base64) — cf.
- *                          `node tools/make-license.mjs --cles`
- *   ALLOW_ORIGIN           (optionnel) origine autorisée pour CORS (défaut *)
+ *   FEDAPAY_SECRET_KEY    clé secrète FedaPay (sk_live_… ou sk_sandbox_…)
+ *   FEDAPAY_BASE_URL      (optionnel) base API ; déduite de la clé sinon
+ *                         (sandbox : https://sandbox-api.fedapay.com/v1)
+ *   AMOUNT_MENSUEL        (optionnel) prix mensuel en FCFA (défaut 3000)
+ *   AMOUNT_ANNUEL         (optionnel) prix annuel en FCFA (défaut 25000)
+ *   LICENSE_PRIVATE_KEY   clé privée ECDSA P-256 (PKCS8, base64) — cf.
+ *                         `node tools/make-license.mjs --cles`
+ *   ALLOW_ORIGIN          (optionnel) origine autorisée pour CORS (défaut *)
+ *   PUBLIC_URL            (optionnel) URL publique du site (retours de paiement)
  *
- * Aucune dépendance npm : appels Stripe en REST via `fetch`, signature via
+ * Aucune dépendance npm : appels FedaPay en REST via `fetch`, signature via
  * `node:crypto`. Fonctionne sur Node 18+.
  *
  * @module api/_lib
@@ -28,10 +33,15 @@ import { sign, createPrivateKey } from 'node:crypto';
 /** Durée (en jours) accordée par offre. */
 export const PLAN_DAYS = { mensuel: 31, annuel: 366 };
 
-/** Mappe une offre vers l'identifiant de prix Stripe (depuis l'environnement). */
-function priceIdFor(plan) {
-  const key = 'STRIPE_PRICE_' + String(plan || '').toUpperCase();
-  return process.env[key] || '';
+/** Devise : Franc CFA (Afrique de l'Ouest). */
+const CURRENCY = 'XOF';
+
+/** Montant (en FCFA) à facturer pour une offre. */
+function amountFor(plan) {
+  const defaults = { mensuel: 3000, annuel: 25000 };
+  const env = { mensuel: process.env.AMOUNT_MENSUEL, annuel: process.env.AMOUNT_ANNUEL };
+  const v = Number(env[plan]);
+  return Number.isFinite(v) && v > 0 ? Math.round(v) : defaults[plan];
 }
 
 /** En-têtes CORS (le front peut être servi depuis une autre origine). */
@@ -72,27 +82,43 @@ export function signAccessCode({ plan, jours, id }) {
   return `${part}.${b64url(sig)}`;
 }
 
-/** Appel REST Stripe authentifié par la clé secrète (jamais exposée). */
-async function stripe(path, { method = 'GET', form } = {}) {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) throw new Error('STRIPE_SECRET_KEY manquante côté serveur.');
+/** Base de l'API FedaPay : explicite (env) sinon déduite de la clé. */
+function fedapayBase() {
+  if (process.env.FEDAPAY_BASE_URL) return process.env.FEDAPAY_BASE_URL.replace(/\/$/, '');
+  const key = process.env.FEDAPAY_SECRET_KEY || '';
+  return key.includes('sandbox')
+    ? 'https://sandbox-api.fedapay.com/v1'
+    : 'https://api.fedapay.com/v1';
+}
+
+/** Appel REST FedaPay authentifié par la clé secrète (jamais exposée). */
+async function fedapay(path, { method = 'GET', body } = {}) {
+  const secret = process.env.FEDAPAY_SECRET_KEY;
+  if (!secret) throw new Error('FEDAPAY_SECRET_KEY manquante côté serveur.');
   const opts = {
     method,
     headers: {
       Authorization: 'Bearer ' + secret,
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
   };
-  if (form) opts.body = new URLSearchParams(form).toString();
-  const res = await fetch('https://api.stripe.com/v1' + path, opts);
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(fedapayBase() + path, opts);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = data && data.error ? data.error.message : 'Erreur Stripe ' + res.status;
-    const err = new Error(msg);
+    const msg = data && (data.message || data.error) ? data.message || data.error : 'Erreur FedaPay ' + res.status;
+    const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     err.status = res.status;
     throw err;
   }
   return data;
+}
+
+/** FedaPay enveloppe ses objets (ex. { "v1/transaction": {...} }). */
+function unwrap(data, klass) {
+  if (!data || typeof data !== 'object') return data;
+  return data[`v1/${klass}`] || data[klass] || data.data || data;
 }
 
 /* ------------------------------------------------------------------ *
@@ -100,67 +126,76 @@ async function stripe(path, { method = 'GET', form } = {}) {
  * ------------------------------------------------------------------ */
 
 /**
- * Crée une session de paiement Stripe et renvoie l'URL sécurisée.
- * @param {{plan:string, origin:string}} input
+ * Crée une transaction FedaPay et renvoie l'URL de paiement sécurisée.
+ * @param {{plan:string, origin:string, email?:string}} input
  */
-export async function coreCreerSession({ plan, origin }) {
-  const price = priceIdFor(plan);
-  if (!PLAN_DAYS[plan] || !price) {
-    return {
-      status: 400,
-      body: {
-        error:
-          "Offre inconnue ou prix Stripe non configuré. Renseignez STRIPE_PRICE_" +
-          String(plan || '').toUpperCase() +
-          ' côté serveur.',
-      },
-    };
+export async function coreCreerSession({ plan, origin, email }) {
+  if (!PLAN_DAYS[plan]) {
+    return { status: 400, body: { error: 'Offre inconnue : ' + plan } };
   }
   const base = (origin || process.env.PUBLIC_URL || '').replace(/\/$/, '');
-  const session = await stripe('/checkout/sessions', {
+  const amount = amountFor(plan);
+
+  // 1) Créer la transaction.
+  const created = await fedapay('/transactions', {
     method: 'POST',
-    form: {
-      mode: 'subscription',
-      'line_items[0][price]': price,
-      'line_items[0][quantity]': '1',
-      'metadata[plan]': plan,
-      success_url: base + '/?paiement=reussi&session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: base + '/?paiement=annule',
-      allow_promotion_codes: 'true',
+    body: {
+      description: `Veritex — abonnement ${plan}`,
+      amount,
+      currency: { iso: CURRENCY },
+      callback_url: `${base}/?paiement=reussi&plan=${encodeURIComponent(plan)}`,
+      ...(email ? { customer: { email } } : {}),
     },
   });
-  return { status: 200, body: { url: session.url } };
+  const tx = unwrap(created, 'transaction');
+  const txId = tx && (tx.id || tx.reference);
+  if (!txId) {
+    return { status: 502, body: { error: 'Transaction FedaPay sans identifiant.' } };
+  }
+
+  // 2) Générer le jeton de paiement (URL de la page FedaPay).
+  const tokenResp = await fedapay(`/transactions/${txId}/token`, { method: 'POST' });
+  const url = tokenResp && (tokenResp.url || (unwrap(tokenResp, 'transaction') || {}).url);
+  if (!url) {
+    return { status: 502, body: { error: 'FedaPay n’a pas renvoyé d’URL de paiement.' } };
+  }
+  return { status: 200, body: { url, transaction: String(txId) } };
 }
 
 /**
- * Après retour de Stripe, vérifie que la session est payée puis délivre un
- * code d'accès signé. Aucune base de données nécessaire : la preuve de
- * paiement est lue directement chez Stripe.
- * @param {{session_id:string}} input
+ * Après retour de FedaPay, vérifie que la transaction est **approuvée** puis
+ * délivre un code d'accès signé. Aucune base de données : la preuve de paiement
+ * est lue directement chez FedaPay.
+ * @param {{transaction:string, plan?:string}} input
  */
-export async function coreRecupererCode({ session_id }) {
-  if (!session_id) return { status: 400, body: { error: 'session_id requis.' } };
-  const session = await stripe('/checkout/sessions/' + encodeURIComponent(session_id));
-  if (session.payment_status !== 'paid') {
-    return { status: 402, body: { error: 'Paiement non confirmé.', payment_status: session.payment_status } };
+export async function coreRecupererCode({ transaction, plan }) {
+  if (!transaction) return { status: 400, body: { error: 'transaction requise.' } };
+  const resp = await fedapay('/transactions/' + encodeURIComponent(transaction));
+  const tx = unwrap(resp, 'transaction');
+  const status = tx && tx.status;
+  if (status !== 'approved') {
+    return { status: 402, body: { error: 'Paiement non confirmé.', statut: status || 'inconnu' } };
   }
-  const plan = (session.metadata && session.metadata.plan) || 'annuel';
-  const jours = PLAN_DAYS[plan] || 366;
-  const id = 'STRIPE-' + String(session_id).slice(-12);
-  const code = signAccessCode({ plan, jours, id });
-  return { status: 200, body: { code, plan } };
+  // On déduit l'offre du montant si elle n'est pas transmise.
+  let offre = plan && PLAN_DAYS[plan] ? plan : null;
+  if (!offre) {
+    const amount = Number(tx.amount);
+    offre = amount >= amountFor('annuel') ? 'annuel' : 'mensuel';
+  }
+  const jours = PLAN_DAYS[offre] || 366;
+  const id = 'FEDA-' + String(transaction).slice(-12);
+  const code = signAccessCode({ plan: offre, jours, id });
+  return { status: 200, body: { code, plan: offre } };
 }
 
 /**
  * Vérifie un code côté serveur (utile comme `verifyEndpoint` de secours).
- * On revérifie simplement la signature avec la clé privée → publique.
  * @param {{reference:string}} input
  */
 export async function coreVerifier({ reference }) {
-  // Ici on se contente de renvoyer que la vérification cryptographique se fait
-  // côté client ; ce point d'entrée existe pour un contrôle serveur renforcé
-  // (révocation, quotas). Par défaut : accepte toute référence non vide.
+  // Point d'entrée pour un contrôle serveur renforcé (révocation, quotas).
+  // Par défaut : accepte toute référence non vide (la vérification
+  // cryptographique du code se fait déjà côté client via la clé publique).
   if (!reference) return { status: 400, body: { active: false, error: 'reference requise.' } };
   return { status: 200, body: { active: true } };
 }
-

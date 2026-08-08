@@ -9,7 +9,7 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'veritex-5d28f5c9fd2e';
+const CACHE = 'veritex-96d30abbaa2e';
 
 const PRECACHE = [
   "./",

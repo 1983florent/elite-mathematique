@@ -74,31 +74,35 @@ hindi, swahili, turc, japonais). Le visiteur peut en changer via le sélecteur
 Le modèle est **freemium** : `N` analyses d'essai gratuites (par défaut **1**),
 puis un mur d'accès propose l'abonnement.
 
-> ⚠️ **Sécurité — à lire.** Une clé secrète de paiement (Stripe `sk_…`) ne doit
+> ⚠️ **Sécurité — à lire.** Une clé secrète de paiement (`sk_…`) ne doit
 > **jamais** vivre dans le code front-end : n'importe qui l'extrait avec « F12 ».
 > C'est pourquoi Veritex est livré avec un **mini-backend** (dossier `api/`) qui
 > détient seul les secrets, via des variables d'environnement. Le front ne
 > connaît que la clé **publique** et l'URL `/api`.
+>
+> Prestataire : **FedaPay** (Wave, Orange Money, Moov, MTN, cartes — FCFA),
+> adapté à l'Afrique de l'Ouest.
 
 ### Architecture (déjà en place)
 
 ```
 Navigateur (front)                     Backend serverless (api/)
-─────────────────                      ─────────────────────────
-« S'abonner »  ── POST /api/creer-session ──▶  crée la session Stripe
-                                               (STRIPE_SECRET_KEY)
-              ◀────────── { url } ───────────
-  redirige vers la page Stripe … paiement …
-  retour: /?paiement=reussi&session_id=…
-              ── GET /api/recuperer-code ───▶  vérifie le paiement chez Stripe,
-                                               signe un code (LICENSE_PRIVATE_KEY)
-              ◀────────── { code } ──────────
+-----------------                      -------------------------
+« S'abonner »  -- POST /api/creer-session -->  crée la transaction FedaPay
+                                               (FEDAPAY_SECRET_KEY)
+              <---------- { url } -----------
+  redirige vers la page FedaPay … paiement (Wave, Orange Money…) …
+  retour: /?paiement=reussi&id=<transaction>
+              -- GET /api/recuperer-code --->  vérifie l'approbation chez
+                                               FedaPay, signe un code
+                                               (LICENSE_PRIVATE_KEY)
+              <---------- { code } ----------
   active l'accès (vérifié par la clé PUBLIQUE)
 ```
 
-Aucune base de données : la preuve de paiement est lue directement chez Stripe.
+Aucune base de données : la preuve de paiement est lue directement chez FedaPay.
 Le client peut aussi entrer **un code d'accès** que vous lui envoyez à la main
-(voir §5) — utile pour le Mobile Money hors Stripe.
+(voir §5).
 
 ### Ce que vous configurez
 
@@ -108,30 +112,30 @@ Le client peut aussi entrer **un code d'accès** que vous lui envoyez à la main
 export const LICENSE_CONFIG = {
   publicKeySpki: '…',   // ← VOTRE clé publique (voir §5) — REMPLACER la démo
   freeTrials: 1,        // ← nombre d'analyses gratuites
-  plans: [ /* vos offres et prix */ ],
+  plans: [ /* offres et prix affichés, en FCFA */ ],
   backendBaseUrl: '',   // ← vide = backend sur la même origine (recommandé)
-  checkout: {           // ← (optionnel) liens de paiement statiques de secours
-    stripe: '', paypal: '', mobileMoney: '',
-  },
   supportEmail: 'maths.florent@gmail.com',
 };
 ```
 
-**b) Côté serveur — variables d'environnement** (dans Vercel/Netlify, voir §8) :
+**b) Côté serveur — variables d'environnement** (dans Netlify/Vercel, voir §8) :
 
 | Variable | Valeur |
 |----------|--------|
-| `STRIPE_SECRET_KEY` | votre clé secrète Stripe (`sk_live_…`) |
-| `STRIPE_PRICE_MENSUEL` | identifiant de prix Stripe de l'offre mensuelle |
-| `STRIPE_PRICE_ANNUEL` | identifiant de prix Stripe de l'offre annuelle |
+| `FEDAPAY_SECRET_KEY` | votre clé secrète FedaPay (`sk_sandbox_…` en test, `sk_live_…` en prod) |
+| `AMOUNT_MENSUEL` | prix mensuel en FCFA (ex. `3000`) |
+| `AMOUNT_ANNUEL` | prix annuel en FCFA (ex. `25000`) |
 | `LICENSE_PRIVATE_KEY` | votre clé privée de signature (PKCS8 base64, §5) |
 
 Modèle complet : `api/.env.example`. Détails : `api/README.md`.
 
-> **Sans backend ?** Si vous ne déployez pas `api/`, renseignez à la place un
-> simple *Payment Link* Stripe dans `checkout.stripe` : le bouton « S'abonner »
-> y redirige et vous délivrez le code d'accès à la main. Moins automatique,
-> mais tout aussi sûr (aucun secret dans le front).
+> **Test → production :** commencez avec la clé `sk_sandbox_…` (paiements
+> fictifs). Quand tout marche, remplacez-la par `sk_live_…` et redéployez :
+> la base de l'API bascule automatiquement en production.
+>
+> **Vos gains :** l'argent des clients arrive sur votre **compte FedaPay** ;
+> vous le retirez ensuite vers votre Wave / Orange Money depuis le tableau de
+> bord FedaPay. Aucun numéro à mettre dans le code.
 
 ---
 
@@ -160,8 +164,9 @@ Cela imprime un code du type `eyJ….n0Se…`. Remettez-le au client (par e-mail
 Il le colle dans le paywall (« J'ai un code d'accès » → **Activer**) et l'accès
 s'ouvre jusqu'à l'échéance.
 
-**Automatisation** : branchez cette commande sur le *webhook* « paiement
-réussi » de Stripe/PayPal pour envoyer le code automatiquement.
+**Automatisation** : le backend délivre déjà les codes automatiquement après un
+paiement FedaPay. La commande ci-dessus ne sert qu'à générer un code **à la
+main** (offre spéciale, dépannage, paiement reçu hors ligne).
 
 ---
 
@@ -186,21 +191,19 @@ unique par document.
 
 Le dépôt est **prêt à déployer** : site statique + fonctions de paiement, avec
 `vercel.json` et `netlify.toml` déjà fournis. Le front et le backend sont sur la
-**même origine** (appels `/api` relatifs) — aucune configuration CORS.
+**même origine** (appels `/api` relatifs), aucune configuration CORS.
 
-> Après déploiement, l'application est à l'adresse **`/plagiat/`**
-> (ex. `https://mondomaine.com/plagiat/`). La page d'accueil du dépôt reste à la
-> racine. Pour mettre Veritex en page d'accueil, ajoutez une redirection
-> `/` → `/plagiat/` (une ligne dans `vercel.json`/`netlify.toml`).
+> Veritex est servi **à la racine** du site (ex. `https://mondomaine.com/`) :
+> `netlify.toml` publie le dossier `plagiat/`, et `vercel.json` fait la même
+> chose par réécriture. Rien à ajouter.
 
 ### Vercel
 
 1. Poussez le dépôt sur GitHub (voir §8).
 2. Sur **vercel.com** → *Add New… → Project* → importez le dépôt GitHub.
 3. Framework Preset : **Other** (aucun build). Cliquez *Deploy*.
-4. *Settings → Environment Variables* : ajoutez `STRIPE_SECRET_KEY`,
-   `STRIPE_PRICE_MENSUEL`, `STRIPE_PRICE_ANNUEL`, `LICENSE_PRIVATE_KEY`
-   (cf. §4b). *Redeploy*.
+4. *Settings → Environment Variables* : ajoutez `FEDAPAY_SECRET_KEY`,
+   `AMOUNT_MENSUEL`, `AMOUNT_ANNUEL`, `LICENSE_PRIVATE_KEY` (cf. §4b). *Redeploy*.
 5. Le dossier `api/` devient automatiquement vos fonctions serverless.
 
 ### Netlify
@@ -245,7 +248,7 @@ npm run serve            # sert le site en local pour un test navigateur
 | Marque | `plagiat/js/core/branding.js` | Nom, couleurs (éditeur laissé vide) |
 | Clé publique | `plagiat/js/core/license.js` | Coller votre `publicKeySpki` (§5a) |
 | Prix | `plagiat/js/core/license.js` | Ajuster `plans` |
-| Secrets paiement | Vercel/Netlify (variables d'env.) | `STRIPE_SECRET_KEY`, prix, `LICENSE_PRIVATE_KEY` (§4b) |
+| Secrets paiement | Netlify/Vercel (variables d'env.) | `FEDAPAY_SECRET_KEY`, `AMOUNT_*`, `LICENSE_PRIVATE_KEY` (§4b) |
 | Déploiement | Vercel ou Netlify | Importer le dépôt GitHub (§7) |
 | Codes manuels | `tools/make-license.mjs` | Générer un code à la main si besoin (§5b) |
 

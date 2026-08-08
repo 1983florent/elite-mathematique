@@ -1392,9 +1392,11 @@ async function handlePaymentReturn() {
   if (!status) return;
 
   if (status === 'reussi') {
-    const sessionId = params.get('session_id');
+    // FedaPay ajoute `id` (transaction) et `status` à l'URL de retour.
+    const transaction = params.get('id') || params.get('transaction') || params.get('session_id');
+    const plan = params.get('plan');
     notify(t('pay.confirming'));
-    const r = await claimCodeAfterPayment(sessionId);
+    const r = await claimCodeAfterPayment(transaction, plan);
     if (r.ok) {
       notify(t('pay.success'), 'succes', 8000);
       refreshEntitlementBadge();

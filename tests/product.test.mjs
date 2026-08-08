@@ -100,9 +100,13 @@ test('onLanguageChange notifie les abonnés', () => {
 /* Accès payant                                                               */
 /* -------------------------------------------------------------------------- */
 
-/** Clé privée de démonstration (accord avec la clé publique embarquée). */
+/** Paire de démonstration, indépendante de la clé de PRODUCTION de license.js.
+ *  Les tests épinglent la clé publique de démo pour rester autonomes. */
 const DEMO_PRIVATE_PKCS8 =
   'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQggjjnHEQiw24/qP6dC7dbNBcziauvrjHsAYrGXo1GewGhRANCAASj7J1oU3Duvg8SFmUBWHeZvS5TCOQbgmuTlgZOts+jdsn1H1hYvrouVuIEG9kD0JyTRZZnfCILx9ex0O14k5NV';
+const DEMO_PUBLIC_SPKI =
+  'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEo+ydaFNw7r4PEhZlAVh3mb0uUwjkG4Jrk5YGTrbPo3bJ9R9YWL66LlbiBBvZA9Cck0WWZ3wiC8fXsdDteJOTVQ==';
+LICENSE_CONFIG.publicKeySpki = DEMO_PUBLIC_SPKI;
 
 function b64url(bytes) {
   return Buffer.from(bytes).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

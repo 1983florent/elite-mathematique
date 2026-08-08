@@ -43,8 +43,8 @@ async function walk(dir, base = dir) {
 
 async function main() {
   const assets = (await walk(APP)).sort();
-  // Le logo de la page vit un cran au-dessus : on le rapatrie dans le cache.
-  const external = ['../logo.png'];
+  // L'application est autonome : aucune ressource hors du dossier `plagiat/`.
+  const external = [];
 
   // Version = hachage du contenu de toutes les ressources préchargées.
   const hash = createHash('sha256');
@@ -74,7 +74,7 @@ async function main() {
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'elite-plagiat-${version}';
+const CACHE = 'veritex-${version}';
 
 const PRECACHE = ${JSON.stringify(precache, null, 2)};
 
@@ -104,7 +104,7 @@ self.addEventListener('activate', (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k.startsWith('elite-plagiat-') && k !== CACHE).map((k) => caches.delete(k)),
+        keys.filter((k) => (k.startsWith('veritex-') || k.startsWith('elite-plagiat-')) && k !== CACHE).map((k) => caches.delete(k)),
       );
       await self.clients.claim();
     })(),

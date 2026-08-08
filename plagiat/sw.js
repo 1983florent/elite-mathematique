@@ -9,7 +9,7 @@
  * directement au réseau, et échouent proprement si la connexion manque.
  */
 
-const CACHE = 'elite-plagiat-838a5bf5e003';
+const CACHE = 'veritex-5d28f5c9fd2e';
 
 const PRECACHE = [
   "./",
@@ -52,8 +52,7 @@ const PRECACHE = [
   "./js/ui/results.js",
   "./js/workers/analyzer.worker.js",
   "./js/workers/humanizer.worker.js",
-  "./manifest.webmanifest",
-  "../logo.png"
+  "./manifest.webmanifest"
 ];
 
 self.addEventListener('install', (event) => {
@@ -82,7 +81,7 @@ self.addEventListener('activate', (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k.startsWith('elite-plagiat-') && k !== CACHE).map((k) => caches.delete(k)),
+        keys.filter((k) => (k.startsWith('veritex-') || k.startsWith('elite-plagiat-')) && k !== CACHE).map((k) => caches.delete(k)),
       );
       await self.clients.claim();
     })(),

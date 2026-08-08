@@ -208,10 +208,6 @@ __req(${JSON.stringify(idOf(ENTRY))});
   // éviter des requêtes vouées à échouer sous file://.
   const retirerSiPresent = (texte, motif) => texte.replace(motif, '');
   out = retirerSiPresent(out, '<link rel="manifest" href="manifest.webmanifest">\n');
-  out = retirerSiPresent(
-    out,
-    '<link rel="icon" type="image/png" sizes="512x512" href="icons/favicon-512.png">\n',
-  );
   out = retirerSiPresent(out, '<link rel="apple-touch-icon" href="icons/icon-192.png">\n');
   // Le bouton « Installer » ne s'applique pas au fichier unique.
   out = retirerSiPresent(
@@ -220,7 +216,11 @@ __req(${JSON.stringify(idOf(ENTRY))});
   );
 
   out = remplacer(out, '<link rel="stylesheet" href="css/app.css">', `<style>\n${css}\n</style>`);
-  out = remplacer(out, '<link rel="icon" href="../logo.png">', `<link rel="icon" href="${LOGO_URI}">`);
+  out = remplacer(
+    out,
+    '<link rel="icon" type="image/png" sizes="512x512" href="icons/favicon-512.png">',
+    `<link rel="icon" href="${LOGO_URI}">`,
+  );
   out = remplacer(
     out,
     '<script type="module" src="js/app.js"></script>',
@@ -229,7 +229,7 @@ __req(${JSON.stringify(idOf(ENTRY))});
   // Version autonome : pas de site autour, la marque n'est plus un lien.
   out = remplacer(
     out,
-    '<a class="entete__marque" href="../index.html">',
+    '<a class="entete__marque" href="./">',
     '<span class="entete__marque">',
   );
   out = remplacer(

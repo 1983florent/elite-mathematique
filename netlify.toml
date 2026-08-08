@@ -1,6 +1,8 @@
-# Déploiement Netlify — site statique + fonctions de paiement.
+# Déploiement Netlify : Veritex servi à la racine + fonctions de paiement.
+# On publie le dossier `plagiat/` comme racine du site (l'application est donc
+# à l'adresse « / », sans suffixe). Les fonctions restent dans netlify/functions.
 [build]
-  publish = "."
+  publish = "plagiat"
   functions = "netlify/functions"
 
 [functions]

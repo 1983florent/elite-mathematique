@@ -137,6 +137,15 @@ export async function showPaywall(hooks = {}) {
         ? el('p', { class: 'alerte alerte--attention' }, 'Votre abonnement a expiré.')
         : null;
 
+  // Moyens de paiement affichés explicitement.
+  const paiements = el('div', { class: 'paywall__paiements' }, [
+    el('span', { class: 'discret' }, t('paywall.methods')),
+    el('div', { class: 'paywall__moyens' },
+      ['Wave', 'Orange Money', 'Moov Money', 'MTN MoMo', 'Carte bancaire'].map((m) =>
+        el('span', { class: 'moyen' }, m)),
+    ),
+  ]);
+
   const card = el('div', { class: 'modale__carte paywall' }, [
     el('button', { type: 'button', class: 'modale__fermer', 'aria-label': t('action.close'), onclick: close }, '×'),
     el('span', { class: 'etiquette-premium' }, t('paywall.badge')),
@@ -144,6 +153,7 @@ export async function showPaywall(hooks = {}) {
     el('p', { class: 'paywall__soustitre' }, t('paywall.subtitle')),
     el('ul', { class: 'paywall__atouts' }, features),
     plans,
+    paiements,
     providerRow,
     el('div', { class: 'paywall__code' }, [
       el('label', { class: 'discret' }, t('paywall.haveCode')),

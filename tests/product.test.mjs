@@ -169,13 +169,29 @@ test('un code expiré est refusé', async () => {
 test('le compteur d’essais gratuits fonctionne', async () => {
   // Repartir d'un état neuf : le magasin mémoire est partagé, on force le compteur.
   const { put } = await import('../plagiat/js/core/store.js');
+  // On teste le mécanisme d'essai indépendamment de la config de production
+  // (où freeTrials vaut 0 : première utilisation payante).
+  const savedFree = LICENSE_CONFIG.freeTrials;
+  LICENSE_CONFIG.freeTrials = 2;
   await put('settings', 'entitlement', { trialUsed: 0 });
   const start = await getEntitlement();
   assert.equal(start.status, 'trial');
-  assert.equal(start.trialLeft, LICENSE_CONFIG.freeTrials);
+  assert.equal(start.trialLeft, 2);
   await consumeTrial();
   const next = await getEntitlement();
   assert.equal(next.trialUsed, 1);
+  LICENSE_CONFIG.freeTrials = savedFree;
+});
+
+test('sans essai gratuit (freeTrials 0), la première utilisation est verrouillée', async () => {
+  const { put } = await import('../plagiat/js/core/store.js');
+  const savedFree = LICENSE_CONFIG.freeTrials;
+  LICENSE_CONFIG.freeTrials = 0;
+  await put('settings', 'entitlement', { trialUsed: 0 });
+  const e = await getEntitlement();
+  assert.equal(e.status, 'locked');
+  assert.equal(await hasAccess(), false);
+  LICENSE_CONFIG.freeTrials = savedFree;
 });
 
 test('checkoutUrl compose l’URL du prestataire', () => {

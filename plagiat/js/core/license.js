@@ -31,8 +31,9 @@ export const LICENSE_CONFIG = {
   publicKeySpki:
     'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEHCSEADy01ZoevZYs9cjE5XmH2fLucmgxTOzLsjOQc9+xLIyLbn33Z0rFgkw/GBaAkS/O8suZKb/4HiEp7HBPQ==',
 
-  /** Nombre d'analyses gratuites avant de demander un paiement. */
-  freeTrials: 1,
+  /** Nombre d'analyses gratuites avant de demander un paiement.
+   *  0 = aucune : la toute première utilisation est payante. */
+  freeTrials: 0,
 
   /**
    * Offres affichées dans le mur d'accès. Le prix affiché ici doit correspondre

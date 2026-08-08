@@ -458,6 +458,17 @@ code { background: var(--fond-doux); border: 1px solid var(--bordure); border-ra
 .paywall__code { border-top: 1px solid var(--bordure); padding-top: 14px; margin-top: 4px; }
 .paywall__code-ligne { display: flex; gap: 8px; margin-top: 6px; }
 .code-input { flex: 1; }
+.paywall__paiements { margin: 14px 0 6px; text-align: center; }
+.paywall__moyens { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+.paywall__moyens .moyen {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: var(--marque);
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.25);
+}
 .paywall__securite { margin-top: 14px; }
 .paywall__pied { margin-top: 12px; text-align: center; }
 

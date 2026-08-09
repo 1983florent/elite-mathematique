@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Müller-Brockmann Grid System — feuille de base
+   Unité de base : 8px. Tout espace vertical en est un multiple.
+   Importer cette feuille en premier, avant les styles de composants.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- Unité et rythme ------------------------------------------------- */
+  --mb-baseline: 8px;
+  --mb-space-0: 0;
+  --mb-space-1: 8px;
+  --mb-space-2: 16px;
+  --mb-space-3: 24px;
+  --mb-space-4: 32px;
+  --mb-space-6: 48px;
+  --mb-space-8: 64px;
+  --mb-space-12: 96px;
+  --mb-space-16: 128px;
+  --mb-space-18: 144px; /* 6 interlignages — plus grand écart de section */
+  --mb-space-24: 192px;
+
+  /* --- Grille ---------------------------------------------------------- */
+  --mb-columns: 4;
+  --mb-gutter: 16px;
+  --mb-margin: 24px;
+  --mb-max: 1440px;
+  --mb-module: 48px; /* hauteur d'un champ modulaire = 6 lignes de base */
+
+  /* --- Typographie ----------------------------------------------------- */
+  --mb-font-sans: "Helvetica Neue", Helvetica, "Neue Haas Grotesk Display", Inter, Arial, sans-serif;
+  --mb-font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --mb-measure: 66ch;
+
+  --mb-size-caption: 0.75rem;   --mb-lh-caption: 1rem;
+  --mb-size-body-s: 0.875rem;   --mb-lh-body-s: 1.5rem;
+  --mb-size-body: 1rem;         --mb-lh-body: 1.5rem;
+  --mb-size-lede: 1.25rem;      --mb-lh-lede: 2rem;
+  --mb-size-h3: 1.5rem;         --mb-lh-h3: 2rem;
+  --mb-size-h2: 2rem;           --mb-lh-h2: 2.5rem;
+  --mb-size-h1: 3rem;           --mb-lh-h1: 3.5rem;
+  --mb-size-display: 4.5rem;    --mb-lh-display: 5rem;
+
+  /* --- Couleur (thème clair, défini sur :root nu) ----------------------- */
+  --mb-paper: #ffffff;
+  --mb-surface: #f4f4f4;
+  --mb-ink: #111111;
+  --mb-ink-muted: #5a5a5a;
+  --mb-ink-faint: #8a8a8a;
+  --mb-rule: #d8d8d8;
+  --mb-accent: #e30613;
+  --mb-accent-ink: #ffffff;
+}
+
+/* Thème sombre : uniquement les jetons de couleur sont redéfinis. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mb-paper: #0e0e0e;
+    --mb-surface: #1a1a1a;
+    --mb-ink: #f2f2f2;
+    --mb-ink-muted: #a8a8a8;
+    --mb-ink-faint: #7a7a7a;
+    --mb-rule: #333333;
+    --mb-accent: #ff3b2f;
+    --mb-accent-ink: #0e0e0e;
+  }
+}
+:root[data-theme="dark"] {
+  --mb-paper: #0e0e0e;
+  --mb-surface: #1a1a1a;
+  --mb-ink: #f2f2f2;
+  --mb-ink-muted: #a8a8a8;
+  --mb-ink-faint: #7a7a7a;
+  --mb-rule: #333333;
+  --mb-accent: #ff3b2f;
+  --mb-accent-ink: #0e0e0e;
+}
+
+/* La grille se recompose sans changer de logique : 4 → 8 → 12 champs. */
+@media (min-width: 40em) {
+  :root { --mb-columns: 8; --mb-gutter: 24px; --mb-margin: 48px; }
+}
+@media (min-width: 64em) {
+  :root { --mb-columns: 12; --mb-gutter: 24px; --mb-margin: 72px; }
+}
+
+/* --- Réinitialisation minimale ---------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+body, h1, h2, h3, h4, p, figure, blockquote, dl, dd, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+img, svg, video { display: block; max-width: 100%; height: auto; }
+
+body {
+  background: var(--mb-paper);
+  color: var(--mb-ink);
+  font-family: var(--mb-font-sans);
+  font-size: var(--mb-size-body);
+  line-height: var(--mb-lh-body);
+  font-weight: 400;
+  text-align: start;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Typographie ------------------------------------------------------- */
+h1, .mb-h1 { font-size: var(--mb-size-h1); line-height: var(--mb-lh-h1); font-weight: 700; letter-spacing: -0.02em; }
+h2, .mb-h2 { font-size: var(--mb-size-h2); line-height: var(--mb-lh-h2); font-weight: 700; letter-spacing: -0.015em; }
+h3, .mb-h3 { font-size: var(--mb-size-h3); line-height: var(--mb-lh-h3); font-weight: 700; letter-spacing: -0.01em; }
+.mb-display { font-size: var(--mb-size-display); line-height: var(--mb-lh-display); font-weight: 700; letter-spacing: -0.03em; }
+.mb-lede    { font-size: var(--mb-size-lede); line-height: var(--mb-lh-lede); }
+.mb-small   { font-size: var(--mb-size-body-s); line-height: var(--mb-lh-body-s); }
+.mb-caption {
+  font-size: var(--mb-size-caption); line-height: var(--mb-lh-caption);
+  letter-spacing: 0.01em; color: var(--mb-ink-muted);
+}
+/* Étiquette de champ : petite capitale espacée, sert de repère structurel. */
+.mb-label {
+  font-size: var(--mb-size-caption); line-height: var(--mb-lh-caption);
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;
+  color: var(--mb-ink-muted);
+}
+.mb-measure { max-width: var(--mb-measure); }
+.mb-muted { color: var(--mb-ink-muted); }
+.mb-accent { color: var(--mb-accent); }
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover { color: var(--mb-accent); }
+:focus-visible { outline: 2px solid var(--mb-accent); outline-offset: 2px; }
+
+/* --- Page et grille ---------------------------------------------------- */
+.mb-page {
+  width: 100%;
+  max-width: var(--mb-max);
+  margin-inline: auto;
+  padding-inline: var(--mb-margin);
+}
+
+.mb-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--mb-columns), minmax(0, 1fr));
+  column-gap: var(--mb-gutter);
+  row-gap: var(--mb-space-6);
+}
+
+/*
+   Portée des éléments : régler `--span-s/m/l` (et `--start-l`) en style inline.
+   Sans valeur, un enfant occupe toute la largeur — le défaut mobile correct.
+   Exemple : <div style="--span-l:6; --start-l:4"> occupe 6 champs à partir du 4e.
+*/
+.mb-grid > * { grid-column: auto / span var(--span-s, var(--mb-columns)); }
+@media (min-width: 40em) {
+  .mb-grid > * { grid-column: auto / span var(--span-m, var(--span-s, var(--mb-columns))); }
+}
+@media (min-width: 64em) {
+  .mb-grid > * {
+    grid-column: var(--start-l, auto) / span var(--span-l, var(--span-m, var(--span-s, var(--mb-columns))));
+  }
+}
+
+/* --- Rythme vertical --------------------------------------------------- */
+/* Espace uniquement *entre* les éléments : pas de marge orpheline en tête de bloc. */
+.mb-flow > * + * { margin-block-start: var(--mb-flow-space, var(--mb-space-3)); }
+.mb-flow > h2 + *, .mb-flow > h3 + * { --mb-flow-space: var(--mb-space-2); }
+.mb-flow > * + h2 { --mb-flow-space: var(--mb-space-6); }
+.mb-flow > * + h3 { --mb-flow-space: var(--mb-space-4); }
+
+.mb-section { padding-block: var(--mb-space-12); }
+.mb-section--tight { padding-block: var(--mb-space-6); }
+
+/* --- Filets ------------------------------------------------------------ */
+.mb-rule { border: 0; border-block-start: 1px solid var(--mb-rule); }
+.mb-rule--emphasis { border-block-start-width: 2px; border-color: var(--mb-ink); }
+.mb-divided > * { padding-block: var(--mb-space-3); border-block-start: 1px solid var(--mb-rule); }
+
+/* --- Images calées sur les champs -------------------------------------- */
+/* La hauteur est un multiple du module : l'image se recadre, la grille ne bouge pas. */
+.mb-figure { display: block; }
+.mb-figure img { width: 100%; height: 100%; object-fit: cover; background: var(--mb-surface); }
+.mb-ratio-1-1 { aspect-ratio: 1 / 1; }
+.mb-ratio-4-3 { aspect-ratio: 4 / 3; }
+.mb-ratio-16-9 { aspect-ratio: 16 / 9; }
+.mb-figure figcaption { margin-block-start: var(--mb-space-1); }
+
+/* --- Éléments d'interface --------------------------------------------- */
+.mb-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mb-space-6);
+  padding-inline: var(--mb-space-3);
+  border: 1px solid var(--mb-ink);
+  background: var(--mb-ink);
+  color: var(--mb-paper);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 120ms cubic-bezier(0.2, 0, 0, 1), color 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+.mb-button:hover { background: var(--mb-accent); border-color: var(--mb-accent); color: var(--mb-accent-ink); }
+.mb-button--ghost { background: transparent; color: var(--mb-ink); }
+.mb-button--ghost:hover { background: var(--mb-ink); color: var(--mb-paper); border-color: var(--mb-ink); }
+
+.mb-surface { background: var(--mb-surface); padding: var(--mb-space-3); }
+
+/* --- Trame de contrôle -------------------------------------------------- */
+/* Ajouter data-mb-debug sur <body> pour voir lignes de base et champs. */
+body[data-mb-debug] {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--mb-accent) 22%, transparent) 0 1px,
+    transparent 1px var(--mb-baseline)
+  );
+}
+body[data-mb-debug] .mb-page { position: relative; }
+body[data-mb-debug] .mb-page::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--mb-margin);
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mb-accent) 10%, transparent) 0,
+    color-mix(in srgb, var(--mb-accent) 10%, transparent)
+      calc((100% - (var(--mb-columns) - 1) * var(--mb-gutter)) / var(--mb-columns)),
+    transparent
+      calc((100% - (var(--mb-columns) - 1) * var(--mb-gutter)) / var(--mb-columns)),
+    transparent
+      calc((100% - (var(--mb-columns) - 1) * var(--mb-gutter)) / var(--mb-columns) + var(--mb-gutter))
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

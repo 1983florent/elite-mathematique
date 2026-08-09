@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Elite Mathématique — styles de page
+   S'appuie sur grid.css. Aucune valeur n'est posée à l'œil : tout espace est
+   un multiple de l'unité de base (8px), via les jetons --mb-*.
+
+   Dérivation de la page
+   ---------------------
+   Unité de base ......... 8px  (demi-interlignage du texte courant 16/24)
+   Grille ................ 4 / 8 / 12 champs — subdivisée en 3, 5, 6 et 8
+   Gouttière ............. 16px (mobile) → 24px = un interlignage
+   Marges ................ 24 / 48 / 72px
+   Aire de texte ......... 1440 − 2×72 = 1296px
+   Colonne ............... (1296 − 11×24) / 12 = 86px
+   Mesure de lecture ..... 6 colonnes = 636px ≈ 66 signes
+   Écarts de section ..... 48 / 96 / 144px — trois valeurs, pas une de plus
+   Axes verticaux ........ lignes 1, 5 et 10 — tous les bords gauches y reviennent
+   Tailles ............... 5 (72 / 32 / 20 / 16 / 12), deux graisses
+   Accent ................ #e30613, réservé au bouton principal et aux états
+   ========================================================================== */
+
+:root {
+  --gap-tight: var(--mb-space-6);    /* 48px  — à l'intérieur d'une section */
+  --gap-section: var(--mb-space-12); /* 96px  — entre sections */
+  --gap-hero: var(--mb-space-18);    /* 144px — respiration d'ouverture */
+}
+
+/* --- Bandeau de tête --------------------------------------------------- */
+.masthead {
+  padding-block: var(--mb-space-3);
+  border-block-end: 1px solid var(--mb-rule);
+}
+.masthead .mb-grid { row-gap: var(--mb-space-2); align-items: baseline; }
+.wordmark { color: var(--mb-ink); }
+
+.masthead__nav { display: flex; flex-wrap: wrap; gap: var(--mb-space-3); }
+.masthead__nav a { text-decoration: none; }
+
+/* --- Ouverture ---------------------------------------------------------- */
+/* Grand élément en haut à gauche, petit en bas à droite : la diagonale
+   d'attention se construit sur trois rangées, pas sur un centrage. */
+.hero { padding-block: var(--gap-hero) var(--gap-section); }
+.hero h1 { text-wrap: balance; }
+.hero__lede { max-width: var(--mb-measure); }
+.hero__cta { display: flex; flex-direction: column; gap: var(--mb-space-2); align-items: flex-start; }
+
+/* --- Sections ----------------------------------------------------------- */
+.section { padding-block-end: var(--gap-section); }
+.section__head { margin-block-start: var(--gap-tight); }
+.section__body { max-width: var(--mb-measure); }
+
+/* --- Liste de fonctionnalités ------------------------------------------- */
+/* Le numéro occupe une gouttière de 48px : deux interlignages, donc la
+   colonne de texte reste alignée sur la trame. */
+.feature-list > li {
+  display: grid;
+  grid-template-columns: var(--mb-space-6) 1fr;
+  column-gap: var(--mb-space-2);
+  padding-block: var(--mb-space-3);
+  border-block-start: 1px solid var(--mb-rule);
+}
+.feature-list > li:last-child { border-block-end: 1px solid var(--mb-rule); }
+.feature__num { color: var(--mb-ink-faint); }
+.feature__name { font-weight: 700; }
+
+/* --- Actions ------------------------------------------------------------ */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mb-space-2);
+  margin-block-start: var(--mb-space-3);
+}
+
+/* Le bouton principal est le seul aplat de couleur de la page : c'est
+   l'action qui compte, et l'accent ne sert qu'à cela. */
+.mb-button--accent {
+  background: var(--mb-accent);
+  border-color: var(--mb-accent);
+  color: var(--mb-accent-ink);
+}
+.mb-button--accent:hover {
+  background: var(--mb-ink);
+  border-color: var(--mb-ink);
+  color: var(--mb-paper);
+}
+
+/* --- Coordonnées de don ------------------------------------------------- */
+.data > div + div { margin-block-start: var(--mb-space-3); }
+.data dd { font-variant-numeric: tabular-nums; }
+.data a { text-decoration: none; }
+.data a:hover { text-decoration: underline; }
+
+/* Le champ du QR est un module carré de 192px (24 unités) : l'image se cale
+   dessus, jamais l'inverse. */
+.qr__field {
+  width: 100%;
+  max-width: var(--mb-space-24);
+  aspect-ratio: 1 / 1;
+  background: var(--mb-surface);
+  display: grid;
+  place-items: center;
+  padding: var(--mb-space-1);
+}
+.qr__field img { width: 100%; height: 100%; object-fit: contain; }
+
+/* --- Pied de page ------------------------------------------------------- */
+.site-footer {
+  padding-block: var(--gap-tight);
+  border-block-start: 2px solid var(--mb-ink);
+}
+.site-footer .mb-grid { row-gap: var(--mb-space-2); }
+.site-footer a { text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+/* --- Mobile ------------------------------------------------------------- */
+/* Seules les deux plus grandes tailles diminuent : le corps reste à 16px. */
+@media (max-width: 40em) {
+  :root {
+    --mb-size-display: 2.5rem; --mb-lh-display: 3rem; /* 40 / 48 */
+    --mb-size-h2: 1.5rem;      --mb-lh-h2: 2rem;      /* 24 / 32 */
+    --gap-hero: var(--mb-space-8);      /* 64px */
+    --gap-section: var(--mb-space-8);   /* 64px */
+  }
+}

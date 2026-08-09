@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Titre du site</title>
+  <link rel="stylesheet" href="grid.css">
+  <style>
+    /* Styles spécifiques à la page. Tout espacement passe par --mb-space-*. */
+    .site-header { padding-block: var(--mb-space-3); border-block-end: 1px solid var(--mb-rule); }
+    .site-header .mb-grid { align-items: baseline; row-gap: var(--mb-space-2); }
+    .site-nav { display: flex; gap: var(--mb-space-3); }
+    .site-nav a { text-decoration: none; }
+    .site-nav a:hover { color: var(--mb-accent); }
+    .hero { padding-block: var(--mb-space-16) var(--mb-space-12); }
+    .site-footer { padding-block: var(--mb-space-6); border-block-start: 2px solid var(--mb-ink); }
+  </style>
+</head>
+<!-- Ajouter data-mb-debug ci-dessous pour afficher la trame de contrôle. -->
+<body>
+
+  <header class="site-header">
+    <div class="mb-page">
+      <div class="mb-grid">
+        <p class="mb-label" style="--span-s:2; --span-m:4; --span-l:4">Nom du site</p>
+        <nav class="site-nav mb-small" style="--span-s:2; --span-m:4; --span-l:8">
+          <a href="#section-un">Section</a>
+          <a href="#section-deux">Section</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Accroche : titre décalé, texte en second champ. -->
+    <section class="hero">
+      <div class="mb-page">
+        <div class="mb-grid">
+          <h1 class="mb-display" style="--span-l:8" data-balance>
+            Une phrase qui dit ce que fait le site.
+          </h1>
+          <p class="mb-lede mb-measure" style="--span-l:6; --start-l:7">
+            Une seule phrase de contexte. Le chapeau n'apparaît qu'une fois par page ; au-delà,
+            il cesse d'être une entrée en matière.
+          </p>
+          <div style="--span-l:6; --start-l:7">
+            <a class="mb-button" href="#">Action principale</a>
+            <a class="mb-button mb-button--ghost" href="#">Action secondaire</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section de contenu : titre à gauche, texte décalé. -->
+    <section id="section-un" class="mb-section">
+      <div class="mb-page">
+        <hr class="mb-rule">
+        <div class="mb-grid" style="margin-block-start: var(--mb-space-4)">
+          <h2 style="--span-l:4">Titre de section</h2>
+          <div class="mb-flow mb-measure" style="--span-l:6; --start-l:6">
+            <p>Le texte courant reste dans la mesure de lecture, même quand la colonne
+              pourrait être plus large.</p>
+            <p>Les espaces entre paragraphes sont des multiples de l'unité de base : le texte
+              retombe sur la trame à chaque bloc.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Série de trois : même portée, empilement automatique sur mobile. -->
+    <section id="section-deux" class="mb-section">
+      <div class="mb-page">
+        <hr class="mb-rule">
+        <div class="mb-grid" style="margin-block-start: var(--mb-space-4)">
+          <h2 style="--span-l:12">Trois éléments</h2>
+
+          <article class="mb-flow" style="--span-m:4; --span-l:4">
+            <p class="mb-label">01</p>
+            <h3>Premier</h3>
+            <p class="mb-small mb-muted">Description brève. La numérotation en étiquette sert de
+              repère structurel sans ajouter de niveau typographique.</p>
+          </article>
+
+          <article class="mb-flow" style="--span-m:4; --span-l:4">
+            <p class="mb-label">02</p>
+            <h3>Deuxième</h3>
+            <p class="mb-small mb-muted">Les trois blocs partagent exactement le même traitement :
+              c'est la répétition qui rend la grille visible.</p>
+          </article>
+
+          <article class="mb-flow" style="--span-m:4; --span-l:4">
+            <p class="mb-label">03</p>
+            <h3>Troisième</h3>
+            <p class="mb-small mb-muted">Sur mobile, chacun occupe les quatre champs disponibles
+              et s'empile sans règle supplémentaire.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Image calée sur les champs, légende alignée sur le même bord. -->
+    <section class="mb-section">
+      <div class="mb-page">
+        <div class="mb-grid">
+          <figure class="mb-figure" style="--span-l:8">
+            <div class="mb-ratio-16-9"><img src="image.jpg" alt="Description de l'image"></div>
+            <figcaption class="mb-caption">Légende sous l'image, calée sur son bord gauche.</figcaption>
+          </figure>
+          <div class="mb-flow" style="--span-l:3; --start-l:10">
+            <p class="mb-label">Note</p>
+            <p class="mb-small">Le champ laissé vide entre l'image et cette colonne fait partie de
+              la composition.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact" class="site-footer">
+    <div class="mb-page">
+      <div class="mb-grid">
+        <p class="mb-small" style="--span-l:4">Nom du site</p>
+        <p class="mb-small mb-muted" style="--span-l:4">contact@exemple.fr</p>
+        <p class="mb-caption" style="--span-l:4">&copy; 2026 — Tous droits réservés</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

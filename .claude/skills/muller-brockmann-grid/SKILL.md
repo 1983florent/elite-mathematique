@@ -1,13 +1,20 @@
 ---
 name: muller-brockmann-grid
-description: Système de design complet pour sites web basé sur la grille de Josef Müller-Brockmann et le Style typographique international suisse — grille modulaire, rythme vertical sur ligne de base, échelle typographique, hiérarchie, couleur restreinte. Utilise ce skill dès qu'il s'agit de créer, refondre, mettre en page ou styler une page ou un site web (HTML/CSS, landing page, portfolio, site vitrine, artifact, composant React/Tailwind), de choisir une grille, des colonnes, des marges, des espacements, des tailles de texte ou une palette — même si l'utilisateur ne mentionne ni « grille » ni « Müller-Brockmann », et même pour une simple page « à rendre plus propre » ou « plus pro ».
+description: Kit d'implémentation Müller-Brockmann pour le dépôt elite-mathematique — fichiers concrets prêts à poser dans le projet : tokens grid-system.json, feuille grid.css (variables, grille, rythme vertical, thèmes clair/sombre, trame de contrôle), gabarit template.html et script d'audit verify_grid.py. Utilise ce skill pour tout travail de mise en page ou de style sur ce dépôt (index.html, nouvelles pages), ou dès qu'il faut des livrables concrets plutôt que la seule méthode : variables CSS à copier, page de départ, vérification automatique des valeurs hors grille. Complémentaire du skill muller-brockmann-grid-systems, qui porte la méthode générale et s'applique à tous les projets.
 ---
 
-# Müller-Brockmann — Système de grille pour le web
+# Müller-Brockmann — Kit d'implémentation
 
 Ce skill transpose la méthode de Josef Müller-Brockmann (*Grid Systems in Graphic Design*, 1981)
 au web moderne. Objectif : produire des pages **objectives, lisibles et ordonnées**, où chaque
 décision (colonne, marge, taille, espace) découle d'un système et non du goût du moment.
+
+> **Deux skills, deux rôles.** `muller-brockmann-grid-systems` (installé au niveau du profil)
+> porte la méthode : l'attitude, la séquence de construction, les arbitrages. Le présent skill
+> porte l'**outillage** de ce dépôt : des fichiers à copier et un script à lancer. Les deux
+> partagent la même base (unité 8px, interlignage 24px, une linéale, composition asymétrique),
+> donc ils ne se contredisent pas — en cas de doute sur une valeur, la méthode fait autorité et
+> les fichiers d'ici s'y ajustent.
 
 L'idée centrale de Müller-Brockmann : la grille n'est pas un carcan décoratif, c'est un
 **instrument de clarté**. Elle rend le rapport entre les éléments vérifiable, donc discutable,

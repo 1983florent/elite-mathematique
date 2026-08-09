@@ -26,8 +26,9 @@ rend la grille perceptible ; sans répétition, elle n'existe que dans le code.
 ## Marges et gouttières
 
 - **Gouttière = un interlignage** (24px). Les colonnes respirent comme les lignes de texte, et
-  l'œil retrouve la même mesure horizontalement et verticalement.
-- **Marges latérales croissantes** : 24px (mobile), 48px (tablette), 64px (desktop). La marge
+  l'œil retrouve la même mesure horizontalement et verticalement. Sous 640px elle tombe à 16px
+  (deux unités) : à cette largeur, une gouttière de 24px mangerait la colonne elle-même.
+- **Marges latérales croissantes** : 24px (mobile), 48px (tablette), 72px (desktop). La marge
   n'est pas de l'espace perdu : elle isole le bloc de texte du bord de l'écran, comme le blanc
   tournant isole la justification d'une page imprimée.
 - **Largeur maximale 1440px.** Au-delà, les lignes s'allongent et la lecture se dégrade ; mieux

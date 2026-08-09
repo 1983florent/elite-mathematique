@@ -2,63 +2,177 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELITE MATHEMATIQUE</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; color: #333; }
-    header { background: #1e2a78; color: white; padding: 20px; text-align: center; }
-    .logo { max-width: 150px; margin: 10px auto; display: block; }
-    section { padding: 20px; max-width: 900px; margin: auto; background: white; margin-top: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h2 { color: #1e2a78; }
-    .don { background: #fff8e1; padding: 15px; border-left: 5px solid #fbc02d; margin-top: 10px; }
-    footer { text-align: center; padding: 20px; background: #1e2a78; color: white; margin-top: 20px; }
-    .btn { display: inline-block; padding: 10px 20px; background: #1e2a78; color: white; border-radius: 5px; text-decoration: none; margin: 10px 5px; }
-    .qr { text-align: center; margin-top: 10px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ELITE MATHEMATIQUE — L'application mathématique la plus complète d'Afrique</title>
+  <meta name="description" content="Elite Mathématique : graphiques 2D et 3D, calcul symbolique et numérique, solveurs avancés et manuels intégrés, dans une seule application Android.">
+  <link rel="stylesheet" href="grid.css">
+  <link rel="stylesheet" href="site.css">
 </head>
+<!-- Ajouter data-mb-debug sur <body> pour afficher la trame de contrôle. -->
 <body>
-  <header>
-    <img src="logo.png" alt="ELITE MATHEMATIQUE" class="logo">
-    <h1>ELITE MATHEMATIQUE</h1>
-    <p>L'application mathématique la plus complète d'Afrique</p>
+
+  <header class="masthead">
+    <div class="mb-page">
+      <div class="mb-grid">
+        <p class="mb-label wordmark" style="--span-s:4; --span-l:3">Elite Mathématique</p>
+        <nav class="masthead__nav mb-small" style="--span-s:4; --span-l:8; --start-l:5" aria-label="Navigation principale">
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#telecharger">Télécharger</a>
+          <a href="#soutenir">Soutenir</a>
+        </nav>
+      </div>
+    </div>
   </header>
 
-  <section>
-    <h2>✨ Fonctionnalités Clés</h2>
-    <ul>
-      <li>Graphiques 2D & 3D dynamiques</li>
-      <li>Calculs symboliques et numériques</li>
-      <li>Algèbre, Analyse, Topologie, Statistiques</li>
-      <li>IA mathématique, solveurs avancés</li>
-      <li>Manuels PDF intégrés</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>📥 Télécharger l'application</h2>
-    <p>Disponible sur Android :</p>
-    <a href="#" class="btn">Télécharger sur le Play Store</a>
-    <a href="#" class="btn">Télécharger l'APK directe</a>
-  </section>
-
-  <section>
-    <h2>💖 Soutenir le projet</h2>
-    <div class="don">
-      <p><strong>Numéro Wave / Orange Money :</strong> (+221) 70 601 31 69</p>
-      <p><strong>Email :</strong> maths.florent@gmail.com</p>
-      <div class="qr">
-        <p>Scanner le QR Code :</p>
-        <img src="qr-code.png" alt="QR Code Wave" style="max-width:150px;">
+  <main>
+    <!-- Ouverture : titre en haut à gauche, action en bas à droite. -->
+    <section class="hero">
+      <div class="mb-page">
+        <div class="mb-grid">
+          <h1 class="mb-display" style="--span-s:4; --span-l:8">
+            L'application mathématique la plus complète d'Afrique
+          </h1>
+          <p class="mb-lede hero__lede" style="--span-s:4; --span-l:6; --start-l:5">
+            Graphiques, calcul symbolique, solveurs et manuels réunis dans une seule
+            application Android.
+          </p>
+          <div class="hero__cta" style="--span-s:4; --span-l:3; --start-l:10">
+            <p class="mb-label">Disponible sur Android</p>
+            <a class="mb-button mb-button--accent" href="#telecharger">Télécharger</a>
+          </div>
+        </div>
       </div>
-      <p>
-        <a href="#" class="btn">Copier le numéro</a>
-        <a href="mailto:maths.florent@gmail.com" class="btn">Envoyer un message</a>
-      </p>
-    </div>
-  </section>
+    </section>
 
-  <footer>
-    <p>&copy; 2025 ELITE MATHEMATIQUE - Tous droits réservés</p>
+    <section id="fonctionnalites" class="section">
+      <div class="mb-page">
+        <hr class="mb-rule mb-rule--emphasis">
+        <div class="mb-grid section__head">
+          <h2 style="--span-s:4; --span-l:3">Fonctionnalités</h2>
+          <ol class="feature-list" style="--span-s:4; --span-l:6; --start-l:5">
+            <li>
+              <span class="mb-label feature__num">01</span>
+              <p class="feature__name">Graphiques 2D et 3D dynamiques</p>
+            </li>
+            <li>
+              <span class="mb-label feature__num">02</span>
+              <p class="feature__name">Calculs symboliques et numériques</p>
+            </li>
+            <li>
+              <span class="mb-label feature__num">03</span>
+              <p class="feature__name">Algèbre, analyse, topologie, statistiques</p>
+            </li>
+            <li>
+              <span class="mb-label feature__num">04</span>
+              <p class="feature__name">IA mathématique et solveurs avancés</p>
+            </li>
+            <li>
+              <span class="mb-label feature__num">05</span>
+              <p class="feature__name">Manuels PDF intégrés</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section id="telecharger" class="section">
+      <div class="mb-page">
+        <hr class="mb-rule mb-rule--emphasis">
+        <div class="mb-grid section__head">
+          <h2 style="--span-s:4; --span-l:3">Télécharger</h2>
+          <div style="--span-s:4; --span-l:6; --start-l:5">
+            <p class="mb-caption">Disponible sur Android</p>
+            <div class="actions">
+              <a class="mb-button mb-button--accent" href="#">Télécharger sur le Play Store</a>
+              <a class="mb-button mb-button--ghost" href="#">Télécharger l'APK</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="soutenir" class="section">
+      <div class="mb-page">
+        <hr class="mb-rule mb-rule--emphasis">
+        <div class="mb-grid section__head">
+          <h2 style="--span-s:4; --span-l:3">Soutenir le projet</h2>
+
+          <div style="--span-s:4; --span-l:5; --start-l:5">
+            <dl class="data">
+              <div>
+                <dt class="mb-label">Wave / Orange Money</dt>
+                <dd class="mb-lede"><a href="tel:+221706013169">+221 70 601 31 69</a></dd>
+              </div>
+              <div>
+                <dt class="mb-label">Email</dt>
+                <dd><a href="mailto:maths.florent@gmail.com">maths.florent@gmail.com</a></dd>
+              </div>
+            </dl>
+            <div class="actions">
+              <button class="mb-button mb-button--ghost" type="button"
+                      data-copy="+221706013169" data-copy-done="Numéro copié">
+                Copier le numéro
+              </button>
+              <a class="mb-button mb-button--ghost" href="mailto:maths.florent@gmail.com">
+                Envoyer un message
+              </a>
+            </div>
+          </div>
+
+          <figure class="mb-figure" style="--span-s:4; --span-l:3; --start-l:10">
+            <div class="qr__field">
+              <img src="qr-code.png" alt="QR code Wave pour effectuer un don" width="192" height="192">
+            </div>
+            <figcaption class="mb-caption">Scanner le QR code pour un don par Wave</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="mb-page">
+      <div class="mb-grid">
+        <p class="mb-small" style="--span-s:4; --span-l:3">Elite Mathématique</p>
+        <p class="mb-small" style="--span-s:4; --span-l:5; --start-l:5">
+          <a href="mailto:maths.florent@gmail.com">maths.florent@gmail.com</a>
+        </p>
+        <p class="mb-caption" style="--span-s:4; --span-l:3; --start-l:10">
+          &copy; 2025 Elite Mathématique — Tous droits réservés
+        </p>
+      </div>
+    </div>
   </footer>
+
+  <script>
+    // Le bouton « Copier le numéro » était inerte : il pointait vers "#".
+    document.querySelectorAll('[data-copy]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var value = button.dataset.copy;
+        var label = button.textContent.trim();
+
+        function confirmCopy() {
+          button.textContent = button.dataset.copyDone;
+          setTimeout(function () { button.textContent = label; }, 2000);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(value).then(confirmCopy);
+          return;
+        }
+        // Repli pour les contextes non sécurisés (fichier local, http).
+        var field = document.createElement('textarea');
+        field.value = value;
+        field.setAttribute('readonly', '');
+        field.style.position = 'absolute';
+        field.style.left = '-9999px';
+        document.body.appendChild(field);
+        field.select();
+        try { document.execCommand('copy'); confirmCopy(); } catch (error) { /* silence */ }
+        document.body.removeChild(field);
+      });
+    });
+  </script>
+
 </body>
 </html>

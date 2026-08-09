@@ -12,12 +12,12 @@
 
   "grid": {
     "gutter": 24,
-    "gutterRationale": "Une gouttière vaut un interlignage : les colonnes respirent comme les lignes de texte.",
+    "gutterRationale": "Une gouttière vaut un interlignage : les colonnes respirent comme les lignes de texte. Sous 640px, elle se réduit à 16px (deux unités) faute de largeur disponible.",
     "maxWidth": 1440,
     "breakpoints": {
-      "s": { "min": 0, "columns": 4, "margin": 24 },
-      "m": { "min": 640, "columns": 8, "margin": 48 },
-      "l": { "min": 1024, "columns": 12, "margin": 64 }
+      "s": { "min": 0, "columns": 4, "gutter": 16, "margin": 24 },
+      "m": { "min": 640, "columns": 8, "gutter": 24, "margin": 48 },
+      "l": { "min": 1024, "columns": 12, "gutter": 24, "margin": 72 }
     },
     "moduleRow": {
       "baselines": 6,
@@ -59,6 +59,7 @@
     "8": 64,
     "12": 96,
     "16": 128,
+    "18": 144,
     "24": 192,
     "rationale": "Multiples de l'unité de base. Une valeur absente de cette liste doit être justifiée."
   },

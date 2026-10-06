@@ -180,6 +180,37 @@ Object.keys(EM.contenu).forEach(function (id) {
 });
 if (missing.length) (STRICT ? errors : warnings).push(missing.length + ' chapitre(s) sans contenu : ' + missing.join(', '));
 
+/* ---------- cohérence index.html / service worker / fichiers ---------- */
+(function () {
+  var html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  var sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  var assets = (/var ASSETS = \[([\s\S]*?)\];/.exec(sw) || [])[1] || '';
+  var listed = (assets.match(/'([^']+)'/g) || []).map(function (x) { return x.slice(1, -1); });
+  var refs = [];
+  html.replace(/<(?:script|link)[^>]+(?:src|href)="([^"#:]+)"/g, function (m, f) { refs.push(f); });
+  refs.forEach(function (f) {
+    if (!fs.existsSync(path.join(ROOT, f))) errors.push('index.html charge un fichier absent : ' + f);
+    if (listed.indexOf(f) < 0) errors.push('sw.js ne met pas en cache : ' + f);
+  });
+  listed.forEach(function (f) {
+    if (f !== './' && !fs.existsSync(path.join(ROOT, f))) errors.push('sw.js liste un fichier absent : ' + f);
+  });
+  fs.readdirSync(path.join(ROOT, 'vendor/katex/fonts')).forEach(function (f) {
+    if (listed.indexOf('vendor/katex/fonts/' + f) < 0) errors.push('sw.js ne met pas en cache la police ' + f);
+  });
+  (function walkJs(rel) {
+    fs.readdirSync(path.join(ROOT, rel)).forEach(function (f) {
+      var r = rel + '/' + f;
+      if (fs.statSync(path.join(ROOT, r)).isDirectory()) return walkJs(r);
+      if (/\.js$/.test(f) && refs.indexOf(r) < 0) errors.push('fichier non chargé par index.html : ' + r);
+    });
+  })('js');
+  if (!FILES) {
+    load('js/data/afrique.js');
+    (EM.afrique || []).forEach(function (f, i) { checkTeX(f.titre, 'afrique ' + i); checkTeX(f.texte, 'afrique ' + i); });
+  }
+})();
+
 /* ---------- couverture ---------- */
 var cover = {};
 EM.programme.listeClasses().forEach(function (k) {

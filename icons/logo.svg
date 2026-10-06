@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ELITE MATHÉMATIQUE">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a3a9e"/>
+      <stop offset="1" stop-color="#1a2366"/>
+    </linearGradient>
+    <clipPath id="c"><rect width="64" height="64" rx="14"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="64" height="64" fill="url(#g)"/>
+    <rect y="56" width="21.4" height="8" fill="#00853f"/>
+    <rect x="21.3" y="56" width="21.4" height="8" fill="#fdef42"/>
+    <rect x="42.6" y="56" width="21.4" height="8" fill="#e31b23"/>
+  </g>
+  <path d="M17 12 H47 V19 H28.5 L38 30.5 L28.5 42 H47 V49 H17 V43.5 L28 30.5 L17 17.5 Z" fill="#fbc02d"/>
+  <circle cx="48.5" cy="12.5" r="3" fill="#ffffff" opacity=".9"/>
+</svg>

@@ -51,6 +51,15 @@ node tests/run.js --seeds 300  # plus de tirages par générateur
 Le banc de tests produit des milliers d'exercices et vérifie que chaque formule s'affiche, que la réponse attendue
 est acceptée par le correcteur et qu'aucune écriture fautive (`+ -3`, `NaN`…) n'apparaît.
 
+## Chiffres
+
+115 chapitres, 193 générateurs d'exercices (chacun produit une infinité de variantes, sur 1 à 3 niveaux),
+741 cartes de révision, 10 outils de laboratoire. Le banc de tests produit plus de 70 000 exercices
+à chaque vérification complète.
+
+Les points du programme dont l'alignement exact reste à confirmer avec les textes officiels sont listés dans
+[docs/A-VERIFIER.md](docs/A-VERIFIER.md).
+
 ## Contribuer
 
 Professeurs et contributeurs peuvent ajouter des chapitres, des cartes ou des générateurs : voir [docs/CONTRIBUER.md](docs/CONTRIBUER.md).

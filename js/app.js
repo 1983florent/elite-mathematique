@@ -115,6 +115,7 @@
         esc(e && e.message) + '</pre><a class="btn" href="#/">Retour à l\'accueil</a></div>';
     }
     var nav = NAV[name];
+    if (name === 'exo' && (EM.gen.get(r.parts[1]) || {}).mission) nav = 'missions';
     Array.prototype.forEach.call(document.querySelectorAll('[data-nav]'), function (a) {
       a.classList.toggle('active', a.getAttribute('data-nav') === nav);
     });

@@ -57,7 +57,7 @@
     return '<section class="bandeau bandeau-motif-droite' + (opts.classe ? ' ' + opts.classe : '') + '">' +
       EM.motif(graine, { cols: opts.cols || 10, rows: opts.rows || 4, titre: 'Motif géométrique généré' }) +
       '<div class="voile"></div><div class="bandeau-in">' + contenu + '</div>' +
-      (opts.legende === false ? '' : '<span class="motif-legende">Pavage de Truchet · graine « ' + esc(graine) + ' »</span>') + '</section>';
+      (opts.legende === false ? '' : '<span class="motif-legende">Pavage de Truchet · graine « ' + esc(String(graine).split(':').pop()) + ' »</span>') + '</section>';
   };
 
   /* ---------- ligne du parcours scolaire (plan de ligne) ---------- */

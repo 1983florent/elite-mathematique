@@ -54,3 +54,12 @@ dont l'alignement exact mérite d'être confirmé. Pour corriger :
 - Tle L : loi binomiale et probabilités conditionnelles non incluses.
 - Seuil $|r| \geq 0{,}87$ pour justifier un ajustement linéaire, présenté comme une convention usuelle.
 - Tle S1 : similitudes indirectes et isométries non couvertes ; coniques à axes parallèles aux axes du repère.
+- Tle L : la limite $\lim\limits_{x \to +\infty} \dfrac{\ln x}{x} = 0$ n'est pas au cours ; elle est « admise » dans l'énoncé du problème de Tle L qui en a besoin.
+- Tle S1, coniques : seulement foyer, directrice, excentricité et définition bifocale (pas de tangentes aux coniques).
+- 1ère S : le nombre de solutions de $f(x) = m$ lu dans le tableau de variation repose sur une propriété admise.
+- Angles et arguments : la réponse attendue est la mesure principale (le correcteur n'accepte pas une mesure « à $2\pi$ près »).
+
+## Missions Sénégal
+
+- Les données chiffrées des missions (prix, tarifs d'eau, forfaits, pluviométrie, rendements…) sont **fictives** et présentées comme « données de la mission » : elles ne prétendent pas refléter les prix ou statistiques réels.
+- 1ère S : une mission rattachée à la S1 (dénombrement, suites), une autre à la S2 (dérivation, optimisation).

@@ -888,7 +888,7 @@
         };
       }
       // niveau 3 : piste de stade (rectangle + deux demi-cercles)
-      var L = 10 * rng.int(6, 10), D = 10 * rng.int(4, 7), tours = rng.int(3, 12);
+      var L = 10 * rng.int(6, 10), D = 10 * rng.int(4, 7), tours = rng.int(3, 12), cour = personne(rng);
       var P = R(2 * L + 3.14 * D), dist = R(tours * P / 1000, 6);
       var r0 = D / 2;
       f = EM.fig.fit([[-r0, -r0], [L + r0, r0]], { w: 300, h: 170, pad: 26 });
@@ -899,7 +899,7 @@
       f.segLabel([0, r0], [L, r0], L + ' m', { inside: [L / 2, 0] });
       f.text([0.12 * D, 0], D + ' m', { small: true, anchor: 'start' });
       return {
-        enonce: 'La piste d\'un stade est formée de deux lignes droites de ' + u(L, 'm') + ' et de deux demi-cercles de diamètre ' + u(D, 'm') + ' (voir la figure). On prend $\\pi \\approx 3{,}14$.<br>a) Calculer la longueur d\'un tour de piste.<br>b) ' + personne(rng).nom + ' fait ' + tours + ' tours de piste. Quelle distance parcourt-il ou elle, en kilomètres ?',
+        enonce: 'La piste d\'un stade est formée de deux lignes droites de ' + u(L, 'm') + ' et de deux demi-cercles de diamètre ' + u(D, 'm') + ' (voir la figure). On prend $\\pi \\approx 3{,}14$.<br>a) Calculer la longueur d\'un tour de piste.<br>b) ' + cour.nom + ' fait ' + tours + ' tours de piste. Quelle distance parcourt-' + cour.il + ', en kilomètres ?',
         figure: f.svg(),
         questions: [qnum('a) Longueur d\'un tour :', P, 'm'), qnum('b) Distance (km) :', dist, 'km')],
         indices: ['Les deux demi-cercles forment ensemble un cercle entier de diamètre ' + u(D, 'm') + ' : son périmètre est $\\pi \\times D$.',
@@ -1076,7 +1076,7 @@
           questions: [qnum('Nombre d\'axes de symétrie :', F0.k)],
           indices: ['Un axe de symétrie partage la figure en deux parties qui se superposent quand on plie le long de cet axe.', 'Pense aux médiatrices des côtés et aux diagonales, et vérifie à chaque fois par pliage (mentalement).'],
           solution: [
-            'Les axes de symétrie de ' + F0.nom + ' sont ' + F0.axes + '.',
+            'Les axes de symétrie ' + F0.nom.replace(/^un /, 'd\'un ') + ' sont ' + F0.axes + '.',
             'Cette figure a donc ' + m(F0.k) + ' axe' + (F0.k > 1 ? 's' : '') + ' de symétrie.'
           ]
         };
@@ -1861,7 +1861,7 @@
         f.angle(pB, pA, pC, a + '°', { r: 22 }).angle(pC, pB, pA, b + '°', { r: 22 }).angle(pA, pC, pD, '?', { r: 22, accent: true });
         f.point(pA, 'A', 'n').point(pB, 'B', 'so').point(pC, 'C', 's').point(pD, 'D', 's');
         return {
-          enonce: 'Dans le triangle $ABC$, $' + w('BAC') + ' = ' + dg(a) + '$ et $' + w('ABC') + ' = ' + dg(b) + '$. Le point $D$ est sur la demi-droite $[BC)$, au-delà de $C$.<br>a) Calculer $' + w('ACB') + '$.<br>b) Calculer $' + w('ACD') + '$. Que remarques-tu ?',
+          enonce: 'Dans le triangle $ABC$, $' + w('BAC') + ' = ' + dg(a) + '$ et $' + w('ABC') + ' = ' + dg(b) + '$. Le point $D$ est sur la demi-droite $[BC)$, au-delà de $C$.<br>a) Calculer $' + w('ACB') + '$.<br>b) Calculer $' + w('ACD') + '$, puis le comparer à $' + w('BAC') + ' + ' + w('ABC') + '$.',
           figure: f.svg(),
           questions: [qnum('a) $' + w('ACB') + ' =$', c, '°'), qnum('b) $' + w('ACD') + ' =$', a + b, '°')],
           indices: ['La somme des angles du triangle vaut $180^\\circ$.', 'Les angles $' + w('ACB') + '$ et $' + w('ACD') + '$ sont adjacents et forment un angle plat.'],
@@ -1908,7 +1908,7 @@
           'Le troisième côté $c$ doit être plus petit que $' + a3 + ' + ' + b3 + ' = ' + (a3 + b3) + '$ (sinon il serait trop long).',
           'Le côté de ' + b3 + ' m doit être plus petit que $' + a3 + ' + c$ : donc $c > ' + b3 + ' - ' + a3 + ' = ' + (b3 - a3) + '$.',
           'Donc $' + (b3 - a3) + ' < c < ' + (a3 + b3) + '$ : les entiers possibles sont $' + T.set(poss) + '$. (Pour $c = ' + (b3 - a3) + '$ ou $c = ' + (a3 + b3) + '$, les trois sommets seraient alignés.)',
-          'Le triangle est isocèle si deux côtés sont égaux : $c = ' + a3 + '$' + (poss.indexOf(a3) < 0 ? ' n\'est pas possible ici' : '') + ' ou $c = ' + b3 + '$. Réponse : $' + T.set(iso) + '$.'
+          'Le triangle est isocèle si deux côtés sont égaux, c\'est-à-dire si $c = ' + a3 + '$ ou $c = ' + b3 + '$. ' + (poss.indexOf(a3) < 0 ? '$c = ' + a3 + '$ n\'est pas dans la liste (car $' + a3 + ' + ' + a3 + ' \\leq ' + b3 + '$) : seul $c = ' + b3 + '$ convient.' : 'Les deux valeurs sont dans la liste.') + ' Réponse : $' + T.set(iso) + '$.'
         ],
         aide: 'Sépare les nombres par « ; ».'
       };
@@ -1953,7 +1953,7 @@
           ['A', 'B', 'C'].forEach(function (k) { P[k] = [rng.nz(-4, 4), rng.nz(-4, 4)]; });
           P.D = [P.A[0] + P.C[0] - P.B[0], P.A[1] + P.C[1] - P.B[1]];
           g++;
-        } while (g < 300 && (Math.abs((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0])) < 6 || Math.abs(P.D[0]) > 5 || Math.abs(P.D[1]) > 5 || dist(P.A, P.C) < 3 || P.D[0] === 0 || P.D[1] === 0));
+        } while (g < 300 && (Math.abs((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0])) < 6 || Math.abs(P.D[0]) > 5 || Math.abs(P.D[1]) > 5 || dist(P.A, P.C) < 3 || dist(P.A, P.B) < 2 || dist(P.B, P.C) < 2 || dist(P.D, P.A) < 2 || dist(P.D, P.C) < 2 || P.D[0] === 0 || P.D[1] === 0));
         var I = [(P.A[0] + P.C[0]) / 2, (P.A[1] + P.C[1]) / 2];
         f = repere(-6, 6, -6, 6, 270);
         f.seg(P.A, P.B).seg(P.B, P.C).seg(P.A, P.C, { dash: true });
@@ -2089,7 +2089,10 @@
         var sol = [];
         if (a * c < 0) sol.push('Les deux nombres sont de signes contraires : le nombre négatif est le plus petit. Donc $' + frx(a, b) + ' ' + signe + ' ' + frx(c, d) + '$.');
         else {
-          sol.push('On les écrit avec le même dénominateur positif $' + L + '$ : $' + frx(a, b) + ' = ' + frx(N1, L) + '$ et $' + frx(c, d) + ' = ' + frx(N2, L) + '$.');
+          var conv = [];
+          if (L !== b) conv.push('$' + frx(a, b) + ' = ' + frx(N1, L) + '$');
+          if (L !== d) conv.push('$' + frx(c, d) + ' = ' + frx(N2, L) + '$');
+          sol.push('On les écrit avec le même dénominateur positif $' + L + '$ : ' + conv.join(' et ') + '.');
           sol.push('On compare les numérateurs : $' + n(N1) + ' ' + signe + ' ' + n(N2) + '$, donc $' + frx(a, b) + ' ' + signe + ' ' + frx(c, d) + '$.' + '');
         }
         sol.push('L\'inverse de $' + frx(a, b) + '$ est $' + frx(b, a) + (F(b, a).d !== Math.abs(a) || F(b, a).n !== (a < 0 ? -b : b) ? ' = ' + F(b, a).tex() : '') + '$ (même signe) ; son opposé est $' + frx(-a, b) + '$ (signe contraire).');
@@ -2198,7 +2201,7 @@
         var quo = R(ys[0] / C.xs[0], 4), quos = C.xs.map(function (x, i) { return R(ys[i] / x, 4); });
         var qs = [qcm(rng, 'a) Est-ce un tableau de proportionnalité ?', C.lin ? 'Oui : $y$ est une fonction linéaire de $x$' : 'Non : ce n\'est pas une application linéaire', ['Oui : $y$ est une fonction linéaire de $x$', 'Non : ce n\'est pas une application linéaire']), qnum('b) Quotient $\\dfrac{y}{x}$ pour la première colonne :', quo)];
         if (C.lin) qs.push(qnum('c) Valeur de $y$ pour $x = ' + C.q + '$ :', C.a * C.q, C.unite));
-        var sol = ['On calcule le quotient $\\dfrac{y}{x}$ pour chaque colonne : ' + C.xs.map(function (x, i) { return '$\\dfrac{' + n(ys[i]) + '}{' + n(x) + '} = ' + n(quos[i]) + '$'; }).join(' ; ') + '.'];
+        var sol = ['On calcule le quotient $\\dfrac{y}{x}$ pour chaque colonne : ' + C.xs.map(function (x, i) { var ex = ar.isInt(quos[i] * 100); return '$\\dfrac{' + n(ys[i]) + '}{' + n(x) + '} ' + (ex ? '= ' : '\\approx ') + n(R(quos[i], 2)) + '$'; }).join(' ; ') + '.'];
         if (C.lin) {
           sol.push('Tous les quotients sont égaux à ' + m(C.a) + ' : c\'est un tableau de proportionnalité. $y = ' + n(C.a) + 'x$ : l\'application $x \\mapsto ' + n(C.a) + 'x$ est linéaire, de coefficient ' + m(C.a) + '.');
           sol.push('Pour $x = ' + C.q + '$ : $y = ' + n(C.a) + ' \\times ' + C.q + ' = ' + n(C.a * C.q) + '$.');
@@ -2298,7 +2301,7 @@
             'Effectifs lus : ' + ef.join(' ; ') + ' ; effectif total ' + m(N) + '. Centres des classes : ' + cen.map(m).join(' ; ') + '.',
             'Somme des produits : $' + cen.map(function (c, jj) { return n(c) + ' \\times ' + ef[jj]; }).join(' + ') + ' = ' + n(S) + '$.',
             'Moyenne : $\\dfrac{' + n(S) + '}{' + N + '} ' + (exact ? '= ' : '\\approx ') + n(R(moy, 1)) + '$ ' + C.u + '.',
-            'Valeurs strictement inférieures à ' + m(C.a0 + mb3 * C.h) + ' : $' + ef.slice(0, mb3).join(' + ') + ' = ' + EM.util.sum(ef.slice(0, mb3)) + '$, soit $\\dfrac{' + EM.util.sum(ef.slice(0, mb3)) + '}{' + N + '} \\times 100 ' + (exPc ? '= ' : '\\approx ') + n(R(pc, 1)) + '$ %.'
+            'Valeurs strictement inférieures à ' + m(C.a0 + mb3 * C.h) + ' : ' + (mb3 > 1 ? '$' + ef.slice(0, mb3).join(' + ') + ' = ' + EM.util.sum(ef.slice(0, mb3)) + '$' : m(ef[0])) + ', soit $\\dfrac{' + EM.util.sum(ef.slice(0, mb3)) + '}{' + N + '} \\times 100 ' + (exPc ? '= ' : '\\approx ') + n(R(pc, 1)) + '$ %.'
           ]
         };
       }
@@ -2424,7 +2427,7 @@
         var L = rng.int(90, 110), l = rng.int(55, 75), d = Math.sqrt(L * L + l * l), dr = R(d, 1), gain = R(L + l - d, 1);
         var nom = personne(rng);
         return {
-          enonce: 'Le terrain de football d\'un stade de ' + rng.pick(VILLES) + ' est un rectangle de ' + u(L, 'm') + ' sur ' + u(l, 'm') + '. ' + nom.nom + ' va d\'un coin au coin opposé en traversant le terrain en ligne droite (en diagonale).<br>a) Calculer la longueur de la diagonale, arrondie au dixième de mètre.<br>b) Combien de mètres ' + nom.il + ' économise-t-' + nom.il + ' par rapport au trajet le long des deux côtés ? (Arrondir au dixième.)',
+          enonce: 'Le terrain de football d\'un stade de ' + rng.pick(VILLES) + ' est un rectangle de ' + u(L, 'm') + ' sur ' + u(l, 'm') + '. ' + nom.nom + ' va d\'un coin au coin opposé en traversant le terrain en ligne droite (en diagonale).<br>a) Calculer la longueur de la diagonale, arrondie au dixième de mètre.<br>b) Combien de mètres économise-t-' + nom.il + ' par rapport au trajet le long des deux côtés ? (Arrondir au dixième.)',
           questions: [qnum('a) Diagonale :', dr, 'm', 0.06), qnum('b) Économie :', gain, 'm', 0.11)],
           indices: ['La diagonale partage le rectangle en deux triangles rectangles dont elle est l\'hypoténuse.', 'Le trajet le long des côtés mesure longueur + largeur.'],
           solution: [
@@ -2639,7 +2642,7 @@
       if (niveau === 2) {
         var d2 = rng.dec(0.8, 1.8, 1), a3 = rng.int(62, 78), L2 = d2 / Math.cos(rad(a3)), h2 = Math.sqrt(L2 * L2 - d2 * d2);
         return {
-          enonce: metier + ' pose une échelle contre ' + support + ' vertical. Le pied de l\'échelle est à ' + u(d2, 'm') + ' du pied du support, et l\'échelle fait avec le sol un angle de $' + dg(a3) + '$. ' + base + '<br>a) Calculer la longueur $PS$ de l\'échelle, arrondie au centimètre.<br>b) À quelle hauteur $HS$ l\'échelle touche-t-elle le support ? (Arrondir au centimètre ; utilise la valeur de $PS$ gardée en mémoire dans la calculatrice.)',
+          enonce: metier + ' pose une échelle contre ' + support + ' vertical. Le pied de l\'échelle est à ' + u(d2, 'm') + ' du pied du support, et l\'échelle fait avec le sol un angle de $' + dg(a3) + '$. ' + base + '<br>a) Calculer la longueur $PS$ de l\'échelle, arrondie au centimètre.<br>b) À quelle hauteur $HS$ l\'échelle touche-t-elle le support ? (Arrondir au centimètre, en utilisant la valeur de $PS$ gardée en mémoire dans la calculatrice.)',
           figure: figEchelle(d2, h2, '?', a3 + '°', tx(d2) + ' m'),
           questions: [qnum('a) $PS \\approx$', R(L2, 2), 'm', 0.006), qnum('b) $HS \\approx$', R(h2, 2), 'm', 0.02)],
           indices: ['$\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$, donc $PS = \\dfrac{PH}{\\cos ' + w('HPS') + '}$.', 'Pour la hauteur, applique le théorème de Pythagore dans le triangle $PHS$ rectangle en $H$.'],
@@ -2721,7 +2724,7 @@
           indices: ['Pense à un triangle rectangle d\'hypoténuse fixe : quand l\'angle aigu grandit, le côté adjacent raccourcit.', 'Le cosinus d\'un angle aigu est toujours strictement compris entre 0 et 1.'],
           solution: [
             'Quand un angle aigu augmente, son cosinus diminue. Comme $' + Math.min(a, b) + '^\\circ < ' + Math.max(a, b) + '^\\circ$, on a $\\cos ' + dg(Math.min(a, b)) + ' > \\cos ' + dg(Math.max(a, b)) + '$, donc $\\cos ' + dg(a) + ' ' + signe + ' \\cos ' + dg(b) + '$.',
-            'L\'affirmation est ' + (V[1] ? 'vraie' : 'fausse') + ' : ' + V[2]
+            'L\'affirmation est ' + (V[1] ? 'vraie' : 'fausse') + '. ' + V[2]
           ]
         };
       }
@@ -3077,7 +3080,7 @@
       }
       if (niveau === 2) {
         var Tt = rng.pick(TOITS), r = Tt[0], h = Tt[1], g2 = Math.sqrt(R(r * r + h * h, 6)), exact = Math.abs(g2 * 100 - Math.round(g2 * 100)) < 1e-6;
-        var Al = Math.PI * r * g2, Alr = Math.round(Al), prix = rng.pick([1500, 2000, 2500, 3000]);
+        var Al = Math.PI * r * R(g2, 2), Alr = Math.round(Al), prix = rng.pick([1500, 2000, 2500, 3000]);
         var village = rng.pick(['en Casamance', 'dans le Saloum', 'près de Kédougou', 'dans le Fouta']);
         var S = [0, h], A = [-r, 0], B = [r, 0], O = [0, 0];
         var f = EM.fig.fit([S, A, B, [0, -0.35 * r]], { w: 260, h: 190, pad: 30 });
@@ -3087,7 +3090,7 @@
         return {
           enonce: 'Le toit d\'une case ' + village + ' a la forme d\'un cône de révolution de sommet $S$, dont la base est un disque de centre $O$ et de rayon $OB = ' + n(r) + '$ m. Sa hauteur est $SO = ' + n(h) + '$ m.<br>a) Calculer la longueur de la génératrice $SB$' + (exact ? '.' : ', arrondie au centimètre.') + '<br>b) Calculer l\'aire latérale du toit, arrondie au m² : c\'est la surface de paille à poser.<br>c) La pose de la paille coûte ' + T.fcfa(prix) + ' par m² (aire arrondie). Calculer le coût.',
           figure: f.svg(),
-          questions: [qnum('a) $SB \\approx$', R(g2, 2), 'm', exact ? null : 0.006), qnum('b) Aire latérale :', Alr, 'm²', 0.6), qnum('c) Coût :', Alr * prix, 'F CFA', prix)],
+          questions: [qnum('a) $SB \\approx$', R(g2, 2), 'm', exact ? null : 0.006), qnum('b) Aire latérale :', Alr, 'm²', 1), qnum('c) Coût :', Alr * prix, 'F CFA', prix)],
           indices: ['Le triangle $SOB$ est rectangle en $O$ : $SB^2 = SO^2 + OB^2$.', 'Aire latérale d\'un cône : $\\mathcal{A}_\\ell = \\pi \\times r \\times g$, où $g$ est la génératrice.'],
           solution: [
             'Le triangle $SOB$ est rectangle en $O$. D\'après le théorème de Pythagore : $SB^2 = ' + n(h) + '^2 + ' + n(r) + '^2 = ' + n(R(h * h, 4)) + ' + ' + n(R(r * r, 4)) + ' = ' + n(R(g2 * g2, 4)) + '$, donc $SB ' + (exact ? '= ' : '\\approx ') + n(R(g2, 2)) + '$ m.',

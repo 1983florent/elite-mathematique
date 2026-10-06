@@ -59,6 +59,13 @@ dont l'alignement exact mérite d'être confirmé. Pour corriger :
 - 1ère S : le nombre de solutions de $f(x) = m$ lu dans le tableau de variation repose sur une propriété admise.
 - Angles et arguments : la réponse attendue est la mesure principale (le correcteur n'accepte pas une mesure « à $2\pi$ près »).
 
+## Exercices complémentaires du collège
+
+- 4e, vecteurs : le niveau 3 (somme de vecteurs en coordonnées, règle du parallélogramme) relève peut-être plutôt de la 3e.
+- 4e, applications linéaires : le tarif du taxi (avec prise en charge) cite « application affine » en simple remarque.
+- 3e, polygones réguliers inscrits : les corrections utilisent $\cos 30^\circ = \dfrac{\sqrt{3}}{2}$ (supposé connu en 3e).
+- Ordres de grandeur utilisés comme données d'énoncé, **non** comme statistiques officielles : fréquentation mensuelle du TER, pluies d'hivernage à Ziguinchor, températures à Tambacounda, règle des 65°–75° pour une échelle, rayon terrestre de 6 370 km.
+
 ## Missions Sénégal
 
 - Les données chiffrées des missions (prix, tarifs d'eau, forfaits, pluviométrie, rendements…) sont **fictives** et présentées comme « données de la mission » : elles ne prétendent pas refléter les prix ou statistiques réels.

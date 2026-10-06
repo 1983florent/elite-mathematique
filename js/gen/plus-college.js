@@ -1414,7 +1414,7 @@
       var eu3 = euclideEtapes(Lg, lg);
       var lieu = rng.pick(['un champ de mil près de Kaffrine', 'un verger de manguiers en Casamance', 'un champ d\'arachide près de Kaolack', 'la cour d\'une école de Louga']);
       return {
-        enonce: 'On veut planter des arbres tout autour de ' + lieu + ', de forme rectangulaire, de ' + u(Lg, 'm') + ' sur ' + u(lg, 'm') + '. On place un arbre à chaque coin, et les arbres doivent être régulièrement espacés d\'un nombre entier de mètres, le plus grand possible.<br>a) Quel est l\'écart entre deux arbres voisins ?<br>b) Combien d\'arbres faut-il planter ?',
+        enonce: 'On veut planter des arbres tout autour ' + (/^un /.test(lieu) ? 'd\'' : 'de ') + lieu + ', de forme rectangulaire, de ' + u(Lg, 'm') + ' sur ' + u(lg, 'm') + '. On place un arbre à chaque coin, et les arbres doivent être régulièrement espacés d\'un nombre entier de mètres, le plus grand possible.<br>a) Quel est l\'écart entre deux arbres voisins ?<br>b) Combien d\'arbres faut-il planter ?',
         questions: [qnum('a) Écart :', g, 'm'), qnum('b) Nombre d\'arbres :', nbA)],
         indices: ['Avec un arbre à chaque coin, l\'écart doit diviser exactement la longueur et la largeur.', 'Le plus grand diviseur commun est le PGCD. Puis : nombre d\'intervalles sur le tour complet = nombre d\'arbres.'],
         solution: [
@@ -1454,9 +1454,9 @@
       if (niveau === 1) {
         var k = rng.int(2, 9), x0, K = String(k);
         var MOD = [
-          { t: 'le double de $x$, augmenté de $' + K + '$', bon: '2x + ' + K, faux: ['2(x + ' + K + ')', 'x^2 + ' + K, '2 + x + ' + K], v: function (x) { return 2 * x + k; }, s: '$2 \\times x + ' + K + '$' },
+          { t: 'le double de $x$, augmenté de $' + K + '$', bon: '2x + ' + K, faux: ['2(x + ' + K + ')', 'x^2 + ' + K, '2 + x + ' + K], v: function (x) { return 2 * x + k; }, s: 'on calcule d\'abord le double de $x$, $2 \\times x$, puis on ajoute $' + K + '$' },
           { t: 'le triple de la somme de $x$ et de $' + K + '$', bon: '3(x + ' + K + ')', faux: ['3x + ' + K, 'x + ' + (3 * k), '3 + x + ' + K], v: function (x) { return 3 * (x + k); }, s: 'on calcule d\'abord la somme $x + ' + K + '$, puis on la multiplie par 3' },
-          { t: 'le carré de $x$, diminué de $' + K + '$', bon: 'x^2 - ' + K, faux: ['(x - ' + K + ')^2', '2x - ' + K, 'x - ' + (k * k)], v: function (x) { return x * x - k; }, s: '$x \\times x - ' + K + '$' },
+          { t: 'le carré de $x$, diminué de $' + K + '$', bon: 'x^2 - ' + K, faux: ['(x - ' + K + ')^2', '2x - ' + K, 'x - ' + (k * k)], v: function (x) { return x * x - k; }, s: 'on calcule d\'abord le carré de $x$, $x \\times x$, puis on soustrait $' + K + '$' },
           { t: 'la moitié de la différence de $x$ et de $' + K + '$', bon: '\\dfrac{x - ' + K + '}{2}', faux: ['\\dfrac{x}{2} - ' + K, 'x - \\dfrac{' + K + '}{2}', '2(x - ' + K + ')'], v: function (x) { return (x - k) / 2; }, s: 'on calcule d\'abord la différence $x - ' + K + '$, puis on la divise par 2' },
           { t: 'le produit de $x$ par la somme de $x$ et de $' + K + '$', bon: 'x(x + ' + K + ')', faux: ['x \\times x + ' + K, '2x + ' + K, 'x + x + ' + K], v: function (x) { return x * (x + k); }, s: 'on calcule d\'abord la somme $x + ' + K + '$, puis on la multiplie par $x$' }
         ];
@@ -1561,7 +1561,7 @@
         else { bon = rng.pick(SANS_CENTRE); autres = rng.sample(AVEC_CENTRE, 3); }
         var C0 = rng.pick(CENTRES);
         return {
-          enonce: 'a) Parmi les figures suivantes, laquelle ' + (avec ? 'possède' : 'ne possède pas') + ' de centre de symétrie ?<br>b) Quel est le centre de symétrie ' + C0[0] + ' ?',
+          enonce: 'a) Parmi les figures suivantes, laquelle ' + (avec ? 'possède un' : 'ne possède pas de') + ' centre de symétrie ?<br>b) Quel est le centre de symétrie ' + C0[0] + ' ?',
           questions: [qcm(rng, 'a) Réponse :', bon, autres), qcm(rng, 'b) Centre de symétrie ' + C0[0] + ' :', C0[1], C0[2])],
           indices: ['Un point $O$ est centre de symétrie d\'une figure si, en faisant tourner la figure d\'un demi-tour autour de $O$, elle se superpose à elle-même.', 'Pour une lettre, imagine-la tournée « la tête en bas » : se lit-elle pareil ?'],
           solution: [
@@ -2042,8 +2042,9 @@
       }
       // niveau 3 : abreuvoir en forme de prisme à base triangulaire
       var larg = rng.pick([40, 50, 60, 80]), prof = rng.pick([30, 40, 45, 50]), long = rng.pick([2, 2.5, 3, 4, 5]);
-      var Bm = (larg / 100) * (prof / 100) / 2, V = R(Bm * long, 6), L = R(V * 1000, 3), debit = rng.pick([10, 15, 20, 25, 30, 40]);
-      var tmin = L / debit;
+      var Bm = (larg / 100) * (prof / 100) / 2, V = R(Bm * long, 6), L = R(V * 1000, 3), debit, tmin, gd = 0;
+      do { debit = rng.pick([10, 15, 20, 25, 30, 40]); tmin = L / debit; gd++; } while (gd < 30 && Math.abs(tmin - Math.floor(tmin) - 0.5) < 0.12);
+      if (Math.abs(tmin - Math.floor(tmin) - 0.5) < 0.12) { debit = 24; tmin = L / debit; }
       var mn = Math.floor(tmin), sec = Math.round((tmin - mn) * 60);
       var village = rng.pick(['du Ferlo', 'près de Linguère', 'près de Dahra', 'près de Matam']);
       return {

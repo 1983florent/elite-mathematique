@@ -157,7 +157,7 @@
     return '<div class="history"><p class="eyebrow">Le saviez-vous ?</p><h3>' + esc(fa.titre) + '</h3><p>' + EM.md(fa.texte) + '</p></div>';
   }
   function initiales(nom) {
-    var mots = String(nom).replace(/^(L'|Le |La |Les )/i, '').split(/[\s-]+/).filter(function (m) { return /^[A-ZÀ-Ý]/.test(m); });
+    var mots = String(nom).replace(/^(L'|Le |La |Les )/i, '').split(/[\s-]+/).map(function (m) { return m.replace(/^[dl]['’]/i, ''); }).filter(function (m) { return /^[A-ZÀ-Ý]/.test(m); });
     return (mots[0] ? mots[0][0] : '?') + (mots.length > 1 ? mots[mots.length - 1][0] : '');
   }
   EM.initiales = initiales;

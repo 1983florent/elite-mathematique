@@ -586,7 +586,7 @@ details summary::-webkit-details-marker { display: none; }
 .choice.good { border-color: var(--ok); background: var(--ok-soft); }
 .choice.bad { border-color: var(--ko); background: var(--ko-soft); }
 .choice .letter { width: 28px; height: 28px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); font-family: var(--font-display); font-weight: 750; font-size: .85rem; color: var(--primary); }
-.choice.sel .letter { background: var(--primary-strong); color: #fff; }
+.choice.sel .letter { background: var(--primary-strong); color: var(--on-primary); }
 .hint { display: flex; gap: 10px; background: var(--info-soft); border-radius: var(--r); padding: 11px 14px; margin-top: 10px; }
 .solution { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px 18px; margin-top: 14px; }
 .solution h4 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
@@ -602,7 +602,7 @@ details summary::-webkit-details-marker { display: none; }
 .levels { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 11px; overflow: hidden; background: var(--surface); }
 .levels button, .levels a { border: 0; background: var(--surface); padding: 7px 13px; cursor: pointer; font-size: .86rem; color: var(--muted); text-decoration: none; }
 .levels > * + * { border-left: 1px solid var(--border) !important; }
-.levels [aria-pressed="true"] { background: var(--primary-strong); color: #fff; font-weight: 600; }
+.levels [aria-pressed="true"] { background: var(--primary-strong); color: var(--on-primary); font-weight: 600; }
 
 /* ---------- figures SVG ---------- */
 .fig { font-family: var(--font-body); }
@@ -706,6 +706,9 @@ textarea.inp { width: 100%; min-height: 90px; resize: vertical; }
 .mission-card .row { margin-top: auto; }
 .demo-card { display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px; text-decoration: none; color: var(--text); }
 .demo-card:hover { border-color: var(--primary); }
+.demo-card { overflow: hidden; }
+.demo-motif { display: block; margin: -18px -18px 10px; height: 52px; }
+.demo-motif .motif { display: block; width: 100%; height: 100%; }
 .demo-card h3 { margin: 0; }
 .demo-card p { margin: 0; color: var(--muted); font-size: .9rem; }
 .demo-zone { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px; }

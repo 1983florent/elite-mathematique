@@ -56,7 +56,7 @@
       'Fais bouger les figures, déplace les curseurs : les propriétés restent vraies sous tes yeux. Idéal pour comprendre un théorème avant de l\'appliquer.');
     if (!demos.length) html += '<div class="card"><p class="muted">Les démonstrations sont en préparation.</p></div>';
     else html += '<div class="grid g3">' + demos.map(function (d) {
-      return '<a class="demo-card" href="#/demo/' + d.id + '"><span class="ico-box" style="margin-bottom:6px">' + I('curseurs') + '</span><h3>' + EM.md(d.titre) + '</h3>' +
+      return '<a class="demo-card" href="#/demo/' + d.id + '"><span class="demo-motif" aria-hidden="true">' + EM.motif('demo:' + d.id, { cols: 9, rows: 1, densite: 0.9 }) + '</span><h3>' + EM.md(d.titre) + '</h3>' +
         '<p>' + EM.md(d.resume || '') + '</p><div class="row" style="margin-top:8px">' + chipsChapitres(d.chapitres, 2) + '</div></a>';
     }).join('') + '</div>';
     main.innerHTML = html;

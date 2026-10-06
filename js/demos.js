@@ -74,7 +74,26 @@
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
   }
-  function md(s) { return EM.md ? EM.md(s) : esc(s); }
+  /**
+   * Texte avec formules $…$ (KaTeX). La ponctuation qui suit une formule lui reste collée :
+   * pas de « : » ni de « . » seul en début de ligne sur téléphone.
+   */
+  function md(s) {
+    var R = EM.render;
+    if (!R || !R.split || !R.tex) return EM.md ? EM.md(s) : esc(s);
+    var segs = R.split(s), out = '';
+    for (var i = 0; i < segs.length; i++) {
+      var g = segs[i], nx = segs[i + 1];
+      if (g.t === 'text') { out += g.v.replace(/\\\$/g, '$'); continue; }
+      var h = R.tex(g.v, g.t === 'display');
+      if (g.t === 'inline' && nx && nx.t === 'text') {
+        var m = /^(\u00a0?[:;.,!?)\u00bb]+)/.exec(nx.v);
+        if (m) { h = '<span style="white-space:nowrap">' + h + m[1] + '</span>'; nx.v = nx.v.slice(m[1].length); }
+      }
+      out += h;
+    }
+    return out;
+  }
   function it(s) { return '<i>' + s + '</i>'; }
   function nid(p) { uid += 1; return 'demo-' + p + '-' + uid; }
   /** ax + b en TeX (a et b décimaux). */
@@ -555,7 +574,7 @@
     id: 'thales-curseur',
     titre: 'Thalès en mouvement',
     chapitres: ['3e-thales', '4e-droite-milieux'],
-    resume: 'Fais glisser le point M sur la droite (AB) : (MN) reste parallèle à (BC) et les trois rapports restent égaux.',
+    resume: 'Fais glisser le point M sur la droite (AB)\u00a0: (MN) reste parallèle à (BC) et les trois rapports restent égaux.',
     render: function (el) {
       var A = [2.5, 5], B = [0, 0], Cc = [7, 0];
       var AB = dist(A, B), AC = dist(A, Cc), BC = dist(B, Cc);
@@ -567,21 +586,21 @@
         return '<tr><td>' + md('$' + tex + '$') + '</td><td><span data-o="' + a + '"></span> ÷ <span data-o="' + b + '"></span></td><td><b data-o="' + r + '"></b></td></tr>';
       }
       el.innerHTML = layout({
-        stage: svgTag('fig', F, 'Triangle ABC ; M sur la droite (AB), N sur (AC), (MN) parallèle à (BC)'),
+        stage: svgTag('fig', F, 'Triangle ABC\u00a0; M sur la droite (AB), N sur (AC), (MN) parallèle à (BC)'),
         controls: slider('t', 'Position de $M$ sur $(AB)$', TMIN, TMAX, 0.01, st.t),
         readout: '<div class="table-wrap"><table class="t"><thead><tr><th>Rapport</th><th>Longueurs (cm)</th><th>Valeur</th></tr></thead><tbody>' +
           row('\\dfrac{AM}{AB}', 'am', 'ab', 'r1') + row('\\dfrac{AN}{AC}', 'an', 'ac', 'r2') + row('\\dfrac{MN}{BC}', 'mn', 'bc', 'r3') +
           '</tbody></table></div><p data-o="msg" style="margin:10px 0 0"></p>',
-        note: md('Observe : où que soit $M$ sur $(AB)$, la parallèle à $(BC)$ passant par $M$ coupe $(AC)$ en $N$, et $\\frac{AM}{AB} = \\frac{AN}{AC} = \\frac{MN}{BC}$. ' +
-          'Place $M$ au milieu de $[AB]$ : c\'est la droite des milieux. Passe de l\'autre côté de $A$ : configuration « papillon ».')
+        note: md('Observe\u00a0: où que soit $M$ sur $(AB)$, la parallèle à $(BC)$ passant par $M$ coupe $(AC)$ en $N$, et $\\frac{AM}{AB} = \\frac{AN}{AC} = \\frac{MN}{BC}$. ' +
+          'Place $M$ au milieu de $[AB]$\u00a0: c\'est la droite des milieux. Passe de l\'autre côté de $A$\u00a0: configuration «\u00a0papillon\u00a0».')
       });
       var MSG = {
-        zero: md('$M$ est en $A$ : les longueurs $AM$, $AN$ et $MN$ sont nulles.'),
-        mid: md('$M$ est le milieu de $[AB]$ : $N$ est le milieu de $[AC]$ et $MN = \\dfrac{BC}{2}$ (droite des milieux).'),
-        one: md('$M$ est en $B$ et $N$ en $C$ : les trois rapports valent $1$.'),
-        pap: md('Configuration « papillon » : $M$ et $N$ sont de l\'autre côté de $A$, les rapports restent égaux.'),
-        far: md('$M$ est au-delà de $B$ : les rapports dépassent $1$ et restent égaux.'),
-        seg: md('$M$ est sur le segment $[AB]$ : les trois rapports sont égaux et $(MN) \\parallel (BC)$.')
+        zero: md('$M$ est en $A$\u00a0: les longueurs $AM$, $AN$ et $MN$ sont nulles.'),
+        mid: md('$M$ est le milieu de $[AB]$\u00a0: $N$ est le milieu de $[AC]$ et $MN = \\dfrac{BC}{2}$ (droite des milieux).'),
+        one: md('$M$ est en $B$ et $N$ en $C$\u00a0: les trois rapports valent $1$.'),
+        pap: md('Configuration «\u00a0papillon\u00a0»\u00a0: $M$ et $N$ sont de l\'autre côté de $A$, les rapports restent égaux.'),
+        far: md('$M$ est au-delà de $B$\u00a0: les rapports dépassent $1$ et restent égaux.'),
+        seg: md('$M$ est sur le segment $[AB]$\u00a0: les trois rapports sont égaux et $(MN) \\parallel (BC)$.')
       };
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
       var rT = bindRange(el, 't', function (v) { return 'AM = ' + nf(Math.abs(v) * AB) + ' cm'; }, function (v) { st.t = v; update(); });
@@ -646,9 +665,9 @@
   }
   EM.demos.register({
     id: 'pythagore-aires',
-    titre: 'Pythagore : les aires des carrés',
+    titre: 'Pythagore\u00a0: les aires des carrés',
     chapitres: ['4e-pythagore'],
-    resume: 'Déforme le triangle : quand l\'angle en A est droit, l\'aire du grand carré est exactement la somme des aires des deux autres.',
+    resume: 'Déforme le triangle\u00a0: quand l\'angle en A est droit, l\'aire du grand carré est exactement la somme des aires des deux autres.',
     render: function (el) {
       var LMIN = 1, LMAX = 4, TH0 = 60, TH1 = 120;
       var st = { b: 4, c: 3, th: 90 };
@@ -673,14 +692,14 @@
         controls: slider('b', 'Côté $AB$', LMIN, LMAX, 0.1, st.b) + slider('c', 'Côté $AC$', LMIN, LMAX, 0.1, st.c) +
           slider('th', 'Angle $\\widehat{BAC}$', TH0, TH1, 1, st.th),
         readout: '<div>' + md('$AB^2 + AC^2$') + ' = <span data-o="sum"></span></div>' +
-          '<div>' + md('$BC^2$') + ' = <span data-o="hyp"></span></div><p data-o="msg" style="margin:8px 0 0"></p>',
-        note: md('Observe les nombres écrits dans les carrés : ce sont leurs aires. Avec un angle droit en $A$, $BC^2 = AB^2 + AC^2$ ' +
-          '(avec $AB = 4$ et $AC = 3$, compte les carreaux : $16 + 9 = 25$). Ouvre ou ferme l\'angle : l\'égalité devient fausse, c\'est la réciproque du théorème.')
+          '<div>' + md('$BC^2$') + ' <span data-o="hyp"></span></div><p data-o="msg" style="margin:8px 0 0"></p>',
+        note: md('Observe les nombres écrits dans les carrés\u00a0: ce sont leurs aires. Avec un angle droit en $A$, $BC^2 = AB^2 + AC^2$ ' +
+          '(avec $AB = 4$ et $AC = 3$, compte les carreaux\u00a0: $16 + 9 = 25$). Ouvre ou ferme l\'angle\u00a0: l\'égalité devient fausse, c\'est la réciproque du théorème.')
       });
       var MSG = {
-        eq: md('Égalité : le triangle $ABC$ est rectangle en $A$ (théorème de Pythagore).'),
-        gt: md('$BC^2 > AB^2 + AC^2$ : l\'angle $\\widehat{BAC}$ est obtus, le triangle n\'est pas rectangle en $A$.'),
-        lt: md('$BC^2 < AB^2 + AC^2$ : l\'angle $\\widehat{BAC}$ est aigu, le triangle n\'est pas rectangle en $A$.')
+        eq: md('Égalité\u00a0: le triangle $ABC$ est rectangle en $A$ (théorème de Pythagore).'),
+        gt: md('$BC^2 > AB^2 + AC^2$\u00a0: l\'angle $\\widehat{BAC}$ est obtus, le triangle n\'est pas rectangle en $A$.'),
+        lt: md('$BC^2 < AB^2 + AC^2$\u00a0: l\'angle $\\widehat{BAC}$ est aigu, le triangle n\'est pas rectangle en $A$.')
       };
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
       var rB = bindRange(el, 'b', function (v) { return nt(v, 1); }, function (v) { st.b = v; update(); });
@@ -739,7 +758,7 @@
         S.sync();
         var tot = rnd(b2 + c2, 2);
         out.sum.innerHTML = sw(C.blue, nt(b2, 2)) + ' + ' + sw(C.green, nt(c2, 2)) + ' = <b>' + nt(tot, 2) + '</b>';
-        out.hyp.innerHTML = sw(C.acc, (st.th === 90 ? '' : '≈ ') + nt(a2, 2)) + ', donc ' + it('BC') + ' ' + eqv(Math.sqrt(a2), 2);
+        out.hyp.innerHTML = (st.th === 90 ? '= ' : '≈ ') + sw(C.acc, nt(a2, 2)) + ', donc ' + it('BC') + ' ' + eqv(Math.sqrt(a2), 2);
         out.msg.innerHTML = st.th === 90 ? MSG.eq : st.th > 90 ? MSG.gt : MSG.lt;
       }
       update();
@@ -754,7 +773,7 @@
     id: 'angle-inscrit',
     titre: 'Angle inscrit et angle au centre',
     chapitres: ['3e-angles-inscrits', '1s-angles-orientes'],
-    resume: 'Fais glisser M sur le cercle : l\'angle inscrit AMB ne change pas et vaut la moitié de l\'angle au centre qui intercepte le même arc.',
+    resume: 'Fais glisser M sur le cercle\u00a0: l\'angle inscrit AMB ne change pas et vaut la moitié de l\'angle au centre qui intercepte le même arc.',
     render: function (el) {
       var F = new Frame(-1.5, 1.5, -1.5, 1.5, 320);
       var st = { a: 215, b: 325, m: 100 };
@@ -767,12 +786,12 @@
         readout: '<div>' + sw(C.blue, 'Angle inscrit') + ' ' + md('$\\widehat{AMB}$') + ' = <b data-o="ins"></b></div>' +
           '<div>' + sw(C.acc, 'Angle au centre') + ' ' + md('$\\widehat{AOB}$') + ' (même arc) = <b data-o="cen"></b></div>' +
           '<div data-o="rel"></div><p data-o="msg" style="margin:8px 0 0"></p>',
-        note: md('Observe : tant que $M$ reste sur le même arc, $\\widehat{AMB}$ ne bouge pas, et l\'angle au centre qui intercepte le même arc (en rouge) vaut toujours le double : ' +
-          '$\\widehat{AOB} = 2\\,\\widehat{AMB}$. Déplace $A$ ou $B$ pour changer l\'arc ; fais passer $M$ sur l\'autre arc.')
+        note: md('Observe\u00a0: tant que $M$ reste sur le même arc, $\\widehat{AMB}$ ne bouge pas, et l\'angle au centre qui intercepte le même arc (en rouge) vaut toujours le double\u00a0: ' +
+          '$\\widehat{AOB} = 2\\,\\widehat{AMB}$. Déplace $A$ ou $B$ pour changer l\'arc\u00a0; fais passer $M$ sur l\'autre arc.')
       });
       var MSG = {
-        dia: md('$[AB]$ est un diamètre : $\\widehat{AMB} = 90°$, le triangle $AMB$ est rectangle en $M$.'),
-        big: md('$M$ est sur le petit arc : l\'angle inscrit intercepte le grand arc, et l\'angle au centre correspondant est rentrant (plus de $180°$).'),
+        dia: md('$[AB]$ est un diamètre\u00a0: $\\widehat{AMB} = 90°$, le triangle $AMB$ est rectangle en $M$.'),
+        big: md('$M$ est sur le petit arc\u00a0: l\'angle inscrit intercepte le grand arc, et l\'angle au centre correspondant est rentrant (plus de $180°$).'),
         std: md('Deux angles inscrits qui interceptent le même arc sont égaux.')
       };
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
@@ -825,7 +844,7 @@
         S.sync();
         out.ins.textContent = fdeg(ins);
         out.cen.textContent = fdeg(meas) + (meas > 180 ? ' (angle rentrant)' : '');
-        out.rel.innerHTML = '<b>' + fdeg(meas) + '</b> = 2 × <b>' + fdeg(meas / 2) + '</b> : l\'angle au centre est le double de l\'angle inscrit.';
+        out.rel.innerHTML = '<b>' + fdeg(meas) + '</b> = 2 × <b>' + fdeg(meas / 2) + '</b>\u00a0: l\'angle au centre est le double de l\'angle inscrit.';
         out.msg.innerHTML = meas === 180 ? MSG.dia : meas > 180 ? MSG.big : MSG.std;
       }
       update();
@@ -847,10 +866,10 @@
     id: 'somme-angles-triangle',
     titre: 'La somme des angles d\'un triangle',
     chapitres: ['5e-triangles', '5e-angles', '6e-triangles'],
-    resume: 'Déplace les sommets du triangle : ses angles changent mais leur somme reste toujours égale à 180°.',
+    resume: 'Déplace les sommets du triangle\u00a0: ses angles changent mais leur somme reste toujours égale à 180°.',
     render: function (el) {
       var F = new Frame(0, 10, 0, 7, 340);
-      var st = { P: [[1.2, 1], [8.8, 1.6], [3.6, 6.1]], proof: false };
+      var st = { P: [[1.2, 0.9], [8.8, 1.5], [3.8, 5.7]], proof: false };
       var NAMES = ['A', 'B', 'C'], COLS = [C.blue, C.green, C.acc];
       function angles(P) {
         return [0, 1, 2].map(function (i) {
@@ -860,12 +879,12 @@
       }
       el.innerHTML = layout({
         stage: svgTag('fig', F, 'Triangle ABC dont on peut déplacer les sommets'),
-        controls: checkbox('proof', 'Montrer la preuve : la parallèle à $(AB)$ passant par $C$', false),
+        controls: checkbox('proof', 'Montrer la preuve\u00a0: la parallèle à $(AB)$ passant par $C$', false),
         readout: '<div style="' + ROW + '"><span>' + md('$\\widehat{A}$') + ' = <b data-o="a0" style="color:' + C.blue + '"></b></span>' +
           '<span>' + md('$\\widehat{B}$') + ' = <b data-o="a1" style="color:' + C.green + '"></b></span>' +
           '<span>' + md('$\\widehat{C}$') + ' = <b data-o="a2" style="color:' + C.acc + '"></b></span></div>' +
-          '<div>Somme : <span data-o="sum"></span></div><p data-o="type" class="small" style="margin:6px 0 0"></p>',
-        note: md('Observe : quelle que soit la forme du triangle, $\\widehat{A} + \\widehat{B} + \\widehat{C} = 180°$. Coche la preuve : ' +
+          '<div>Somme\u00a0: <span data-o="sum"></span></div><p data-o="type" class="small" style="margin:6px 0 0"></p>',
+        note: md('Observe\u00a0: quelle que soit la forme du triangle, $\\widehat{A} + \\widehat{B} + \\widehat{C} = 180°$. Coche la preuve\u00a0: ' +
           'les angles alternes-internes reportent $\\widehat{A}$ et $\\widehat{B}$ au sommet $C$, et les trois angles forment un angle plat.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
@@ -891,14 +910,16 @@
         var rs = [];
         for (i = 0; i < 3; i++) {
           var u = p[(i + 1) % 3], v = p[(i + 2) % 3];
-          rs[i] = Math.min(30, 0.42 * Math.min(dist(p[i], u), dist(p[i], v)));
+          rs[i] = Math.min(st.proof && i === 2 ? 36 : 30, 0.42 * Math.min(dist(p[i], u), dist(p[i], v)));
           s += angleMark(p[i], u, v, q(rs[i]), COLS[i], 0.28);
         }
         if (st.proof) {
           // reports en C : angle A entre (-AB) et CA, angle B entre CB et (+AB)
           var c = p[2], ab = [p[1][0] - p[0][0], p[1][1] - p[0][1]];
-          s += angleMark(c, [c[0] - ab[0], c[1] - ab[1]], p[0], q(rs[2]), COLS[0], 0.28);
-          s += angleMark(c, p[1], [c[0] + ab[0], c[1] + ab[1]], q(rs[2]), COLS[1], 0.28);
+          var cA = [c[0] - ab[0], c[1] - ab[1]], cB = [c[0] + ab[0], c[1] + ab[1]], wA = wedge(c, cA, p[0]), wB = wedge(c, p[1], cB), kr = rs[2] + 15;
+          s += angleMark(c, cA, p[0], q(rs[2]), COLS[0], 0.28) + angleMark(c, p[1], cB, q(rs[2]), COLS[1], 0.28);
+          s += text([c[0] + kr * Math.cos(wA.mid), c[1] + kr * Math.sin(wA.mid) + 4], shown[0] + '°', { size: 12, bold: true, color: COLS[0] });
+          s += text([c[0] + kr * Math.cos(wB.mid), c[1] + kr * Math.sin(wB.mid) + 4], shown[1] + '°', { size: 12, bold: true, color: COLS[1] });
         }
         for (i = 0; i < 3; i++) {
           var w = wedge(p[i], p[(i + 1) % 3], p[(i + 2) % 3]), k = rs[i] + 15;
@@ -910,8 +931,8 @@
         out.a0.textContent = shown[0] + '°'; out.a1.textContent = shown[1] + '°'; out.a2.textContent = shown[2] + '°';
         out.sum.innerHTML = sw(C.blue, shown[0] + '°') + ' + ' + sw(C.green, shown[1] + '°') + ' + ' + sw(C.acc, shown[2] + '°') + ' = <b>180°</b>';
         var mx = Math.max.apply(null, shown);
-        out.type.textContent = (mx > 90 ? 'Triangle obtusangle : un angle obtus.' : mx === 90 ? 'Triangle rectangle : un angle droit, les deux autres sont complémentaires.' :
-          'Triangle acutangle : trois angles aigus.') + ' (Mesures arrondies au degré.)';
+        out.type.textContent = (mx > 90 ? 'Triangle obtusangle\u00a0: un angle obtus.' : mx === 90 ? 'Triangle rectangle\u00a0: un angle droit, les deux autres sont complémentaires.' :
+          'Triangle acutangle\u00a0: trois angles aigus.') + ' (Mesures arrondies au degré.)';
       }
       update();
       return function () { S.destroy(); };
@@ -923,19 +944,19 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'symetries-translation',
-    titre: 'Symétries et translation : point et image',
+    titre: 'Symétries et translation\u00a0: point et image',
     chapitres: ['6e-symetrie-orthogonale', '5e-symetrie-centrale', '4e-vecteurs', '2s-transformations'],
-    resume: 'Déplace le triangle, l\'axe, le centre ou le vecteur : l\'image se construit en direct et les longueurs sont conservées.',
+    resume: 'Déplace le triangle, l\'axe, le centre ou le vecteur\u00a0: l\'image se construit en direct et les longueurs sont conservées.',
     render: function (el) {
       var F = new Frame(-6, 6, -4.4, 4.4, 340);
-      var st = { mode: 0, T: [[-4, 1], [-1.5, 0.5], [-3, 3.5]], D: [[0, -3], [0, 3]], O: [0.5, 0], U: [[-5, -2.5], [0, -3.5]] };
+      var st = { mode: 0, T: [[-4.5, 1], [-2, 0.5], [-3.5, 3.5]], D: [[0, -3], [0, 3]], O: [0, 0], U: [[-5, -2.5], [0, -3.5]] };
       var NAMES = ['A', 'B', 'C'];
       var NOTES = [
-        md('Observe : $(d)$ est la médiatrice de chaque segment $[AA\']$, $[BB\']$, $[CC\']$ (les petits traits codent les longueurs égales). Les longueurs, les angles et les aires sont conservés, mais la figure est retournée, comme dans un miroir.'),
-        md('Observe : $O$ est le milieu de chaque segment $[AA\']$, $[BB\']$, $[CC\']$. La symétrie centrale est un demi-tour autour de $O$ : la figure n\'est pas retournée, et chaque côté de l\'image est parallèle au côté de départ.'),
-        md('Observe : dans la translation de vecteur $\\vec{u}$, tous les points glissent de la même façon : $\\overrightarrow{AA\'} = \\overrightarrow{BB\'} = \\overrightarrow{CC\'} = \\vec{u}$ (même direction, même sens, même longueur).')
+        md('Observe\u00a0: $(d)$ est la médiatrice de chaque segment $[AA\']$, $[BB\']$, $[CC\']$ (les petits traits codent les longueurs égales). Les longueurs, les angles et les aires sont conservés, mais la figure est retournée, comme dans un miroir.'),
+        md('Observe\u00a0: $O$ est le milieu de chaque segment $[AA\']$, $[BB\']$, $[CC\']$. La symétrie centrale est un demi-tour autour de $O$\u00a0: la figure n\'est pas retournée, et chaque côté de l\'image est parallèle au côté de départ.'),
+        md('Observe\u00a0: dans la translation de vecteur $\\overrightarrow{u}$, tous les points glissent de la même façon\u00a0: $\\overrightarrow{AA\'} = \\overrightarrow{BB\'} = \\overrightarrow{CC\'} = \\overrightarrow{u}$ (même direction, même sens, même longueur).')
       ];
-      var VU = md('$\\vec{u}$');
+      var VU = md('$\\overrightarrow{u}$');
       el.innerHTML = layout({
         stage: svgTag('fig', F, 'Triangle ABC et son image par la transformation choisie'),
         controls: segmented('mode', 'Transformation', ['Axiale', 'Centrale', 'Translation'], 0),
@@ -1003,9 +1024,15 @@
         }
         s += polygon(tp, shape(C.blue, 0.14, C.blue, 2)) + polygon(ip, shape(C.acc, 0.14, C.acc, 2));
         var gt = F.P(cen(T)), gi = F.P(cen(I));
+        // étiquettes : à l'écart du centre de gravité du triangle et de l'axe ou du centre de la transformation
+        function dirOf(p, g, from) {
+          var d = unit([p[0] - g[0], p[1] - g[1]]), e = from && dist(p, from) > 1 ? unit([p[0] - from[0], p[1] - from[1]]) : [0, 0];
+          return [d[0] + 0.9 * e[0], d[1] + 0.9 * e[1]];
+        }
         for (i = 0; i < 3; i++) {
-          s += dot(ip[i], C.acc, 3.5) + lab(ip[i], NAMES[i] + PRIME, [ip[i][0] - gi[0], ip[i][1] - gi[1]], { color: C.acc, k: 15, F: F });
-          s += lab(tp[i], NAMES[i], [tp[i][0] - gt[0], tp[i][1] - gt[1]], { color: C.blue, k: 20, F: F });
+          var ref = m === 0 ? F.P(proj(T[i])) : m === 1 ? F.P(st.O) : null;
+          s += dot(ip[i], C.acc, 3.5) + lab(ip[i], NAMES[i] + PRIME, dirOf(ip[i], gi, ref), { color: C.acc, k: 15, F: F });
+          s += lab(tp[i], NAMES[i], dirOf(tp[i], gt, ref), { color: C.blue, k: 20, F: F });
         }
         if (m === 1) s += lab(F.P(st.O), 'O', [-0.7, 0.75], { k: 19, F: F });
         S.draw('main', s);
@@ -1013,15 +1040,15 @@
         var AB = L(dist(T[0], T[1])), aire = nt(rnd(aireTri(T[0], T[1], T[2]), 3), 3);
         var A1 = it('A' + PRIME), B1 = it('B' + PRIME);
         if (m === 0) {
-          out.r1.innerHTML = it('A') + ' et ' + A1 + ' sont à la même distance de (' + it('d') + ') : <b>' + L(dist(T[0], proj(T[0]))) + '</b> et <b>' + L(dist(I[0], proj(I[0]))) + '</b>.';
-          out.r2.innerHTML = it('AB') + ' = <b>' + AB + '</b> et ' + A1 + B1 + ' = <b>' + L(dist(I[0], I[1])) + '</b> : les longueurs sont conservées.';
+          out.r1.innerHTML = it('A') + ' et ' + A1 + ' sont à la même distance de (' + it('d') + ')\u00a0: <b>' + L(dist(T[0], proj(T[0]))) + '</b> et <b>' + L(dist(I[0], proj(I[0]))) + '</b>.';
+          out.r2.innerHTML = it('AB') + ' = <b>' + AB + '</b> et ' + A1 + B1 + ' = <b>' + L(dist(I[0], I[1])) + '</b>\u00a0: les longueurs sont conservées.';
         } else if (m === 1) {
-          out.r1.innerHTML = it('OA') + ' = <b>' + L(dist(st.O, T[0])) + '</b> et ' + it('O') + A1 + ' = <b>' + L(dist(st.O, I[0])) + '</b> : ' + it('O') + ' est le milieu de [' + it('A') + A1 + '].';
+          out.r1.innerHTML = it('OA') + ' = <b>' + L(dist(st.O, T[0])) + '</b> et ' + it('O') + A1 + ' = <b>' + L(dist(st.O, I[0])) + '</b>\u00a0: ' + it('O') + ' est le milieu de [' + it('A') + A1 + '].';
           out.r2.innerHTML = it('AB') + ' = ' + A1 + B1 + ' = <b>' + AB + '</b> et (' + it('AB') + ') ∥ (' + A1 + B1 + ').';
         } else {
           var ux = st.U[1][0] - st.U[0][0], uy = st.U[1][1] - st.U[0][1];
-          out.r1.innerHTML = VU + ' (' + nt(ux) + ' ; ' + nt(uy) + ') : ' + it('AA' + PRIME) + ' = ' + it('BB' + PRIME) + ' = ' + it('CC' + PRIME) + ' = <b>' + L(Math.sqrt(ux * ux + uy * uy)) + '</b>.';
-          out.r2.innerHTML = it('ABB' + PRIME + 'A' + PRIME) + ' est un parallélogramme : ' + it('AB') + ' = ' + A1 + B1 + ' = <b>' + AB + '</b>.';
+          out.r1.innerHTML = VU + ' (' + nt(ux) + '\u00a0; ' + nt(uy) + ')\u00a0: ' + it('AA' + PRIME) + ' = ' + it('BB' + PRIME) + ' = ' + it('CC' + PRIME) + ' = <b>' + L(Math.sqrt(ux * ux + uy * uy)) + '</b>.';
+          out.r2.innerHTML = it('ABB' + PRIME + 'A' + PRIME) + ' est un parallélogramme\u00a0: ' + it('AB') + ' = ' + A1 + B1 + ' = <b>' + AB + '</b>.';
         }
         out.r3.innerHTML = 'Aire de ' + it('ABC') + ' = aire de ' + it('A' + PRIME + 'B' + PRIME + 'C' + PRIME) + ' = <b>' + aire + '</b> carreaux.';
         out.note.innerHTML = NOTES[m];
@@ -1036,9 +1063,9 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'fonction-affine',
-    titre: 'Fonction affine : le rôle de a et de b',
+    titre: 'Fonction affine\u00a0: le rôle de a et de b',
     chapitres: ['3e-applications-affines', '4e-applications-lineaires', '2l-fonctions', '3e-reperage', '2s-droites'],
-    resume: 'Règle a et b avec les curseurs ou en déplaçant deux points : la droite, le tableau de valeurs et l\'expression f(x) = ax + b changent ensemble.',
+    resume: 'Règle a et b avec les curseurs ou en déplaçant deux points\u00a0: la droite, le tableau de valeurs et l\'expression f(x) = ax + b changent ensemble.',
     render: function (el) {
       var F = new Frame(-4.5, 4.5, -5, 5, 320);
       var st = { a: 1.5, b: -1 };
@@ -1049,21 +1076,21 @@
         readout: '<div data-o="expr" style="font-size:1.1em"></div><div class="table-wrap" style="margin:6px 0"><table class="t"><tbody><tr><th>' + md('$x$') + '</th>' +
           XS.map(function (x) { return '<td>' + nt(x) + '</td>'; }).join('') + '</tr><tr><th>' + md('$f(x)$') + '</th>' +
           XS.map(function (x, i) { return '<td data-o="v' + i + '"></td>'; }).join('') + '</tr></tbody></table></div><p data-o="msg" style="margin:0"></p>',
-        note: md('Observe : $a$ règle l\'inclinaison ; quand $x$ augmente de $1$, $f(x)$ augmente de $a$, à n\'importe quel endroit de la droite (regarde le tableau). ' +
-          '$b$ fait monter ou descendre la droite, qui coupe toujours l\'axe des ordonnées au point $(0\\,;\\,b)$ : c\'est l\'ordonnée à l\'origine.')
+        note: md('Observe\u00a0: $a$ règle l\'inclinaison\u00a0; quand $x$ augmente de $1$, $f(x)$ augmente de $a$, à n\'importe quel endroit de la droite (regarde le tableau). ' +
+          '$b$ fait monter ou descendre la droite, qui coupe toujours l\'axe des ordonnées au point $(0\\,;\\,b)$\u00a0: c\'est l\'ordonnée à l\'origine.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
       S.draw('bg', axes(F, { gx: 1, xname: 'x', yname: 'y' }));
       var rA = bindRange(el, 'a', function (v) { return nt(v); }, function (v) { st.a = v; update(); });
       var rB = bindRange(el, 'b', function (v) { return nt(v); }, function (v) { st.b = v; update(); });
       S.handle({
-        label: 'Point (0 ; b)', color: C.green,
+        label: 'Point (0\u00a0; b)', color: C.green,
         get: function () { return [0, st.b]; },
         set: function (x, y) { st.b = clamp(snap(y, 0.5), -4, 4); },
         key: function (dx, dy) { st.b = clamp(st.b + 0.5 * (dy || dx), -4, 4); }
       });
       var hA = S.handle({
-        label: 'Point (1 ; a + b)', color: C.acc,
+        label: 'Point (1\u00a0; a + b)', color: C.acc,
         get: function () { return [1, st.a + st.b]; },
         set: function (x, y) { st.a = clamp(snap(y - st.b, 0.5), -3, 3); },
         key: function (dx, dy) { st.a = clamp(st.a + 0.5 * (dy || dx), -3, 3); }
@@ -1088,11 +1115,11 @@
         S.sync();
         out.expr.innerHTML = md('$f(x) = ' + affTeX(a, b) + '$');
         XS.forEach(function (x, i) { out['v' + i].textContent = nt(a * x + b); });
-        var msg = a > 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' augmente de ' + nt(a) + ' : ' + it('f') + ' est <b>croissante</b>.' :
-          a < 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' diminue de ' + nt(-a) + ' : ' + it('f') + ' est <b>décroissante</b>.' :
-            it('a') + ' = 0 : ' + it('f') + ' est <b>constante</b>, la droite est parallèle à l\'axe des abscisses.';
-        msg += ' ' + (b === 0 ? it('b') + ' = 0 : ' + it('f') + ' est <b>linéaire</b>, la droite passe par l\'origine (proportionnalité).' :
-          'La droite coupe l\'axe des ordonnées au point (0 ; ' + nt(b) + ').');
+        var msg = a > 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' augmente de ' + nt(a) + '\u00a0: ' + it('f') + ' est <b>croissante</b>.' :
+          a < 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' diminue de ' + nt(-a) + '\u00a0: ' + it('f') + ' est <b>décroissante</b>.' :
+            it('a') + ' = 0\u00a0: ' + it('f') + ' est <b>constante</b>, la droite est parallèle à l\'axe des abscisses.';
+        msg += ' ' + (b === 0 ? it('b') + ' = 0\u00a0: ' + it('f') + ' est <b>linéaire</b>, la droite passe par l\'origine (proportionnalité).' :
+          'La droite coupe l\'axe des ordonnées au point (0\u00a0; ' + nt(b) + ').');
         if (a !== 0) msg += ' Elle coupe l\'axe des abscisses pour ' + it('x') + ' ' + eqv(-b / a + 0, 2) + '.';
         out.msg.innerHTML = msg;
       }
@@ -1106,9 +1133,9 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'second-degre-parabole',
-    titre: 'Second degré : parabole et discriminant',
+    titre: 'Second degré\u00a0: parabole et discriminant',
     chapitres: ['2s-second-degre', '1s-polynomes', '1l-equations'],
-    resume: 'Règle a, b et c : la parabole bouge, le discriminant change de signe et les racines apparaissent ou disparaissent sur l\'axe des abscisses.',
+    resume: 'Règle a, b et c\u00a0: la parabole bouge, le discriminant change de signe et les racines apparaissent ou disparaissent sur l\'axe des abscisses.',
     render: function (el) {
       var F = new Frame(-6, 6, -8, 8, 340, 300);
       var st = { a: 1, b: -2, c: -3 };
@@ -1117,7 +1144,7 @@
         controls: slider('a', 'Coefficient $a$', -3, 3, 0.5, st.a) + slider('b', 'Coefficient $b$', -6, 6, 0.5, st.b) + slider('c', 'Coefficient $c$', -6, 6, 0.5, st.c),
         readout: '<div data-o="expr" style="font-size:1.1em"></div><div>' + md('$\\Delta = b^2 - 4ac$') + ' = <b data-o="delta"></b></div>' +
           '<p data-o="roots" style="margin:6px 0"></p><div data-o="vertex"></div><div data-o="canon" style="margin-top:4px"></div>',
-        note: md('Observe : le signe de $\\Delta$ donne le nombre de racines, c\'est-à-dire de points d\'intersection avec l\'axe des abscisses ; le signe de $a$ dit si la parabole est tournée vers le haut ou vers le bas. ' +
+        note: md('Observe\u00a0: le signe de $\\Delta$ donne le nombre de racines, c\'est-à-dire de points d\'intersection avec l\'axe des abscisses\u00a0; le signe de $a$ dit si la parabole est tournée vers le haut ou vers le bas. ' +
           'Le sommet est toujours sur l\'axe de symétrie, la droite d\'équation $x = -\\frac{b}{2a}$.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
@@ -1130,7 +1157,7 @@
         if (a === 0) {
           S.draw('main', path(F.curve(f), stroke(C.blue, 2.6)));
           out.delta.textContent = '—';
-          out.roots.innerHTML = md('$a = 0$ : $f$ n\'est plus un trinôme du second degré, sa courbe est une droite.');
+          out.roots.innerHTML = md('$a = 0$\u00a0: $f$ n\'est plus un trinôme du second degré, sa courbe est une droite.');
           out.vertex.innerHTML = ''; out.canon.innerHTML = '';
           return;
         }
@@ -1152,14 +1179,14 @@
         S.draw('main', s);
         var X = it('x');
         out.delta.textContent = nt(D, 2);
-        out.roots.innerHTML = D > 0 ? '<b>Δ &gt; 0</b> : deux racines, ' + X + '<sub>1</sub> ' + eqv(roots[0], 2) + ' et ' + X + '<sub>2</sub> ' + eqv(roots[1], 2) + ' ; la parabole coupe l\'axe des abscisses en deux points.' :
-          D === 0 ? '<b>Δ = 0</b> : une racine double ' + X + '<sub>0</sub> ' + eqv(al, 2) + ' ; la parabole touche l\'axe des abscisses en son sommet.' :
-            '<b>Δ &lt; 0</b> : pas de racine réelle ; la parabole ne coupe pas l\'axe des abscisses.';
+        out.roots.innerHTML = D > 0 ? '<b>Δ &gt; 0</b>\u00a0: deux racines, ' + X + '<sub>1</sub> ' + eqv(roots[0], 2) + ' et ' + X + '<sub>2</sub> ' + eqv(roots[1], 2) + '\u00a0; la parabole coupe l\'axe des abscisses en deux points.' :
+          D === 0 ? '<b>Δ = 0</b>\u00a0: une racine double ' + X + '<sub>0</sub> ' + eqv(al, 2) + '\u00a0; la parabole touche l\'axe des abscisses en son sommet.' :
+            '<b>Δ &lt; 0</b>\u00a0: pas de racine réelle\u00a0; la parabole ne coupe pas l\'axe des abscisses.';
         var at = alF.tex({ small: true }), bt = beF.tex({ small: true });
-        out.vertex.innerHTML = md('Sommet $S\\left(' + at + '\\,;\\,' + bt + '\\right)$ ; ' +
-          (a > 0 ? 'parabole tournée vers le haut ($a > 0$) : minimum $' + bt + '$.' : 'parabole tournée vers le bas ($a < 0$) : maximum $' + bt + '$.'));
+        out.vertex.innerHTML = md('Sommet $S\\left(' + at + '\\,;\\,' + bt + '\\right)$\u00a0; ' +
+          (a > 0 ? 'parabole tournée vers le haut ($a > 0$)\u00a0: minimum $' + bt + '$.' : 'parabole tournée vers le bas ($a < 0$)\u00a0: maximum $' + bt + '$.'));
         var inner = alF.isZero() ? 'x^2' : '\\left(x ' + (alF.n > 0 ? '- ' : '+ ') + alF.abs().tex({ small: true }) + '\\right)^2';
-        out.canon.innerHTML = md('Forme canonique : $f(x) = ' + (a === 1 ? '' : a === -1 ? '-' : tn(a)) + inner +
+        out.canon.innerHTML = md('Forme canonique\u00a0: $f(x) = ' + (a === 1 ? '' : a === -1 ? '-' : tn(a)) + inner +
           (beF.isZero() ? '' : (beF.n > 0 ? ' + ' : ' - ') + beF.abs().tex({ small: true })) + '$');
       }
       update();
@@ -1195,9 +1222,9 @@
   }
   EM.demos.register({
     id: 'cercle-trigonometrique',
-    titre: 'Cercle trigonométrique : cosinus et sinus',
+    titre: 'Cercle trigonométrique\u00a0: cosinus et sinus',
     chapitres: ['2s-trigonometrie', '1s-trigonometrie', '3e-trigonometrie'],
-    resume: 'Fais tourner le point M sur le cercle : ses coordonnées sont cos θ et sin θ, et les courbes du cosinus et du sinus se tracent au fur et à mesure.',
+    resume: 'Fais tourner le point M sur le cercle\u00a0: ses coordonnées sont cos θ et sin θ, et les courbes du cosinus et du sinus se tracent au fur et à mesure.',
     render: function (el) {
       var Fc = new Frame(-1.42, 1.42, -1.42, 1.42, 300);
       var Fg = new Frame(-0.5, 6.75, -1.62, 1.45, 340, 170);
@@ -1210,9 +1237,9 @@
         readout: '<div>' + md('$\\theta$') + ' = <b data-o="deg"></b> <span data-o="rad"></span></div>' +
           '<div>' + sw(C.blue, md('$\\cos\\theta$')) + ' <span data-o="cos"></span></div>' +
           '<div>' + sw(C.acc, md('$\\sin\\theta$')) + ' <span data-o="sin"></span></div>' +
-          '<div class="small" style="margin-top:4px">' + md('$\\cos^2\\theta + \\sin^2\\theta = 1$') + ' : <span data-o="pyth"></span></div>',
-        note: md('Observe : $M$ a pour coordonnées $(\\cos\\theta\\,;\\,\\sin\\theta)$. Le cosinus se lit sur l\'axe horizontal, le sinus sur l\'axe vertical ; ' +
-          'ils restent entre $-1$ et $1$. Après un tour complet ($360°$, soit $2\\pi$ radians), tout recommence : ces fonctions sont périodiques.')
+          '<div class="small" style="margin-top:4px">' + md('$\\cos^2\\theta + \\sin^2\\theta = 1$') + '\u00a0: <span data-o="pyth"></span></div>',
+        note: md('Observe\u00a0: $M$ a pour coordonnées $(\\cos\\theta\\,;\\,\\sin\\theta)$. Le cosinus se lit sur l\'axe horizontal, le sinus sur l\'axe vertical\u00a0; ' +
+          'ils restent entre $-1$ et $1$. Après un tour complet ($360°$, soit $2\\pi$ radians), tout recommence\u00a0: ces fonctions sont périodiques.')
       });
       var Sc = new Stage(el.querySelector('[data-s="c"]'), Fc), Sg = new Stage(el.querySelector('[data-s="g"]'), Fg), out = outs(el);
       var o = Fc.P([0, 0]), R = Fc.X(1) - Fc.X(0), bg = '', k;
@@ -1302,9 +1329,9 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'tangente-nombre-derive',
-    titre: 'De la sécante à la tangente : le nombre dérivé',
+    titre: 'De la sécante à la tangente\u00a0: le nombre dérivé',
     chapitres: ['1s-derivation', 'ts-derivabilite', '1l-fonctions'],
-    resume: 'Rapproche le point M du point A sur la courbe : la sécante (AM) tend vers la tangente et le taux d\'accroissement tend vers le nombre dérivé.',
+    resume: 'Rapproche le point M du point A sur la courbe\u00a0: la sécante (AM) tend vers la tangente et le taux d\'accroissement tend vers le nombre dérivé.',
     render: function (el) {
       var FN = [
         { nom: 'f(x) = x²/2', tex: 'f(x) = \\dfrac{x^2}{2}', dtex: 'f\'(x) = x', f: function (x) { return x * x / 2; }, d: function (x) { return x; }, win: [-3.2, 3.2, -1.4, 4.6], a: 1, h: 1.5 },
@@ -1323,13 +1350,13 @@
           '<div>' + sw(C.acc, 'Pente de la sécante') + ' ' + md('$\\dfrac{f(a+h)-f(a)}{h}$') + ' = <b data-o="tx"></b></div>' +
           '<div>' + sw(C.green, 'Nombre dérivé') + ' ' + md('$f\'(a)$') + ' = <b data-o="fp"></b></div>' +
           '<div data-o="eq"></div><p data-o="msg" style="margin:6px 0 0"></p>',
-        note: md('Observe : la sécante $(AM)$ a pour pente le taux d\'accroissement $\\frac{f(a+h)-f(a)}{h}$. Quand $h$ tend vers $0$, $M$ se rapproche de $A$, ' +
+        note: md('Observe\u00a0: la sécante $(AM)$ a pour pente le taux d\'accroissement $\\frac{f(a+h)-f(a)}{h}$. Quand $h$ tend vers $0$, $M$ se rapproche de $A$, ' +
           'la sécante pivote vers la tangente (en vert) et sa pente tend vers le nombre dérivé $f\'(a)$.')
       });
       var MSG = {
-        zero: md('$h = 0$ : la sécante n\'existe plus ; il ne reste que la tangente, sa position limite.'),
-        tiny: md('$h$ est tout petit : la sécante et la tangente sont presque confondues.'),
-        std: md('Rapproche $M$ de $A$ : la pente de la sécante va tendre vers $f\'(a)$.')
+        zero: md('$h = 0$\u00a0: la sécante n\'existe plus\u00a0; il ne reste que la tangente, sa position limite.'),
+        tiny: md('$h$ est tout petit\u00a0: la sécante et la tangente sont presque confondues.'),
+        std: md('Rapproche $M$ de $A$\u00a0: la pente de la sécante va tendre vers $f\'(a)$.')
       };
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), fxCache = {};
       var rA = bindRange(el, 'a', function (v) { return nt(v); }, function (v) { st.a = v; update(); });
@@ -1363,7 +1390,6 @@
       function update() {
         var f = fn.f, a = st.a, h = st.h, A = [a, f(a)], m = fn.d(a), s = '', pa = F.P(A);
         s += path(F.curve(f, null, null, 240), stroke(C.blue, 2.4));
-        s += fullLine(F, A, [a + 1, f(a) + m], stroke(C.green, 2.2));
         if (h !== 0) {
           var M = [a + h, f(a + h)], Hh = F.P([a + h, f(a)]), pm = F.P(M);
           s += fullLine(F, A, M, stroke(C.acc, 2));
@@ -1371,6 +1397,7 @@
           if (Math.abs(Hh[0] - pa[0]) > 20) s += text([(pa[0] + Hh[0]) / 2, pa[1] + (M[1] >= A[1] ? 16 : -8)], 'h', { size: 13, italic: true, color: C.muted });
           s += lab(pm, 'M', [h >= 0 ? 0.8 : -0.8, -0.7], { color: C.acc, k: 18, F: F });
         }
+        s += fullLine(F, A, [a + 1, f(a) + m], stroke(C.green, 2.4, h === 0 ? '' : 'stroke-dasharray:8 5;'));
         s += lab(pa, 'A', [h >= 0 ? -0.8 : 0.8, -0.7], { color: C.green, k: 18, F: F });
         S.draw('main', s);
         S.sync();
@@ -1378,7 +1405,7 @@
         out.fx.innerHTML = fxCache[fn.nom];
         out.tx.textContent = h === 0 ? '—' : nf((f(a + h) - f(a)) / h, 3);
         out.fp.textContent = nf(m, 3);
-        out.eq.innerHTML = 'Tangente en ' + it('A') + ' : ' + it('y') + ' = ' + affHtml(m, f(a) - m * a, 3);
+        out.eq.innerHTML = 'Tangente en ' + it('A') + '\u00a0: ' + it('y') + ' = ' + affHtml(m, f(a) - m * a, 3);
         out.msg.innerHTML = h === 0 ? MSG.zero : Math.abs(h) <= 0.05 ? MSG.tiny : MSG.std;
       }
       setFn(0);
@@ -1391,9 +1418,9 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'suite-recurrente-toile',
-    titre: 'Suite récurrente : l\'escalier et l\'escargot',
+    titre: 'Suite récurrente\u00a0: l\'escalier et l\'escargot',
     chapitres: ['ts-suites', '1s-suites', 'tl-suites'],
-    resume: 'Construis les termes d\'une suite définie par récurrence avec la courbe de f et la droite d\'équation y = x : on voit si elle converge, oscille ou diverge.',
+    resume: 'Construis les termes d\'une suite définie par récurrence avec la courbe de f et la droite d\'équation y = x\u00a0: on voit si elle converge, oscille ou diverge.',
     render: function (el) {
       var F = new Frame(-0.6, 7.4, -1.2, 7.4, 320);
       var FN = [
@@ -1409,8 +1436,8 @@
         controls: selectBox('f', 'Fonction $f$', FN.map(function (x) { return x.nom; }), 0) +
           slider('u0', 'Premier terme $u_0$', 0, 7, 0.1, st.u0) + slider('n', 'Nombre d\'étapes $n$', 1, 30, 1, st.n),
         readout: '<div data-o="rec"></div><div data-o="terms" style="margin:4px 0"></div><p data-o="msg" style="margin:0"></p>',
-        note: md('Observe : on part de $u_0$ sur l\'axe des abscisses, on monte jusqu\'à la courbe pour lire $u_1 = f(u_0)$, on rabat ce nombre sur l\'axe grâce à la droite $y = x$, et on recommence. ' +
-          'Si la suite converge, c\'est vers l\'abscisse $\\ell$ du point commun à la courbe et à la droite : $f(\\ell) = \\ell$.')
+        note: md('Observe\u00a0: on part de $u_0$ sur l\'axe des abscisses, on monte jusqu\'à la courbe pour lire $u_1 = f(u_0)$, on rabat ce nombre sur l\'axe grâce à la droite $y = x$, et on recommence. ' +
+          'Si la suite converge, c\'est vers l\'abscisse $\\ell$ du point commun à la courbe et à la droite\u00a0: $f(\\ell) = \\ell$.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), cache = {};
       S.draw('bg', axes(F, { gx: 1, xname: 'x', yname: 'y' }));
@@ -1460,13 +1487,13 @@
         var last = u.length - 1;
         if (last < st.n) T.push('… puis les termes dépassent 10<sup>6</sup> en valeur absolue');
         else if (last >= 5) T.push('…', U + '<sub>' + last + '</sub> ' + eqv(u[last], 3));
-        out.terms.innerHTML = T.join(' ; ');
+        out.terms.innerHTML = T.join('\u00a0; ');
         var u0 = st.u0, msg;
-        if (Math.abs(u0 - l) < 1e-9) msg = M('$u_0 = \\ell$ : la suite est constante.');
+        if (Math.abs(u0 - l) < 1e-9) msg = M('$u_0 = \\ell$\u00a0: la suite est constante.');
         else if (fn.kind === 'mono') msg = M('La suite est ' + (u0 < l ? 'croissante' : 'décroissante') + ' et converge vers $\\ell = ' + fn.lt + '$ (en escalier).');
-        else if (fn.kind === 'osc') msg = M('Les termes sont alternativement de part et d\'autre de $\\ell = ' + fn.lt + '$ et s\'en rapprochent (en escargot) : la suite converge vers $\\ell$ sans être monotone.');
-        else if (fn.kind === 'div') msg = M('La suite est ' + (u0 > l ? 'croissante et tend vers $+\\infty$' : 'décroissante et tend vers $-\\infty$') + ' : elle diverge, les termes s\'éloignent de $\\ell = ' + fn.lt + '$.');
-        else msg = M('Les termes valent alternativement $u_0$ et $\\frac{6}{u_0}$ : la suite ne converge pas (sauf si $u_0 = \\sqrt{6}$).');
+        else if (fn.kind === 'osc') msg = M('Les termes sont alternativement de part et d\'autre de $\\ell = ' + fn.lt + '$ et s\'en rapprochent (en escargot)\u00a0: la suite converge vers $\\ell$ sans être monotone.');
+        else if (fn.kind === 'div') msg = M('La suite est ' + (u0 > l ? 'croissante et tend vers $+\\infty$' : 'décroissante et tend vers $-\\infty$') + '\u00a0: elle diverge, les termes s\'éloignent de $\\ell = ' + fn.lt + '$.');
+        else msg = M('Les termes valent alternativement $u_0$ et $\\frac{6}{u_0}$\u00a0: la suite ne converge pas (sauf si $u_0 = \\sqrt{6}$).');
         out.msg.innerHTML = msg;
       }
       update();
@@ -1481,13 +1508,13 @@
     id: 'integrale-rectangles',
     titre: 'L\'intégrale, limite des sommes de rectangles',
     chapitres: ['ts-integrales', 'ts-primitives'],
-    resume: 'Augmente le nombre n de rectangles : la somme de leurs aires se rapproche de l\'intégrale, c\'est-à-dire de l\'aire sous la courbe.',
+    resume: 'Augmente le nombre n de rectangles\u00a0: la somme de leurs aires se rapproche de l\'intégrale, c\'est-à-dire de l\'aire sous la courbe.',
     render: function (el) {
       var FN = [
-        { nom: 'x²/4 + 1 sur [0 ; 4]', f: function (x) { return x * x / 4 + 1; }, a: 0, b: 4, I: 28 / 3, itex: '\\int_0^4 \\left(\\frac{x^2}{4} + 1\\right) \\mathrm{d}x = \\frac{28}{3}', win: [-0.45, 4.5, -0.6, 5.6], gy: 1 },
-        { nom: '√x sur [0 ; 4]', f: Math.sqrt, a: 0, b: 4, I: 16 / 3, itex: '\\int_0^4 \\sqrt{x}\\,\\mathrm{d}x = \\frac{16}{3}', win: [-0.45, 4.5, -0.32, 2.45], gy: 0.5 },
-        { nom: '1/x sur [1 ; 4]', f: function (x) { return 1 / x; }, a: 1, b: 4, I: Math.log(4), itex: '\\int_1^4 \\frac{1}{x}\\,\\mathrm{d}x = \\ln 4', win: [-0.4, 4.5, -0.22, 1.6], gy: 0.5, from: 0.55 },
-        { nom: 'sin x sur [0 ; π]', f: Math.sin, a: 0, b: PI, I: 2, itex: '\\int_0^{\\pi} \\sin x\\,\\mathrm{d}x = 2', win: [-0.35, 3.6, -0.2, 1.3], gy: 0.5 }
+        { nom: 'x²/4 + 1 sur [0\u00a0; 4]', f: function (x) { return x * x / 4 + 1; }, a: 0, b: 4, I: 28 / 3, itex: '\\int_0^4 \\left(\\frac{x^2}{4} + 1\\right) \\mathrm{d}x = \\frac{28}{3}', win: [-0.45, 4.5, -0.6, 5.6], gy: 1 },
+        { nom: '√x sur [0\u00a0; 4]', f: Math.sqrt, a: 0, b: 4, I: 16 / 3, itex: '\\int_0^4 \\sqrt{x}\\,\\mathrm{d}x = \\frac{16}{3}', win: [-0.45, 4.5, -0.32, 2.45], gy: 0.5 },
+        { nom: '1/x sur [1\u00a0; 4]', f: function (x) { return 1 / x; }, a: 1, b: 4, I: Math.log(4), itex: '\\int_1^4 \\frac{1}{x}\\,\\mathrm{d}x = \\ln 4', win: [-0.4, 4.5, -0.22, 1.6], gy: 0.5, from: 0.55 },
+        { nom: 'sin x sur [0\u00a0; π]', f: Math.sin, a: 0, b: PI, I: 2, itex: '\\int_0^{\\pi} \\sin x\\,\\mathrm{d}x = 2', win: [-0.35, 3.6, -0.2, 1.3], gy: 0.5 }
       ];
       var W = 340, H = 230;
       function frame(i) { var w = FN[i].win; return new Frame(w[0], w[1], w[2], w[3], W, H); }
@@ -1498,8 +1525,8 @@
           selectBox('m', 'Hauteur des rectangles', ['Valeur à gauche', 'Valeur à droite', 'Valeur au milieu'], 0) +
           slider('n', 'Nombre de rectangles $n$', 1, 100, 1, st.n) + buttons(button('play', 'Augmenter n', ' ')),
         readout: '<div>Somme des aires ' + md('$S_n$') + ' = <b data-o="sn" style="color:' + C.acc + '"></b></div>' +
-          '<div data-o="ex"></div><div>Écart : <b data-o="err"></b></div><p data-o="msg" class="small" style="margin:6px 0 0"></p>',
-        note: md('Observe : chaque rectangle a pour largeur $\\frac{b-a}{n}$. Quand $n$ augmente, les rectangles épousent la courbe et la somme de leurs aires se rapproche de l\'intégrale $\\int_a^b f(x)\\,\\mathrm{d}x$ : l\'écart tend vers $0$.')
+          '<div data-o="ex"></div><div>Écart\u00a0: <b data-o="err"></b></div><p data-o="msg" class="small" style="margin:6px 0 0"></p>',
+        note: md('Observe\u00a0: chaque rectangle a pour largeur $\\frac{b-a}{n}$. Quand $n$ augmente, les rectangles épousent la courbe et la somme de leurs aires se rapproche de l\'intégrale $\\int_a^b f(x)\\,\\mathrm{d}x$\u00a0: l\'écart tend vers $0$.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
       var rN = bindRange(el, 'n', function (v) { return String(v); }, function (v) { st.n = v; update(); });
@@ -1534,11 +1561,11 @@
         S.draw('main', s);
         if (!itex[fn.nom]) itex[fn.nom] = md('$' + fn.itex + '$');
         out.sn.textContent = nf(Sn, 4);
-        out.ex.innerHTML = 'Intégrale : ' + itex[fn.nom] + ' \u2248 <b>' + nf(fn.I, 4) + '</b>';
+        out.ex.innerHTML = 'Intégrale\u00a0: ' + itex[fn.nom] + ' \u2248 <b>' + nf(fn.I, 4) + '</b>';
         out.err.textContent = nf(Math.abs(Sn - fn.I), 4);
         out.msg.innerHTML = Math.abs(Sn - fn.I) < 5e-5 ? 'Avec cette précision, la somme et l\'intégrale sont égales.' :
-          Sn < fn.I ? 'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est inférieure à l\'intégrale : c\'est une valeur approchée par défaut.' :
-            'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est supérieure à l\'intégrale : c\'est une valeur approchée par excès.';
+          Sn < fn.I ? 'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est inférieure à l\'intégrale\u00a0: c\'est une valeur approchée par défaut.' :
+            'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est supérieure à l\'intégrale\u00a0: c\'est une valeur approchée par excès.';
       }
       drawBg();
       update();
@@ -1552,14 +1579,14 @@
   function grp(x) { return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f'); }
   EM.demos.register({
     id: 'loi-grands-nombres',
-    titre: 'Loi des grands nombres : la fréquence se stabilise',
+    titre: 'Loi des grands nombres\u00a0: la fréquence se stabilise',
     chapitres: ['ts-probabilites', 'tl-probabilites', '5e-statistiques'],
-    resume: 'Lance une pièce ou un dé des centaines de fois : la fréquence d\'apparition se rapproche de la probabilité.',
+    resume: 'Lance une pièce ou un dé des centaines de fois\u00a0: la fréquence d\'apparition se rapproche de la probabilité.',
     render: function (el) {
       var MAX = 20000, W = 340, HG = 200, HB = 132;
       var MODES = [
-        { nom: 'Pièce : obtenir Pile', faces: ['Pile', 'Face'], target: 0, p: 0.5, ptxt: 'p = 1/2', ev: '« Pile »' },
-        { nom: 'Dé : obtenir 6', faces: ['1', '2', '3', '4', '5', '6'], target: 5, p: 1 / 6, ptxt: 'p = 1/6', ev: '« 6 »' }
+        { nom: 'Pièce\u00a0: obtenir Pile', faces: ['Pile', 'Face'], target: 0, p: 0.5, ptxt: 'p = 1/2', ev: '«\u00a0Pile\u00a0»' },
+        { nom: 'Dé\u00a0: obtenir 6', faces: ['1', '2', '3', '4', '5', '6'], target: 5, p: 1 / 6, ptxt: 'p = 1/6', ev: '«\u00a06\u00a0»' }
       ];
       var mo = MODES[1], N = 0, hits = 0, counts = [], hist = [], last = [];
       el.innerHTML = layout({
@@ -1567,10 +1594,10 @@
           svgTag('b', new Frame(0, 1, 0, 1, W, HB), 'Fréquence de chaque résultat'),
         controls: selectBox('mode', 'Expérience', MODES.map(function (x) { return x.nom; }), 1) +
           buttons(button('1', '+1 lancer') + button('10', '+10') + button('100', '+100') + button('play', 'Lancer en continu', ' ') + button('reset', 'Recommencer')),
-        readout: '<div style="' + ROW + '"><span>Lancers : <b data-o="n"></b></span><span>Nombre de <span data-o="ev"></span> : <b data-o="k"></b></span></div>' +
-          '<div style="' + ROW + '"><span>Fréquence : <b data-o="f" style="color:' + C.blue + '"></b></span><span>Probabilité : <b data-o="p" style="color:' + C.acc + '"></b></span><span>Écart : <b data-o="e"></b></span></div>' +
-          '<div class="small" style="margin-top:4px">Derniers résultats : <span data-o="last"></span></div>',
-        note: md('Observe : au début, la fréquence saute beaucoup d\'un lancer à l\'autre. Plus le nombre de lancers augmente, plus elle se stabilise autour de la probabilité $p$ (le trait en pointillés) : c\'est la loi des grands nombres. ' +
+        readout: '<div style="' + ROW + '"><span>Lancers\u00a0: <b data-o="n"></b></span><span>Nombre de <span data-o="ev"></span>\u00a0: <b data-o="k"></b></span></div>' +
+          '<div style="' + ROW + '"><span>Fréquence\u00a0: <b data-o="f" style="color:' + C.blue + '"></b></span><span>Probabilité\u00a0: <b data-o="p" style="color:' + C.acc + '"></b></span><span>Écart\u00a0: <b data-o="e"></b></span></div>' +
+          '<div class="small" style="margin-top:4px">Derniers résultats\u00a0: <span data-o="last"></span></div>',
+        note: md('Observe\u00a0: au début, la fréquence saute beaucoup d\'un lancer à l\'autre. Plus le nombre de lancers augmente, plus elle se stabilise autour de la probabilité $p$ (le trait en pointillés)\u00a0: c\'est la loi des grands nombres. ' +
           'En bas, la fréquence de chaque résultat se stabilise elle aussi autour de sa probabilité.')
       });
       var Sg = new Stage(el.querySelector('[data-s="g"]'), new Frame(0, 1, 0, 1, W, HG)), Sb = new Stage(el.querySelector('[data-s="b"]'), new Frame(0, 1, 0, 1, W, HB)), out = outs(el);
@@ -1585,20 +1612,20 @@
       }
       function add(k) { for (var i = 0; i < k && N < MAX; i++) throwOne(); draw(); }
       function draw() {
-        var xmax = Math.max(10, N), F = new Frame(0, xmax, 0, 1, W, HG, { l: 40, r: 14, t: 12, b: 26 }), s = '', i;
+        var xmax = Math.max(10, N), F = new Frame(0, xmax, 0, 1, W, HG, { l: 40, r: 24, t: 12, b: 26 }), s = '', i;
         [0, 0.25, 0.5, 0.75, 1].forEach(function (y) {
           s += line([F.X(0), F.Y(y)], [F.X(xmax), F.Y(y)], GRID) + text([F.l - 6, F.Y(y) + 4], nt(y, 2), { size: 11, color: C.muted, anchor: 'end' });
         });
         var stp = niceStep(xmax / 4);
-        for (var x = 0; x <= xmax + 1e-9; x += stp) s += text([F.X(x), HG - 8], grp(x), { size: 11, color: C.muted, anchor: x === 0 ? 'start' : 'middle' });
+        for (var x = 0; x <= xmax + 1e-9; x += stp) s += text([F.X(x), HG - 8], grp(x), { size: 11, color: C.muted, anchor: x === 0 ? 'start' : F.X(x) > W - 30 ? 'end' : 'middle' });
         s += line([F.X(0), F.Y(0)], [F.X(xmax), F.Y(0)], stroke(C.muted, 1.2)) + line([F.X(0), F.Y(0)], [F.X(0), F.Y(1)], stroke(C.muted, 1.2));
-        s += line([F.X(0), F.Y(mo.p)], [F.X(xmax), F.Y(mo.p)], stroke(C.acc, 1.6, DASH)) + text([F.X(0) + 6, F.Y(mo.p) - 6], mo.ptxt, { size: 12, bold: true, color: C.acc, anchor: 'start' });
+        s += line([F.X(0), F.Y(mo.p)], [F.X(xmax), F.Y(mo.p)], stroke(C.acc, 1.6, DASH)) + text([F.X(xmax) + 6, F.Y(mo.p) + 5], 'p', { size: 14, bold: true, italic: true, color: C.acc, anchor: 'start' });
         if (N) {
           var pts0 = [], step = Math.max(1, N / 400);
           for (var k = 0; k < N; k += step) { i = Math.floor(k); pts0.push([F.X(i + 1), F.Y(hist[i])]); }
           pts0.push([F.X(N), F.Y(hist[N - 1])]);
           s += polyline(pts0, stroke(C.blue, 1.8)) + dot(pts0[pts0.length - 1], C.blue, 3.5);
-        } else s += text([(F.l + W - F.r) / 2, F.Y(0.86)], 'Appuie sur « +1 lancer » ou « Lancer en continu »', { size: 12, color: C.muted });
+        } else s += text([(F.l + W - F.r) / 2, F.Y(0.86)], 'Appuie sur «\u00a0+1 lancer\u00a0» ou «\u00a0Lancer en continu\u00a0»', { size: 12, color: C.muted });
         Sg.draw('main', s);
         // diagramme des fréquences de chaque résultat
         var nf0 = mo.faces.length, fr = counts.map(function (c) { return N ? c / N : 0; });
@@ -1623,7 +1650,7 @@
         out.last.textContent = last.length ? last.map(function (r) { return mo.faces[r]; }).join(' · ') : '—';
       }
       var loop = new Loop(function () {
-        var k = clamp(Math.floor(N / 60), 1, 300);
+        var k = clamp(Math.floor(N / 40), 1, 400);
         for (var i = 0; i < k && N < MAX; i++) throwOne();
         draw();
         if (N >= MAX) return false;
@@ -1646,9 +1673,9 @@
   function binom(n, k) { var r = 1; for (var i = 1; i <= k; i++) r = r * (n - k + i) / i; return r; }
   EM.demos.register({
     id: 'loi-binomiale',
-    titre: 'Loi binomiale : le diagramme en bâtons',
+    titre: 'Loi binomiale\u00a0: le diagramme en bâtons',
     chapitres: ['ts-probabilites'],
-    resume: 'Règle le nombre d\'épreuves n et la probabilité de succès p : le diagramme de la loi binomiale se déforme autour de l\'espérance np.',
+    resume: 'Règle le nombre d\'épreuves n et la probabilité de succès p\u00a0: le diagramme de la loi binomiale se déforme autour de l\'espérance np.',
     render: function (el) {
       var W = 340, H = 220, st = { n: 10, p: 0.3, k: 3, mode: 0 };
       el.innerHTML = layout({
@@ -1657,7 +1684,7 @@
           slider('k', 'Nombre de succès $k$', 0, st.n, 1, st.k) + selectBox('mode', 'Probabilité calculée', ['P(X = k)', 'P(X ≤ k)', 'P(X ≥ k)'], 0),
         readout: '<div data-o="prob"></div><div style="' + ROW + ';margin-top:4px"><span>' + md('$E(X) = np$') + ' = <b data-o="e" style="color:' + C.green + '"></b></span>' +
           '<span>' + md('$V(X) = np(1-p)$') + ' = <b data-o="v"></b></span><span>' + md('$\\sigma(X)$') + ' \u2248 <b data-o="s"></b></span></div>',
-        note: md('Observe : chaque bâton donne la probabilité d\'obtenir exactement $k$ succès en $n$ épreuves indépendantes. Le diagramme se regroupe autour de l\'espérance $np$ (trait vert) ; ' +
+        note: md('Observe\u00a0: chaque bâton donne la probabilité d\'obtenir exactement $k$ succès en $n$ épreuves indépendantes. Le diagramme se regroupe autour de l\'espérance $np$ (trait vert)\u00a0; ' +
           'il est symétrique quand $p = 0{,}5$. Touche un bâton pour choisir $k$.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), new Frame(0, 1, 0, 1, W, H)), out = outs(el);
@@ -1706,23 +1733,23 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'complexes-multiplication',
-    titre: 'Multiplier par z : tourner et agrandir',
+    titre: 'Multiplier par z\u00a0: tourner et agrandir',
     chapitres: ['ts-complexes', 'ts-similitudes'],
-    resume: 'Déplace les points d\'affixes z et w : le point d\'affixe zw s\'obtient en tournant w d\'un angle arg z et en multipliant sa distance à O par |z|.',
+    resume: 'Déplace les points d\'affixes z et w\u00a0: le point d\'affixe zw s\'obtient en tournant w d\'un angle arg z et en multipliant sa distance à O par |z|.',
     render: function (el) {
       var F = new Frame(-3.3, 3.3, -3.3, 3.3, 330);
-      var st = { r: 1.2, t: 50, w: [2, -0.5] };
+      var st = { r: 1.2, t: 50, w: [2, -0.5] }, PAD = 'padding:6px 4px';
       el.innerHTML = layout({
-        stage: svgTag('fig', F, 'Plan complexe : points d\'affixes 1, z, w et zw', { max: 470 }),
+        stage: svgTag('fig', F, 'Plan complexe\u00a0: points d\'affixes 1, z, w et zw', { max: 470 }),
         controls: slider('r', 'Module $|z|$', 0.2, 2, 0.05, st.r) + slider('t', 'Argument $\\arg z$ (en degrés)', -180, 180, 1, st.t),
-        readout: '<div class="table-wrap"><table class="t" style="font-size:.86rem"><thead><tr><th></th><th>Forme algébrique</th><th>Module</th><th>Argument</th></tr></thead><tbody>' +
+        readout: '<div class="table-wrap"><table class="t" style="font-size:.86rem"><thead><tr><th style="' + PAD + '"></th><th style="' + PAD + '">Affixe</th><th style="' + PAD + '">Module</th><th style="' + PAD + '">Argument</th></tr></thead><tbody>' +
           ['z', 'w', 'p'].map(function (k) {
             var nm = k === 'p' ? sw(C.acc, it('zw')) : k === 'z' ? sw(C.blue, it('z')) : it('w');
-            return '<tr><th>' + nm + '</th><td data-o="' + k + 'a"></td><td data-o="' + k + 'm"></td><td data-o="' + k + 'g"></td></tr>';
+            return '<tr><th style="' + PAD + '">' + nm + '</th><td style="' + PAD + ';white-space:nowrap" data-o="' + k + 'a"></td><td style="' + PAD + '" data-o="' + k + 'm"></td><td style="' + PAD + ';white-space:nowrap" data-o="' + k + 'g"></td></tr>';
           }).join('') + '</tbody></table></div>' +
-          '<div style="margin-top:6px">' + md('$|zw| = |z| \\times |w|$') + ' : <span data-o="mods"></span></div>' +
-          '<div>' + md('$\\arg(zw) = \\arg z + \\arg w$') + ' : <span data-o="args"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
-        note: md('Observe : multiplier par $z$, c\'est tourner autour de $O$ d\'un angle $\\arg z$ et multiplier les distances à $O$ par $|z|$ (une similitude directe de centre $O$). ' +
+          '<div style="margin-top:6px">' + md('$|zw| = |z| \\times |w|$') + '\u00a0: <span data-o="mods"></span></div>' +
+          '<div>' + md('$\\arg(zw) = \\arg z + \\arg w$') + '\u00a0: <span data-o="args"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
+        note: md('Observe\u00a0: multiplier par $z$, c\'est tourner autour de $O$ d\'un angle $\\arg z$ et multiplier les distances à $O$ par $|z|$ (une similitude directe de centre $O$). ' +
           'Les triangles formés par $O$, $1$, $z$ (en bleu) et par $O$, $w$, $zw$ (en rouge) sont semblables.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), o = F.P([0, 0]), u = F.P([1, 0]);
@@ -1785,7 +1812,7 @@
         out.mods.innerHTML = nt(mz) + ' × ' + nf(mw, 2) + ' \u2248 <b>' + nf(mp, 2) + '</b>';
         var aw1 = rnd(awd, 1), sm = rnd(az + aw1, 1), nm = argN(sm);
         out.args.innerHTML = fdeg(az) + ' + ' + (aw1 < 0 ? '(' + fdeg(aw1) + ')' : fdeg(aw1)) + ' = <b>' + fdeg(sm) + '</b>' + (Math.abs(nm - sm) > 1e-9 ? ', soit <b>' + fdeg(nm) + '</b> à 360° près' : '');
-        out.msg.textContent = Math.abs(P[0]) > 3.3 || Math.abs(P[1]) > 3.3 ? 'Le point d\'affixe zw sort du cadre : rapproche z ou w de O.' : '';
+        out.msg.textContent = Math.abs(P[0]) > 3.3 || Math.abs(P[1]) > 3.3 ? 'Le point d\'affixe zw sort du cadre\u00a0: rapproche z ou w de O.' : '';
       }
       update();
       return function () { S.destroy(); };
@@ -1799,7 +1826,7 @@
     id: 'moyenne-mediane',
     titre: 'Moyenne et médiane en direct',
     chapitres: ['4e-statistiques', '3e-statistiques', '2s-statistiques', '2l-statistiques', '1l-statistiques'],
-    resume: 'Ajoute, déplace ou retire des notes : la moyenne et la médiane bougent sous tes yeux. Une valeur extrême tire la moyenne, pas la médiane.',
+    resume: 'Ajoute, déplace ou retire des notes\u00a0: la moyenne et la médiane bougent sous tes yeux. Une valeur extrême tire la moyenne, pas la médiane.',
     render: function (el) {
       var W = 340, H = 176, AXY = 94, NMAX = 40;
       var F = new Frame(0, 20, 0, 1, W, H, { l: 18, r: 18 });
@@ -1810,11 +1837,11 @@
         controls: '<div class="demo-control"><label for="' + idNew + '">Ajouter une note (sur 20)</label><div style="display:flex;gap:8px">' +
           '<input class="inp" type="number" inputmode="decimal" min="0" max="20" step="0.5" value="16" id="' + idNew + '" style="width:6.5em">' + button('add', 'Ajouter', ' ') + '</div></div>' +
           buttons(button('pop', 'Retirer la dernière') + button('zero', 'Ajouter un 0') + button('reset', 'Réinitialiser')),
-        readout: '<div style="' + ROW + '"><span>Effectif : <b data-o="n"></b></span><span>Moyenne : <b data-o="m" style="color:' + C.acc + '"></b></span>' +
-          '<span>Médiane : <b data-o="me" style="color:' + C.green + '"></b></span></div>' +
-          '<div style="' + ROW + '"><span>Étendue : <b data-o="e"></b></span><span>Écart type : <b data-o="s"></b></span></div>' +
-          '<div class="small" style="margin-top:4px">Série rangée : <span data-o="sorted"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
-        note: md('Touche l\'axe pour ajouter une note, touche un point pour le retirer, fais-le glisser pour le changer. Observe : une valeur extrême (un $0$ par exemple) fait beaucoup bouger la moyenne, ' +
+        readout: '<div style="' + ROW + '"><span>Effectif\u00a0: <b data-o="n"></b></span><span>Moyenne\u00a0: <b data-o="m" style="color:' + C.acc + '"></b></span>' +
+          '<span>Médiane\u00a0: <b data-o="me" style="color:' + C.green + '"></b></span></div>' +
+          '<div style="' + ROW + '"><span>Étendue\u00a0: <b data-o="e"></b></span><span>Écart type\u00a0: <b data-o="s"></b></span></div>' +
+          '<div class="small" style="margin-top:4px">Série rangée\u00a0: <span data-o="sorted"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
+        note: md('Touche l\'axe pour ajouter une note, touche un point pour le retirer, fais-le glisser pour le changer. Observe\u00a0: une valeur extrême (un $0$ par exemple) fait beaucoup bouger la moyenne, ' +
           'mais presque pas la médiane, qui partage la série rangée en deux moitiés de même effectif.')
       });
       var svg = el.querySelector('[data-s="fig"]'), S = new Stage(svg, F), out = outs(el), inp = el.querySelector('#' + idNew);
@@ -1856,9 +1883,9 @@
         out.e.textContent = nt(t.e, 2);
         out.s.textContent = '\u2248 ' + nf(t.sd, 2);
         var lo = t.n % 2 ? (t.n - 1) / 2 : t.n / 2 - 1, hi = t.n % 2 ? lo : lo + 1;
-        out.sorted.innerHTML = t.s.map(function (v, i) { return i >= lo && i <= hi ? '<b style="color:' + C.green + '">' + nt(v) + '</b>' : nt(v); }).join(' ; ');
-        out.msg.textContent = t.n % 2 ? 'Effectif impair : la médiane est la valeur du milieu de la série rangée.' :
-          'Effectif pair : la médiane est la moyenne des deux valeurs du milieu de la série rangée.';
+        out.sorted.innerHTML = t.s.map(function (v, i) { return i >= lo && i <= hi ? '<b style="color:' + C.green + '">' + nt(v) + '</b>' : nt(v); }).join('\u00a0; ');
+        out.msg.textContent = t.n % 2 ? 'Effectif impair\u00a0: la médiane est la valeur du milieu de la série rangée.' :
+          'Effectif pair\u00a0: la médiane est la moyenne des deux valeurs du milieu de la série rangée.';
       }
       function addVal(v) { if (vals.length < NMAX && isFinite(v)) { vals.push(clamp(snap(v, 0.5), 0, 20)); update(); } }
       var press = null;
@@ -1907,18 +1934,18 @@
   /* ================================================================== */
   EM.demos.register({
     id: 'homothetie',
-    titre: 'Homothétie : centre et rapport',
+    titre: 'Homothétie\u00a0: centre et rapport',
     chapitres: ['2s-transformations', '2s-vecteurs-barycentre', '3e-vecteurs', '1s1-transformations'],
-    resume: 'Fais varier le rapport k et déplace le centre O : l\'image du triangle s\'agrandit, rétrécit ou passe de l\'autre côté de O, avec OA′ = k × OA en vecteurs.',
+    resume: 'Fais varier le rapport k et déplace le centre O\u00a0: l\'image du triangle s\'agrandit, rétrécit ou passe de l\'autre côté de O, avec OA′ = k × OA en vecteurs.',
     render: function (el) {
-      var F = new Frame(-6, 6, -4.4, 4.4, 340);
-      var st = { k: 2, O: [-5.5, -4], T: [[-4, -2], [-2.5, -2.5], [-3.5, -0.5]] };
+      var F = new Frame(-4.5, 4.5, -3.4, 3.4, 340);
+      var st = { k: 2, O: [0.5, 0], T: [[-1.5, -1], [-0.5, -1.5], [-1, 0.5]] };
       var NAMES = ['A', 'B', 'C'];
       el.innerHTML = layout({
         stage: svgTag('fig', F, 'Triangle ABC et son image par l\'homothétie de centre O et de rapport k'),
         controls: slider('k', 'Rapport $k$', -3, 3, 0.1, st.k),
         readout: '<div data-o="kind" style="margin-bottom:4px"></div><div data-o="l1"></div><div data-o="l2"></div><div data-o="l3"></div>',
-        note: md('Observe : $O$, $A$ et $A\'$ sont toujours alignés, avec $\\overrightarrow{OA\'} = k\\,\\overrightarrow{OA}$. Les longueurs sont multipliées par $|k|$, les aires par $k^2$, et chaque côté de l\'image est parallèle au côté correspondant. ' +
+        note: md('Observe\u00a0: $O$, $A$ et $A\'$ sont toujours alignés, avec $\\overrightarrow{OA\'} = k\\,\\overrightarrow{OA}$. Les longueurs sont multipliées par $|k|$, les aires par $k^2$, et chaque côté de l\'image est parallèle au côté correspondant. ' +
           'Avec $k = -1$, tu retrouves la symétrie centrale de centre $O$. Tu peux aussi faire glisser $A\'$.')
       });
       var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
@@ -1926,7 +1953,7 @@
       var MSG = {};
       function M(s) { if (!MSG[s]) MSG[s] = md(s); return MSG[s]; }
       var rK = bindRange(el, 'k', function (v) { return nt(v, 1); }, function (v) { st.k = rnd(v, 1); update(); });
-      function sp(x, y) { return [clamp(snap(x, 0.5), -5.5, 5.5), clamp(snap(y, 0.5), -4, 4)]; }
+      function sp(x, y) { return [clamp(snap(x, 0.5), -4, 4), clamp(snap(y, 0.5), -3, 3)]; }
       function img(p) { return [st.O[0] + st.k * (p[0] - st.O[0]), st.O[1] + st.k * (p[1] - st.O[1])]; }
       S.handle({ label: 'Centre O', color: C.line, step: 0.5, get: function () { return st.O; }, set: function (x, y) { st.O = sp(x, y); } });
       [0, 1, 2].forEach(function (i) {
@@ -1964,17 +1991,17 @@
         s += lab(o, 'O', [-0.7, 0.75], { k: 19, F: F });
         S.draw('main', s);
         S.sync();
-        out.kind.innerHTML = '<b>' + (k === 0 ? M('$k = 0$ n\'est pas permis : tous les points iraient en $O$.') :
-          k === 1 ? M('$k = 1$ : chaque point est sa propre image.') : k === -1 ? M('$k = -1$ : c\'est la symétrie centrale de centre $O$.') :
-            k > 1 ? M('$k > 1$ : agrandissement, l\'image est du même côté de $O$.') : k > 0 ? M('$0 < k < 1$ : réduction, l\'image est du même côté de $O$.') :
-              k > -1 ? M('$-1 < k < 0$ : réduction, l\'image passe de l\'autre côté de $O$.') : M('$k < -1$ : agrandissement, l\'image passe de l\'autre côté de $O$.')) + '</b>';
+        out.kind.innerHTML = '<b>' + (k === 0 ? M('$k = 0$ n\'est pas permis\u00a0: tous les points iraient en $O$.') :
+          k === 1 ? M('$k = 1$\u00a0: chaque point est sa propre image.') : k === -1 ? M('$k = -1$\u00a0: c\'est la symétrie centrale de centre $O$.') :
+            k > 1 ? M('$k > 1$\u00a0: agrandissement, l\'image est du même côté de $O$.') : k > 0 ? M('$0 < k < 1$\u00a0: réduction, l\'image est du même côté de $O$.') :
+              k > -1 ? M('$-1 < k < 0$\u00a0: réduction, l\'image passe de l\'autre côté de $O$.') : M('$k < -1$\u00a0: agrandissement, l\'image passe de l\'autre côté de $O$.')) + '</b>';
         if (k === 0) { out.l1.innerHTML = out.l2.innerHTML = out.l3.innerHTML = ''; return; }
         var A1 = it('A' + PRIME), B1 = it('B' + PRIME), OA = dist(st.O, T[0]), AB = dist(T[0], T[1]), ar = aireTri(T[0], T[1], T[2]);
-        out.l1.innerHTML = it('OA') + ' = ' + nf(OA, 2) + ' ; ' + it('O') + A1 + ' = ' + nf(Math.abs(k) * OA, 2) +
-          (OA > 1e-9 ? ' ; ' + it('O') + A1 + ' ÷ ' + it('OA') + ' = <b>' + nt(Math.abs(k), 1) + '</b> = |' + it('k') + '|' : '');
-        out.l2.innerHTML = it('AB') + ' = ' + nf(AB, 2) + ' ; ' + A1 + B1 + ' = ' + nf(Math.abs(k) * AB, 2) +
-          (AB > 1e-9 ? ' ; ' + A1 + B1 + ' ÷ ' + it('AB') + ' = <b>' + nt(Math.abs(k), 1) + '</b>' : '');
-        out.l3.innerHTML = 'Aires : ' + nt(rnd(ar, 3), 3) + ' et ' + nt(rnd(k * k * ar, 3), 3) + (ar > 1e-9 ? ' ; rapport <b>' + nt(rnd(k * k, 2), 2) + '</b> = ' + it('k') + '²' : '') + ' carreaux.';
+        out.l1.innerHTML = it('OA') + ' = ' + nf(OA, 2) + '\u00a0; ' + it('O') + A1 + ' = ' + nf(Math.abs(k) * OA, 2) +
+          (OA > 1e-9 ? '\u00a0; ' + it('O') + A1 + ' ÷ ' + it('OA') + ' = <b>' + nt(Math.abs(k), 1) + '</b> = |' + it('k') + '|' : '');
+        out.l2.innerHTML = it('AB') + ' = ' + nf(AB, 2) + '\u00a0; ' + A1 + B1 + ' = ' + nf(Math.abs(k) * AB, 2) +
+          (AB > 1e-9 ? '\u00a0; ' + A1 + B1 + ' ÷ ' + it('AB') + ' = <b>' + nt(Math.abs(k), 1) + '</b>' : '');
+        out.l3.innerHTML = 'Aires\u00a0: ' + nt(rnd(ar, 3), 3) + ' et ' + nt(rnd(k * k * ar, 3), 3) + (ar > 1e-9 ? '\u00a0; rapport <b>' + nt(rnd(k * k, 2), 2) + '</b> = ' + it('k') + '²' : '') + ' carreaux.';
       }
       update();
       return function () { S.destroy(); };

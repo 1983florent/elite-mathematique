@@ -7,6 +7,11 @@
   var esc = EM.util.esc;
   EM.views = EM.views || {};
 
+  /** Lien de téléchargement de l'APK (publié par GitHub Actions depuis la branche principale). */
+  EM.APK_URL = 'https://github.com/1983florent/elite-mathematique/releases/download/android/elite-mathematique.apk';
+  /** Le logiciel tourne-t-il dans l'application Android ? */
+  EM.estAndroid = function () { return !!(root.AndroidBridge && root.AndroidBridge.estAndroid); };
+
   /** Générateurs d'une classe (sans doublon). */
   EM.gensClasse = function (k, filtre) {
     var cl = EM.programme.classes[k], seen = {}, out = [];
@@ -123,6 +128,7 @@
       '<p>ELITE MATHÉMATIQUE est gratuit pour tous les élèves. Vous pouvez soutenir son développement :</p>' +
       '<p><strong>Wave / Orange Money :</strong> (+221) 70 601 31 69<br><strong>E-mail :</strong> <a href="mailto:maths.florent@gmail.com">maths.florent@gmail.com</a></p>' +
       '<img class="qr-img" src="qr-code.png" alt="QR code pour soutenir le projet" onerror="this.remove()">' +
+      (EM.estAndroid() ? '' : '<p><a class="btn sm gold" href="' + EM.APK_URL + '">📱 Télécharger l\'application Android</a></p>') +
       '<div class="row"><button class="btn sm" data-act="copier">Copier le numéro</button><a class="btn sm ghost" href="mailto:maths.florent@gmail.com">Envoyer un message</a>' +
       '<a class="btn sm ghost" href="#/a-propos">À propos</a></div></div>' +
       '<p class="footer">© ' + new Date().getFullYear() + ' ELITE MATHÉMATIQUE — conforme aux programmes de mathématiques du Sénégal.</p>';
@@ -170,8 +176,10 @@
       '<li><strong>Révision espacée</strong> (boîtes de Leitner) des définitions et formules.</li>' +
       '<li><strong>Problèmes ancrés dans la vie au Sénégal</strong> : marchés, pêche, transport, agriculture, francs CFA.</li>' +
       '<li><strong>Laboratoire</strong> : grapheur, calculatrice, solveurs pas à pas, statistiques, probabilités, nombres complexes.</li></ul>' +
-      '<h2>Installer l\'application</h2><p>Sur Android (Chrome) : ouvre le menu ⋮ puis « Ajouter à l\'écran d\'accueil » ou « Installer l\'application ». Une fois ouverte une première fois, elle fonctionne sans connexion. ' +
-      'Le dossier peut aussi être copié sur une clé USB ou une carte mémoire : il suffit d\'ouvrir <code>index.html</code>.</p>' +
+      '<h2>Installer l\'application</h2>' + (EM.estAndroid() ? '<p>Tu utilises déjà l\'application Android : tout fonctionne sans connexion.</p>' :
+        '<p><a class="btn" href="' + EM.APK_URL + '">📱 Télécharger l\'application Android (APK)</a></p>' +
+        '<p>Après le téléchargement, ouvre le fichier et autorise l\'installation (« sources inconnues ») si ton téléphone le demande. L\'application fonctionne sans connexion, sur Android 5.0 ou plus. ' +
+        'Autre possibilité : dans Chrome, menu ⋮ puis « Installer l\'application ». Le dossier du logiciel peut aussi être copié sur une clé USB : il suffit d\'ouvrir <code>index.html</code>.</p>') +
       '<h2>Tes données</h2><p>Ta progression reste sur ton appareil. Tu peux l\'exporter dans « Mes progrès » pour la transférer sur un autre téléphone.</p>' +
       '<h2>Contact et soutien</h2><p><strong>Wave / Orange Money :</strong> (+221) 70 601 31 69 · <a href="mailto:maths.florent@gmail.com">maths.florent@gmail.com</a></p>' +
       '<p class="small muted">Affichage des formules : KaTeX (licence MIT). Contributions : voir <code>docs/CONTRIBUER.md</code>.</p></div>';

@@ -18,9 +18,17 @@ Gratuit, utilisable sur téléphone, et fonctionnant **sans connexion internet**
 | 👩🏾‍🏫 **Espace enseignant** | Fiches d'exercices imprimables avec corrigé, et leur version interactive pour les élèves (lien à partager). |
 | 🏆 **Progrès** | Maîtrise par chapitre, carte de maîtrise de tout le programme, points, rangs, badges, série de jours, historique des examens, export et import de la progression. |
 
+## Application Android
+
+Le dossier [`android/`](android/README.md) contient l'application Android (sans connexion, sans permission).
+GitHub Actions la compile automatiquement à chaque mise à jour, après avoir lancé le banc de tests ;
+sur la branche principale, l'APK est publié ici :
+https://github.com/1983florent/elite-mathematique/releases/download/android/elite-mathematique.apk
+
 ## Utilisation
 
-- **En ligne** : publier le dossier sur n'importe quel hébergement statique (par exemple GitHub Pages) et ouvrir `index.html`.
+- **En ligne** : le workflow « Site web » publie le logiciel sur GitHub Pages à chaque mise à jour de `main`
+  (à activer une fois : *Settings → Pages → Source : GitHub Actions*). Adresse : https://1983florent.github.io/elite-mathematique/
 - **Sur Android** : ouvrir le site dans Chrome, puis menu ⋮ → « Installer l'application ». Elle fonctionne ensuite hors connexion.
 - **Sans internet du tout** : copier le dossier (clé USB, carte mémoire, partage de fichiers) et ouvrir `index.html` dans un navigateur.
 

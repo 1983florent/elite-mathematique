@@ -1,0 +1,7 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+# copie du logiciel web, refaite à chaque compilation
+app/src/main/assets/www/

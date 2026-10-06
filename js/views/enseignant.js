@@ -102,7 +102,10 @@
           exos.map(function (x, i) { return EM.ui.correctionPapier(x.ex, i + 1); }).join('');
       }
       main.innerHTML = html + '</div>';
-      main.querySelector('[data-act="print"]').addEventListener('click', function () { window.print(); });
+      main.querySelector('[data-act="print"]').addEventListener('click', function () {
+        if (window.AndroidBridge && window.AndroidBridge.imprimer) window.AndroidBridge.imprimer((query.t || 'Fiche') + ' ' + query.s);
+        else window.print();
+      });
       main.querySelector('[data-act="lien"]').addEventListener('click', function () { EM.ui.copy(lienEleve, 'Lien élève copié : partagez-le à la classe'); });
       return;
     }

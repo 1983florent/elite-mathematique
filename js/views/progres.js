@@ -69,13 +69,18 @@
         }).join('') + '</table></div></div>';
     }
 
-    html += '<div class="card"><h2>Sauvegarde</h2><p class="small muted">Exporte ta progression pour la garder ou la transférer sur un autre appareil (par exemple par WhatsApp ou Bluetooth), puis importe le fichier.</p>' +
+    html += '<div class="card"><h2>Sauvegarde</h2><p class="small muted">Exporte ta progression pour la garder ou la transférer sur un autre appareil (par exemple par WhatsApp ou Bluetooth), puis importe le fichier. Dans l'application Android, l'export ouvre le menu de partage : enregistre le texte reçu dans un fichier .json pour l'importer.</p>' +
       '<div class="row"><button class="btn" data-act="export">⬇️ Exporter</button><label class="btn ghost" style="cursor:pointer">⬆️ Importer<input type="file" accept="application/json,.json" data-act="import" hidden></label>' +
       '<button class="btn danger" data-act="reset">Tout effacer</button></div></div>';
     main.innerHTML = html;
 
     main.querySelector('#nom').addEventListener('change', function () { S.setNom(this.value); EM.ui.toast('Enregistré'); });
     main.querySelector('[data-act="export"]').addEventListener('click', function () {
+      if (window.AndroidBridge && window.AndroidBridge.partager) {
+        // dans l'application Android : on partage le fichier de progression (WhatsApp, Bluetooth, e-mail…)
+        window.AndroidBridge.partager(S.exporter(), 'Progression ELITE MATHÉMATIQUE');
+        return;
+      }
       var blob = new Blob([S.exporter()], { type: 'application/json' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);

@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'sn.elitemathematique.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'sn.elitemathematique.app'
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        // Clé de débogage commune (non secrète) : chaque APK produit par GitHub Actions
+        // porte la même signature, ce qui permet de mettre à jour l'application installée.
+        // Pour le Play Store, créer une clé de publication privée (voir android/README.md).
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Copie le logiciel web (racine du dépôt) dans les ressources de l'application.
+def webRoot = rootProject.file('..')
+def webAssets = file('src/main/assets/www')
+tasks.register('copierLogicielWeb', Sync) {
+    description = 'Copie index.html, css, js, vendor, icons et le manifeste dans les assets Android.'
+    from(webRoot) {
+        include 'index.html', 'manifest.webmanifest'
+        include 'css/**', 'js/**', 'vendor/**', 'icons/**'
+    }
+    into webAssets
+}
+tasks.named('preBuild').configure { dependsOn 'copierLogicielWeb' }

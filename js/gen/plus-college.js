@@ -80,6 +80,14 @@
     }
     return posAngle(bis);
   }
+  /** position d'étiquette pour P, à l'opposé de deux points C1 et C2 à la fois */
+  function posLoin2(P, C1, C2) {
+    var u1 = [P[0] - C1[0], P[1] - C1[1]], u2 = [P[0] - C2[0], P[1] - C2[1]];
+    var n1 = Math.sqrt(u1[0] * u1[0] + u1[1] * u1[1]) || 1, n2 = Math.sqrt(u2[0] * u2[0] + u2[1] * u2[1]) || 1;
+    return posAngle(Math.atan2(u1[1] / n1 + u2[1] / n2, u1[0] / n1 + u2[0] / n2) * 180 / Math.PI);
+  }
+  /** position d'étiquette dans un repère : vers l'extérieur du quadrant (loin des axes gradués) */
+  function posQuadrant(P) { return (P[1] >= 0 ? 'n' : 's') + (P[0] >= 0 ? 'e' : 'o'); }
   function centre(pts) {
     var s = [0, 0];
     pts.forEach(function (p) { s[0] += p[0]; s[1] += p[1]; });
@@ -141,7 +149,7 @@
   }
   /** Repère orthonormé simple [−L ; L]², avec quadrillage. */
   function repere(xmin, xmax, ymin, ymax, w) {
-    var f = EM.fig.create({ xmin: xmin, xmax: xmax, ymin: ymin, ymax: ymax, w: w || 280, title: 'Repère' });
+    var f = EM.fig.create({ xmin: xmin - 0.6, xmax: xmax + 0.6, ymin: ymin - 0.6, ymax: ymax + 0.6, w: w || 280, title: 'Repère' });
     f.axes({ step: 1, labelStep: (xmax - xmin) > 14 ? 2 : 1 });
     return f;
   }
@@ -1096,7 +1104,7 @@
         };
       }
       // niveau 3 : conservation par symétrie axiale
-      var a = rng.int(6, 14) / 2, b = rng.int(6, 14) / 2, th = 5 * rng.int(8, 22), psi = rng.int(-30, 10);
+      var a = rng.int(6, 14) / 2, b = rng.int(6, 14) / 2, th = 5 * rng.pick([8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22]), psi = rng.int(-30, 10);
       var pB = [0, 0], pC = pt(pB, 180 + psi, b), pA = pt(pB, 180 + psi - th, a);
       if (th > 90 || pA[1] > pC[1]) pA = pt(pB, 180 + psi + th, a);
       var tri = [pA, pB, pC], maxX = Math.max(pA[0], pB[0], pC[0]), minX = Math.min(pA[0], pB[0], pC[0]);
@@ -1340,6 +1348,1235 @@
           'Aire du rectangle : $' + LL + ' \\times ' + ll + ' = ' + n(aR) + '$ m².',
           'Côté du carré : $' + Pm + ' \\div 4 = ' + n(cote) + '$ m. Aire du carré : $' + n(cote) + ' \\times ' + n(cote) + ' = ' + n(aC) + '$ m².',
           'Le jardin carré a la plus grande aire (' + u(aC - aR, 'm²') + ' de plus) : à périmètre égal, le carré a une aire plus grande que le rectangle.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — PGCD et PPCM : relation PGCD × PPCM, engrenages, plantations    */
+  /* ================================================================== */
+  function euclideEtapes(a, b) {
+    var steps = [], x = Math.max(a, b), y = Math.min(a, b);
+    while (y) { var q = Math.floor(x / y), r = x % y; steps.push('$' + n(x) + ' = ' + n(y) + ' \\times ' + q + ' + ' + r + '$'); x = y; y = r; }
+    return { g: x, steps: steps };
+  }
+
+  EM.gen.register({
+    id: '5e-plus-pgcd-situations',
+    titre: 'PGCD et PPCM : relation, nombres premiers entre eux, engrenages, plantations',
+    chapitres: ['5e-pgcd-ppcm'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var g, p, q, guard = 0;
+      if (niveau === 1) {
+        do { g = rng.int(4, 18); p = rng.int(2, 12); q = rng.intExcept(2, 12, [p]); guard++; } while (guard < 200 && (ar.gcd(p, q) !== 1 || g * Math.max(p, q) > 200));
+        var a = g * Math.max(p, q), b = g * Math.min(p, q), L = a * b / g;
+        var prem = rng.bool(), c, d, g2 = 0;
+        do {
+          if (prem) { c = rng.int(20, 99); d = rng.int(20, 99); }
+          else { var kk = rng.pick([7, 11, 13, 17, 19]), x = rng.int(2, 7), y = rng.int(2, 7); c = kk * x; d = kk * y; }
+          g2++;
+        } while (g2 < 300 && (c === d || c > 99 || d > 99 || (prem ? ar.gcd(c, d) !== 1 || ar.isPrime(c) || ar.isPrime(d) || c % 2 === 0 && d % 2 === 0 : ar.gcd(c, d) < 7 || (c % 2 === 0 && d % 2 === 0) || (c % 3 === 0 && d % 3 === 0) || (c % 5 === 0 && d % 5 === 0))));
+        var eu = euclideEtapes(c, d);
+        return {
+          enonce: 'a) On sait que $\\text{PGCD}(' + a + ' \\,;\\, ' + b + ') = ' + g + '$. Sans décomposer, calculer $\\text{PPCM}(' + a + ' \\,;\\, ' + b + ')$.<br>b) Les nombres ' + m(c) + ' et ' + m(d) + ' sont-ils premiers entre eux ?',
+          questions: [qnum('a) PPCM $=$', L), qcm(rng, 'b) Réponse :', eu.g === 1 ? 'Oui, leur PGCD est 1' : 'Non, ils ont un diviseur commun autre que 1', ['Oui, leur PGCD est 1', 'Non, ils ont un diviseur commun autre que 1'])],
+          indices: ['Pour deux entiers $a$ et $b$ : $\\text{PGCD}(a ; b) \\times \\text{PPCM}(a ; b) = a \\times b$.', 'Deux nombres sont premiers entre eux si leur PGCD est 1 : utilise l\'algorithme d\'Euclide.'],
+          solution: [
+            '$\\text{PPCM}(' + a + ' \\,;\\, ' + b + ') = \\dfrac{' + a + ' \\times ' + b + '}{\\text{PGCD}} = \\dfrac{' + n(a * b) + '}{' + g + '} = ' + n(L) + '$.',
+            'Algorithme d\'Euclide pour ' + m(c) + ' et ' + m(d) + ' : ' + eu.steps.join(' ; ') + '.',
+            eu.g === 1 ? 'Le dernier reste non nul est 1 : $\\text{PGCD} = 1$, les deux nombres sont premiers entre eux (même s\'ils ne sont pas premiers eux-mêmes).'
+              : 'Le dernier reste non nul est ' + eu.g + ' : $\\text{PGCD} = ' + eu.g + '$. Les deux nombres ne sont pas premiers entre eux : $' + c + ' = ' + eu.g + ' \\times ' + (c / eu.g) + '$ et $' + d + ' = ' + eu.g + ' \\times ' + (d / eu.g) + '$.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        do { g = rng.pick([2, 3, 4, 5, 6]); p = rng.int(3, 12); q = rng.int(2, p - 1); guard++; } while (guard < 200 && (ar.gcd(p, q) !== 1 || g * p > 60 || g * q < 10));
+        var A = g * p, B = g * q, Lc = g * p * q;
+        var ctx = rng.pick(['d\'un moulin à mil', 'd\'une batteuse de riz de la vallée du fleuve', 'd\'une vieille horloge']);
+        return {
+          enonce: 'Dans le mécanisme ' + ctx + ', deux roues dentées s\'engrènent : la grande roue a ' + m(A) + ' dents, la petite ' + m(B) + ' dents. Au départ, une dent marquée en rouge de chaque roue est en contact.<br>a) Au bout de combien de dents passées les deux dents rouges se retrouveront-elles en contact pour la première fois ?<br>b) Combien de tours la grande roue aura-t-elle faits ? Et la petite ?',
+          questions: [qnum('a) Nombre de dents :', Lc), qnum('b) Tours de la grande roue :', Lc / A), qnum('b) Tours de la petite roue :', Lc / B)],
+          indices: ['À chaque tour, la grande roue fait passer ' + A + ' dents : la dent rouge revient à sa place après un multiple de ' + A + ' dents. Même raisonnement pour la petite roue.', 'On cherche le plus petit multiple commun non nul : le PPCM.'],
+          solution: [
+            'La dent rouge de la grande roue revient au point de contact toutes les ' + A + ' dents, celle de la petite roue toutes les ' + B + ' dents.',
+            'Les deux dents rouges se retrouvent ensemble après un nombre de dents multiple de ' + A + ' et de ' + B + ' ; la première fois, c\'est le PPCM.',
+            '$' + A + ' = ' + g + ' \\times ' + p + '$ et $' + B + ' = ' + g + ' \\times ' + q + '$ avec $' + p + '$ et $' + q + '$ premiers entre eux : $\\text{PPCM}(' + A + ' \\,;\\, ' + B + ') = ' + g + ' \\times ' + p + ' \\times ' + q + ' = ' + Lc + '$.',
+            'Grande roue : $' + Lc + ' \\div ' + A + ' = ' + (Lc / A) + '$ tours ; petite roue : $' + Lc + ' \\div ' + B + ' = ' + (Lc / B) + '$ tours.'
+          ]
+        };
+      }
+      // niveau 3 : arbres autour d'un champ
+      do { g = rng.pick([3, 4, 5, 6, 7, 8, 9, 10, 12, 15]); p = rng.int(3, 15); q = rng.int(2, p - 1); guard++; } while (guard < 300 && (ar.gcd(p, q) !== 1 || g * p > 210 || g * p < 40 || g * q < 20));
+      var Lg = g * p, lg = g * q, per = 2 * (Lg + lg), nbA = per / g;
+      var eu3 = euclideEtapes(Lg, lg);
+      var lieu = rng.pick(['un champ de mil près de Kaffrine', 'un verger de manguiers en Casamance', 'un champ d\'arachide près de Kaolack', 'la cour d\'une école de Louga']);
+      return {
+        enonce: 'On veut planter des arbres tout autour de ' + lieu + ', de forme rectangulaire, de ' + u(Lg, 'm') + ' sur ' + u(lg, 'm') + '. On place un arbre à chaque coin, et les arbres doivent être régulièrement espacés d\'un nombre entier de mètres, le plus grand possible.<br>a) Quel est l\'écart entre deux arbres voisins ?<br>b) Combien d\'arbres faut-il planter ?',
+        questions: [qnum('a) Écart :', g, 'm'), qnum('b) Nombre d\'arbres :', nbA)],
+        indices: ['Avec un arbre à chaque coin, l\'écart doit diviser exactement la longueur et la largeur.', 'Le plus grand diviseur commun est le PGCD. Puis : nombre d\'intervalles sur le tour complet = nombre d\'arbres.'],
+        solution: [
+          'Comme il y a un arbre à chaque coin, l\'écart doit diviser ' + m(Lg) + ' et ' + m(lg) + ' ; le plus grand possible est leur PGCD.',
+          eu3.steps.join(' ; ') + ' : $\\text{PGCD}(' + Lg + ' \\,;\\, ' + lg + ') = ' + g + '$. L\'écart est de ' + u(g, 'm') + '.',
+          'Périmètre du champ : $2 \\times (' + Lg + ' + ' + lg + ') = ' + per + '$ m, soit $' + per + ' \\div ' + g + ' = ' + nbA + '$ intervalles.',
+          'Sur un tour fermé, il y a autant d\'arbres que d\'intervalles : il faut ' + m(nbA) + ' arbres.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Expressions littérales : traduire, périmètre, programme        */
+  /* ================================================================== */
+  /** ax + b pour l'analyseur */
+  function linStr(a, b) {
+    var s = a === 0 ? '' : (a === 1 ? 'x' : a === -1 ? '-x' : a + '*x');
+    if (b) s += (b > 0 && s ? '+' : '') + b;
+    return s || '0';
+  }
+  /** ax + b pour une figure SVG */
+  function linTxt(a, b) {
+    var s = a === 1 ? 'x' : a + 'x';
+    if (b > 0) s += ' + ' + b; else if (b < 0) s += ' − ' + (-b);
+    return s;
+  }
+
+  EM.gen.register({
+    id: '5e-plus-traduire-programme',
+    titre: 'Traduire une phrase, exprimer un périmètre, étudier un programme de calcul',
+    chapitres: ['5e-expressions-litterales'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var k = rng.int(2, 9), x0, K = String(k);
+        var MOD = [
+          { t: 'le double de $x$, augmenté de $' + K + '$', bon: '2x + ' + K, faux: ['2(x + ' + K + ')', 'x^2 + ' + K, '2 + x + ' + K], v: function (x) { return 2 * x + k; }, s: '$2 \\times x + ' + K + '$' },
+          { t: 'le triple de la somme de $x$ et de $' + K + '$', bon: '3(x + ' + K + ')', faux: ['3x + ' + K, 'x + ' + (3 * k), '3 + x + ' + K], v: function (x) { return 3 * (x + k); }, s: 'on calcule d\'abord la somme $x + ' + K + '$, puis on la multiplie par 3' },
+          { t: 'le carré de $x$, diminué de $' + K + '$', bon: 'x^2 - ' + K, faux: ['(x - ' + K + ')^2', '2x - ' + K, 'x - ' + (k * k)], v: function (x) { return x * x - k; }, s: '$x \\times x - ' + K + '$' },
+          { t: 'la moitié de la différence de $x$ et de $' + K + '$', bon: '\\dfrac{x - ' + K + '}{2}', faux: ['\\dfrac{x}{2} - ' + K, 'x - \\dfrac{' + K + '}{2}', '2(x - ' + K + ')'], v: function (x) { return (x - k) / 2; }, s: 'on calcule d\'abord la différence $x - ' + K + '$, puis on la divise par 2' },
+          { t: 'le produit de $x$ par la somme de $x$ et de $' + K + '$', bon: 'x(x + ' + K + ')', faux: ['x \\times x + ' + K, '2x + ' + K, 'x + x + ' + K], v: function (x) { return x * (x + k); }, s: 'on calcule d\'abord la somme $x + ' + K + '$, puis on la multiplie par $x$' }
+        ];
+        var M = rng.pick(MOD);
+        x0 = rng.int(k + 1, k + 8);
+        var val = R(M.v(x0));
+        return {
+          enonce: 'On note $x$ un nombre.<br>a) Quelle expression traduit la phrase : « ' + M.t + ' » ?<br>b) Calculer la valeur de cette expression pour $x = ' + x0 + '$.',
+          questions: [qcm(rng, 'a) Expression :', '$' + M.bon + '$', M.faux.map(function (e) { return '$' + e + '$'; })), qnum('b) Valeur pour $x = ' + x0 + '$ :', val)],
+          indices: ['Repère la dernière opération de la phrase : « le double de… », « la moitié de… », « le produit de… » indiquent ce qu\'on fait en dernier.', 'Une somme ou une différence qu\'on multiplie ou qu\'on divise doit être entre parenthèses (ou sur la barre de fraction).'],
+          solution: [
+            'Dans « ' + M.t + ' », ' + M.s + ' : l\'expression est $' + M.bon + '$.',
+            'Pour $x = ' + x0 + '$ : on remplace $x$ par ' + x0 + ' et on obtient ' + m(val) + '.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var rect = rng.bool(), x1, P, Pstr, Ptex, sol = [], gg = 0;
+        if (rect) {
+          var a1, b1, b2;
+          do { a1 = rng.pick([2, 3]); b1 = rng.nz(-3, 5); b2 = rng.int(1, 4); x1 = rng.int(3, 9); gg++; } while (gg < 100 && (a1 * x1 + b1 <= x1 + b2 + 1 || a1 * x1 + b1 <= 0));
+          var cA = 2 * (a1 + 1), cB = 2 * (b1 + b2);
+          P = cA * x1 + cB; Pstr = linStr(cA, cB); Ptex = T.poly([cA, cB]);
+          var Lr = 6, lr = 3.4, pts = [[0, 0], [Lr, 0], [Lr, lr], [0, lr]];
+          f = EM.fig.fit(pts, { w: 270, h: 170, pad: 46 });
+          f.poly(pts, { fill: true }).rightAngle(pts[1], pts[0], pts[3]).rightAngle(pts[0], pts[1], pts[2]).rightAngle(pts[1], pts[2], pts[3]).rightAngle(pts[2], pts[3], pts[0]);
+          f.segLabel(pts[0], pts[1], linTxt(a1, b1), { inside: pts[2] }).segLabel(pts[1], pts[2], linTxt(1, b2), { inside: pts[0], k: 24 });
+          sol.push('Le périmètre d\'un rectangle est $2 \\times (L + \\ell)$ : $P = 2(' + T.poly([a1, b1]) + ' + ' + T.poly([1, b2]) + ')$.');
+          sol.push('$P = 2(' + T.poly([a1 + 1, b1 + b2]) + ') = ' + Ptex + '$.');
+        } else {
+          var c1, c2, c3;
+          do { c1 = rng.int(1, 6); c2 = rng.nz(-4, 3); c3 = rng.int(1, 6); x1 = rng.int(3, 9); gg++; } while (gg < 100 && (2 * x1 + c2 <= 0 || c1 === c3));
+          var s1 = x1 + c1, s2 = 2 * x1 + c2, s3 = x1 + c3;
+          if (s1 >= s2 + s3 || s2 >= s1 + s3 || s3 >= s1 + s2) { c2 = 1; s2 = 2 * x1 + 1; }
+          P = 4 * x1 + c1 + c2 + c3; Pstr = linStr(4, c1 + c2 + c3); Ptex = T.poly([4, c1 + c2 + c3]);
+          var tri = triCotes(s2, s3, s1), ctr = centre(tri);
+          f = EM.fig.fit(tri, { w: 270, h: 190, pad: 50 });
+          f.poly(tri, { fill: true });
+          f.segLabel(tri[0], tri[1], linTxt(1, c1), { inside: ctr }).segLabel(tri[1], tri[2], linTxt(2, c2), { inside: ctr, k: 24 }).segLabel(tri[0], tri[2], linTxt(1, c3), { inside: ctr, k: 24 });
+          sol.push('Le périmètre est la somme des trois côtés : $P = (' + T.poly([1, c1]) + ') + (' + T.poly([2, c2]) + ') + (' + T.poly([1, c3]) + ')$.');
+          sol.push('On regroupe les termes en $x$ : $x + 2x + x = 4x$, et les nombres : $' + c1 + T.signed(c2) + T.signed(c3) + ' = ' + (c1 + c2 + c3) + '$. Donc $P = ' + Ptex + '$.');
+        }
+        var cte0 = rect ? cB : c1 + c2 + c3;
+        sol.push('Pour $x = ' + x1 + '$ : $P = ' + (rect ? cA : 4) + ' \\times ' + x1 + (cte0 ? T.signed(cte0) : '') + ' = ' + P + '$.');
+        return {
+          enonce: 'Les longueurs de la figure sont exprimées en centimètres, en fonction d\'un nombre $x$.<br>a) Exprimer le périmètre $P$ de cette figure en fonction de $x$, sous forme réduite.<br>b) Calculer $P$ pour $x = ' + x1 + '$.',
+          figure: f.svg(),
+          questions: [{ label: 'a) $P =$', type: 'expr', reponse: Pstr, reponseTex: Ptex, forme: 'somme' }, qnum('b) $P$ pour $x = ' + x1 + '$ :', P, 'cm')],
+          indices: [rect ? 'Un rectangle a deux longueurs et deux largeurs.' : 'Additionne les longueurs des trois côtés.', 'Réduis : regroupe les termes en $x$ d\'un côté et les nombres de l\'autre.'],
+          solution: sol,
+          aide: 'Écris une expression réduite, par exemple 6x + 4.'
+        };
+      }
+      // niveau 3 : programme de calcul
+      var a = rng.pick([2, 3, 4, 5]), b = rng.int(1, 9), c = rng.pick([2, 3]), cst = rng.bool(0.45), d;
+      if (cst) d = a * c; else { do { d = rng.int(1, 9); } while (d === a * c); }
+      var coef = a * c - d, cte = b * c, x3 = rng.int(2, 12), res = coef * x3 + cte;
+      var etapes = ['Choisir un nombre.', 'Le multiplier par ' + a + '.', 'Ajouter ' + b + ' au résultat.', 'Multiplier le tout par ' + c + '.', 'Soustraire ' + (d === 1 ? 'le nombre de départ' : d + ' fois le nombre de départ') + '.'];
+      var exprTex = T.poly([coef, cte]);
+      return {
+        enonce: 'Voici un programme de calcul :<br>' + etapes.map(function (e) { return '• ' + e; }).join('<br>') + '<br>a) Quel résultat obtient-on en choisissant ' + m(x3) + ' ?<br>b) On choisit un nombre $x$. Exprimer le résultat en fonction de $x$, sous forme réduite.<br>c) Le résultat dépend-il du nombre choisi ?',
+        questions: [
+          qnum('a) Résultat pour ' + m(x3) + ' :', res),
+          { label: 'b) Résultat pour $x$ :', type: 'expr', reponse: linStr(coef, cte), reponseTex: exprTex, forme: 'somme' },
+          qcm(rng, 'c) Réponse :', cst ? 'Non, on trouve toujours ' + cte : 'Oui, il dépend du nombre choisi', ['Non, on trouve toujours ' + cte, 'Oui, il dépend du nombre choisi'])
+        ],
+        indices: ['Applique les étapes une à une à $x$ : $x \\to ' + a + 'x \\to \\ldots$', 'Développe $' + c + '(' + a + 'x + ' + b + ')$ puis réduis.'],
+        solution: [
+          'Avec ' + m(x3) + ' : $' + x3 + ' \\times ' + a + ' = ' + (a * x3) + '$ ; $' + (a * x3) + ' + ' + b + ' = ' + (a * x3 + b) + '$ ; $' + (a * x3 + b) + ' \\times ' + c + ' = ' + (c * (a * x3 + b)) + '$ ; $' + (c * (a * x3 + b)) + ' - ' + (d * x3) + ' = ' + res + '$.',
+          'Avec $x$ : $x \\to ' + a + 'x \\to ' + a + 'x + ' + b + ' \\to ' + c + '(' + a + 'x + ' + b + ') = ' + (a * c) + 'x + ' + cte + '$.',
+          'On soustrait ' + (d === 1 ? '$x$' : '$' + d + 'x$') + ' : $' + (a * c) + 'x + ' + cte + ' - ' + (d === 1 ? 'x' : d + 'x') + ' = ' + exprTex + '$.',
+          cst ? 'Les termes en $x$ s\'annulent : le résultat est toujours ' + m(cte) + ', quel que soit le nombre choisi.' : 'Le coefficient de $x$ n\'est pas nul : le résultat change quand on change le nombre de départ.'
+        ],
+        aide: 'Écris une expression réduite, par exemple 3x + 12.'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Symétrie centrale : centre de symétrie, conservation, cercle    */
+  /* ================================================================== */
+  var AVEC_CENTRE = ['un parallélogramme', 'un rectangle', 'un losange', 'un carré', 'un cercle', 'un segment', 'un hexagone régulier', 'la lettre N', 'la lettre S', 'la lettre Z', 'la lettre H', 'la lettre X'];
+  var SANS_CENTRE = ['un triangle équilatéral', 'un triangle isocèle', 'un trapèze isocèle', 'un pentagone régulier', 'un demi-cercle', 'la lettre A', 'la lettre T', 'la lettre V', 'la lettre E', 'la lettre K', 'la lettre Y'];
+  var CENTRES = [
+    ['d\'un parallélogramme', 'le point d\'intersection de ses diagonales', ['un de ses sommets', 'le milieu d\'un de ses côtés', 'il n\'en a pas']],
+    ['d\'un cercle', 'son centre', ['n\'importe quel point du cercle', 'le milieu d\'un rayon', 'il n\'en a pas']],
+    ['d\'un segment $[AB]$', 'son milieu', ['le point $A$', 'le point $B$', 'il n\'en a pas']],
+    ['d\'un rectangle', 'le point d\'intersection de ses diagonales', ['un de ses sommets', 'le milieu de sa longueur', 'il n\'en a pas']]
+  ];
+
+  EM.gen.register({
+    id: '5e-plus-symetrie-centrale-proprietes',
+    titre: 'Symétrie centrale : centre de symétrie, conservation, image d\'un cercle',
+    chapitres: ['5e-symetrie-centrale'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var avec = rng.bool(), bon, autres;
+        if (avec) { bon = rng.pick(AVEC_CENTRE); autres = rng.sample(SANS_CENTRE, 3); }
+        else { bon = rng.pick(SANS_CENTRE); autres = rng.sample(AVEC_CENTRE, 3); }
+        var C0 = rng.pick(CENTRES);
+        return {
+          enonce: 'a) Parmi les figures suivantes, laquelle ' + (avec ? 'possède' : 'ne possède pas') + ' de centre de symétrie ?<br>b) Quel est le centre de symétrie ' + C0[0] + ' ?',
+          questions: [qcm(rng, 'a) Réponse :', bon, autres), qcm(rng, 'b) Centre de symétrie ' + C0[0] + ' :', C0[1], C0[2])],
+          indices: ['Un point $O$ est centre de symétrie d\'une figure si, en faisant tourner la figure d\'un demi-tour autour de $O$, elle se superpose à elle-même.', 'Pour une lettre, imagine-la tournée « la tête en bas » : se lit-elle pareil ?'],
+          solution: [
+            avec ? bon.charAt(0).toUpperCase() + bon.slice(1) + ' admet un centre de symétrie : après un demi-tour autour de ce point, la figure se superpose à elle-même. Les autres figures (' + autres.join(', ') + ') n\'en ont pas : après un demi-tour, elles ne se superposent pas à elles-mêmes.'
+              : bon.charAt(0).toUpperCase() + bon.slice(1) + ' n\'admet pas de centre de symétrie : après un demi-tour, la figure ne se superpose pas à elle-même. En revanche, ' + autres.join(', ') + ' en ont un.',
+            'Le centre de symétrie ' + C0[0] + ' est ' + C0[1] + '.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var a = rng.int(6, 16) / 2, th = 5 * rng.pick([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22]), ac = rng.int(6, 16) / 2;
+        var rot = rng.int(-50, 50), pA = [0, 0], pB = pt(pA, rot, a), pC = pt(pA, rot + th, ac);
+        var xs0 = [pA[0], pB[0], pC[0]], ys0 = [pA[1], pB[1], pC[1]];
+        var taille = Math.max(Math.max.apply(null, xs0) - Math.min.apply(null, xs0), Math.max.apply(null, ys0) - Math.min.apply(null, ys0));
+        var dxT = -1.2 - 0.3 * taille - Math.max.apply(null, xs0), dyT = 0.5 * taille - Math.min.apply(null, ys0);
+        var tri = [pA, pB, pC].map(function (p) { return [p[0] + dxT, p[1] + dyT]; });
+        var Oc = [0, 0];
+        var img = tri.map(function (p) { return [-p[0], -p[1]]; });
+        f = EM.fig.fit(tri.concat(img), { w: 300, h: 220 });
+        f.poly(tri, { fill: true }).poly(img, { fill: true, dash: true });
+        f.seg(tri[0], img[0], { light: true, dash: true }).ticks(tri[0], Oc, 1).ticks(Oc, img[0], 1);
+        f.angle(tri[1], tri[0], tri[2], th + '°', { r: 22 }).angle(img[1], img[0], img[2], '?', { r: 22 });
+        var c1 = centre(tri), c2 = centre(img);
+        f.point(Oc, 'O', posLibre(tri.concat(img).map(function (p) { return Math.atan2(p[1], p[0]) * 180 / Math.PI; })));
+        ['A', 'B', 'C'].forEach(function (l, j) { f.point(tri[j], l, posLoin2(tri[j], c1, Oc)); f.point(img[j], l + '\'', posLoin2(img[j], c2, Oc)); });
+        return {
+          enonce: 'Le triangle $A\'B\'C\'$ est le symétrique du triangle $ABC$ par rapport au point $O$. On sait que $AB = ' + n(a) + '$ cm, $AC = ' + n(ac) + '$ cm et $' + w('BAC') + ' = ' + dg(th) + '$.<br>a) Donner $A\'B\'$ et la mesure de $' + w('B\'A\'C\'') + '$.<br>b) Quelle est la position des droites $(AB)$ et $(A\'B\')$ ?',
+          figure: f.svg(),
+          questions: [qnum('a) $A\'B\' =$', a, 'cm'), qnum('a) $' + w('B\'A\'C\'') + ' =$', th, '°'), qcm(rng, 'b) $(AB)$ et $(A\'B\')$ sont :', 'parallèles', ['parallèles', 'perpendiculaires', 'sécantes en $O$'])],
+          indices: ['La symétrie centrale conserve les longueurs et les mesures d\'angles.', 'L\'image d\'une droite par une symétrie centrale est une droite parallèle.'],
+          solution: [
+            'La symétrie de centre $O$ conserve les longueurs : $A\'B\' = AB = ' + n(a) + '$ cm (et $A\'C\' = AC = ' + n(ac) + '$ cm).',
+            'Elle conserve les mesures d\'angles : $' + w('B\'A\'C\'') + ' = ' + w('BAC') + ' = ' + dg(th) + '$.',
+            'L\'image d\'une droite par une symétrie centrale est une droite parallèle : $(A\'B\') \\parallel (AB)$. (Ici $O$ n\'est pas sur $(AB)$, donc les deux droites sont distinctes.)'
+          ]
+        };
+      }
+      // niveau 3 : image d'un cercle dans un repère
+      var xo = rng.int(-3, 3), yo = rng.int(-2, 3), r = rng.pick([1, 2]), sx = rng.int(-2, 2), sy = rng.int(-2, 2), gd = 0;
+      var dM, Mx, My;
+      do {
+        xo = rng.nz(-3, 3); yo = rng.nz(-2, 3); sx = rng.nz(-2, 2); sy = rng.nz(-2, 2); r = rng.pick([1, 2]);
+        dM = rng.pick([[1, 0], [-1, 0], [0, 1], [0, -1]]); Mx = xo + r * dM[0]; My = yo + r * dM[1];
+        gd++;
+      } while (gd < 300 && (Math.abs(xo - sx) + Math.abs(yo - sy) < 3 || Math.abs(2 * sx - xo) > 6 || Math.abs(2 * sy - yo) > 6 || Mx === 0 || My === 0 ||
+        Math.abs(xo) - r < 0.5 && Math.abs(yo) - r < 0.5 || Math.abs(Mx - sx) + Math.abs(My - sy) < 2));
+      var Op = [2 * sx - xo, 2 * sy - yo], Mp = [2 * sx - Mx, 2 * sy - My];
+      f = repere(-6, 6, -5, 6, 270);
+      f.circle([xo, yo], r, { accent: true });
+      f.point([xo, yo], 'Ω', posQuadrant([xo, yo])).point([sx, sy], 'S', posQuadrant([sx, sy])).point([Mx, My], 'M', posQuadrant([Mx, My]));
+      return {
+        enonce: 'Dans un repère orthonormé, le cercle $(\\mathscr{C})$ a pour centre $\\Omega' + cpl(xo, yo) + '$ et pour rayon $' + r + '$ ; il passe par le point $M' + cpl(Mx, My) + '$. On note $(\\mathscr{C}\')$ son symétrique par rapport au point $S' + cpl(sx, sy) + '$.<br>a) Donner les coordonnées du centre $\\Omega\'$ de $(\\mathscr{C}\')$ et son rayon.<br>b) Donner les coordonnées du point $M\'$, symétrique de $M$ par rapport à $S$. Ce point est-il sur $(\\mathscr{C}\')$ ?',
+        figure: f.svg(),
+        questions: [qtuple('a) Coordonnées de $\\Omega\'$ :', Op), qnum('a) Rayon de $(\\mathscr{C}\')$ :', r), qtuple('b) Coordonnées de $M\'$ :', Mp), qcm(rng, 'b) $M\'$ est sur $(\\mathscr{C}\')$ :', 'oui', ['oui', 'non'])],
+        indices: ['L\'image d\'un cercle par une symétrie centrale est un cercle de même rayon, dont le centre est l\'image du centre.', '$S$ est le milieu de $[\\Omega\\Omega\']$ : $x_{\\Omega\'} = 2x_S - x_\\Omega$ et $y_{\\Omega\'} = 2y_S - y_\\Omega$.'],
+        solution: [
+          '$S$ est le milieu de $[\\Omega\\Omega\']$ : $x_{\\Omega\'} = 2 \\times ' + T.par(sx) + ' - ' + T.par(xo) + ' = ' + n(Op[0]) + '$ et $y_{\\Omega\'} = 2 \\times ' + T.par(sy) + ' - ' + T.par(yo) + ' = ' + n(Op[1]) + '$ : $\\Omega\'' + cpl(Op[0], Op[1]) + '$.',
+          'La symétrie conserve les longueurs : $(\\mathscr{C}\')$ a le même rayon, $' + r + '$.',
+          'De même, $M\'' + cpl(Mp[0], Mp[1]) + '$. Comme $M$ est sur $(\\mathscr{C})$, son image $M\'$ est sur l\'image $(\\mathscr{C}\')$ : en effet $\\Omega\'M\' = \\Omega M = ' + r + '$.'
+        ],
+        aide: 'Écris des coordonnées sous la forme (2 ; -3).'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Angles : réciproque (droites parallèles ou non)                 */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '5e-plus-paralleles-reciproque',
+    titre: 'Démontrer que deux droites sont (ou ne sont pas) parallèles avec les angles',
+    chapitres: ['5e-angles'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var mm, g = 0;
+      do { mm = rng.int(40, 140); g++; } while (Math.abs(mm - 90) < 12 && g < 50);
+      var par = rng.bool(), tau = par ? 0 : rng.pick([-4, -3, -2, 2, 3, 4]);
+      var dx = 1.5 / Math.tan(rad(mm));
+      var E = [3 + dx, 3], Fp = [3 - dx, 0];
+      var P = { E: E, F: Fp, A: [-0.6, 3], B: [6.6, 3] };
+      P.C = pt(Fp, 180 + tau, Fp[0] + 0.6); P.D = pt(Fp, tau, 6.6 - Fp[0]);
+      P.X = pt(E, mm, 1.4); P.Y = pt(Fp, mm + 180, 1.4);
+      var bm = mm - tau;
+      var ANG = { BEX: mm, AEX: 180 - mm, AEF: mm, BEF: 180 - mm, DFE: bm, CFE: 180 - bm, CFY: bm, DFY: 180 - bm };
+      var PAIRES = [['BEX', 'DFE', 'correspondants'], ['AEX', 'CFE', 'correspondants'], ['AEF', 'CFY', 'correspondants'], ['BEF', 'DFY', 'correspondants'], ['AEF', 'DFE', 'alternes-internes'], ['BEF', 'CFE', 'alternes-internes']];
+      var pr = rng.pick(PAIRES), G = pr[0], I = pr[1], rel = pr[2], J = null;
+      var sol = [], qs = [];
+      if (niveau === 2) {
+        // on donne l'angle adjacent supplémentaire de I, en F
+        J = { DFE: 'CFE', CFE: 'DFE', CFY: 'DFY', DFY: 'CFY' }[I];
+      }
+      var donneF = J || I;
+      var f = EM.fig.fit([P.A, P.B, P.C, P.D, P.X, P.Y], { w: 300, h: 220 });
+      f.seg(P.A, P.B).seg(P.C, P.D).seg(P.X, P.Y);
+      var arcA = function (nm, txt, r, acc) { f.angle(P[nm.charAt(0)], P[nm.charAt(1)], P[nm.charAt(2)], txt, { r: r, accent: acc }); };
+      arcA(G, ANG[G] + '°', 20);
+      arcA(donneF, ANG[donneF] + '°', 20, true);
+      f.point(P.A, 'A', 'n').point(P.B, 'B', 'n').point(P.C, 'C', 's').point(P.D, 'D', 's');
+      f.point(P.X, 'X', 'n').point(P.Y, 'Y', 's').point(P.E, 'E', 'no').point(P.F, 'F', 'se');
+      var egal = ANG[G] === ANG[I];
+      var concl = egal ? 'Oui, les droites $(AB)$ et $(CD)$ sont parallèles' : 'Non, les droites $(AB)$ et $(CD)$ ne sont pas parallèles';
+      var concl2 = egal ? 'Non, les droites $(AB)$ et $(CD)$ ne sont pas parallèles' : 'Oui, les droites $(AB)$ et $(CD)$ sont parallèles';
+      if (niveau === 1) {
+        qs.push(qcm(rng, 'a) Les angles $' + w(G) + '$ et $' + w(I) + '$ sont :', rel, ['correspondants', 'alternes-internes', 'alternes-externes', 'opposés par le sommet']));
+      } else {
+        qs.push(qnum('a) $' + w(I) + ' =$', ANG[I], '°'));
+        sol.push('Les angles $' + w(J) + '$ et $' + w(I) + '$ sont adjacents et leurs côtés non communs forment la droite $(CD)$ : ils sont supplémentaires. $' + w(I) + ' = 180^\\circ - ' + dg(ANG[J]) + ' = ' + dg(ANG[I]) + '$.');
+      }
+      qs.push(qcm(rng, 'b) Les droites $(AB)$ et $(CD)$ sont-elles parallèles ?', concl, [concl2]));
+      sol.push('Les droites $(AB)$ et $(CD)$ sont coupées par la sécante $(XY)$. Les angles $' + w(G) + '$ et $' + w(I) + '$ sont ' + rel + '.');
+      if (egal) sol.push('Ils ont la même mesure, $' + dg(ANG[G]) + '$. D\'après la réciproque de la propriété des angles ' + rel + ', les droites $(AB)$ et $(CD)$ sont parallèles.');
+      else sol.push('Ils n\'ont pas la même mesure ($' + dg(ANG[G]) + '$ et $' + dg(ANG[I]) + '$). Or, si les droites étaient parallèles, ces angles ' + rel + ' seraient égaux. Donc $(AB)$ et $(CD)$ ne sont pas parallèles, même si elles semblent l\'être sur la figure.');
+      return {
+        enonce: 'Sur la figure, la sécante $(XY)$ coupe la droite $(AB)$ en $E$ et la droite $(CD)$ en $F$. On a mesuré $' + w(G) + ' = ' + dg(ANG[G]) + '$ et $' + w(donneF) + ' = ' + dg(ANG[donneF]) + '$.<br>' +
+          (niveau === 1 ? 'a) Préciser la position des angles $' + w(G) + '$ et $' + w(I) + '$.' : 'a) Calculer la mesure de l\'angle $' + w(I) + '$.') +
+          '<br>b) Les droites $(AB)$ et $(CD)$ sont-elles parallèles ? Justifier.',
+        figure: f.svg(),
+        questions: qs,
+        indices: ['Si deux droites coupées par une sécante forment des angles alternes-internes (ou correspondants) de même mesure, alors elles sont parallèles.', 'Si ces angles n\'ont pas la même mesure, les droites ne peuvent pas être parallèles. Ne te fie pas à la figure : seules les mesures comptent.'],
+        solution: sol
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Angles : opposés, complémentaires, ligne brisée, triangle       */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '5e-plus-angles-raisonnement',
+    titre: 'Angles opposés, complémentaires, ligne brisée entre deux parallèles',
+    chapitres: ['5e-angles'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f, O = [0, 0];
+      if (niveau === 1) {
+        var a = rng.int(20, 70), L = 3.2;
+        var P = { A: pt(O, 180, L), B: pt(O, 0, L), C: pt(O, 180 - a, L), D: pt(O, -a, L), E: pt(O, 90, L) };
+        f = EM.fig.fit([P.A, P.B, P.C, P.D, P.E, [0, -L]], { w: 280, h: 230 });
+        f.seg(P.A, P.B).seg(P.C, P.D).seg(O, P.E, { accent: true }).rightAngle(P.B, O, P.E);
+        f.angle(P.A, O, P.C, a + '°', { r: 26 });
+        f.point(P.A, 'A', 'o').point(P.B, 'B', 'e').point(P.C, 'C', posAngle(180 - a)).point(P.D, 'D', posAngle(-a)).point(P.E, 'E', 'n').point(O, 'O', 'so');
+        return {
+          enonce: 'Les droites $(AB)$ et $(CD)$ se coupent en $O$, et la demi-droite $[OE)$ est perpendiculaire à $(AB)$. On sait que $' + w('AOC') + ' = ' + dg(a) + '$.<br>Calculer $' + w('BOD') + '$, $' + w('AOD') + '$ et $' + w('COE') + '$.',
+          figure: f.svg(),
+          questions: [qnum('$' + w('BOD') + ' =$', a, '°'), qnum('$' + w('AOD') + ' =$', 180 - a, '°'), qnum('$' + w('COE') + ' =$', 90 - a, '°')],
+          indices: ['Deux angles opposés par le sommet ont la même mesure.', 'Deux angles adjacents dont les côtés extérieurs forment une droite sont supplémentaires ; si ces côtés forment un angle droit, ils sont complémentaires.'],
+          solution: [
+            '$' + w('BOD') + '$ et $' + w('AOC') + '$ sont opposés par le sommet : $' + w('BOD') + ' = ' + dg(a) + '$.',
+            '$' + w('AOC') + '$ et $' + w('COB') + '$ forment l\'angle plat $' + w('AOB') + '$, et $' + w('AOD') + '$ est opposé par le sommet à $' + w('COB') + '$ : $' + w('AOD') + ' = 180^\\circ - ' + dg(a) + ' = ' + dg(180 - a) + '$.',
+            '$' + w('AOC') + '$ et $' + w('COE') + '$ sont adjacents et forment l\'angle droit $' + w('AOE') + '$ : ils sont complémentaires. $' + w('COE') + ' = 90^\\circ - ' + dg(a) + ' = ' + dg(90 - a) + '$.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var al = rng.int(25, 60), be = rng.int(25, 60), h = 3;
+        var A = [0, h], B = [0, 0], ua = [Math.cos(rad(-al)), Math.sin(rad(-al))], vb = [Math.cos(rad(be)), Math.sin(rad(be))];
+        // A + s·ua = B + t·vb
+        var det = ua[0] * (-vb[1]) - ua[1] * (-vb[0]);
+        var s = ((B[0] - A[0]) * (-vb[1]) - (B[1] - A[1]) * (-vb[0])) / det;
+        var M = [A[0] + s * ua[0], A[1] + s * ua[1]];
+        var xr = Math.max(M[0] + 2, 5.5), X = [xr, h], Y = [xr, 0], A0 = [-1.5, h], B0 = [-1.5, 0], Z = [M[0] - 2.2, M[1]];
+        f = EM.fig.fit([A0, X, B0, Y, M], { w: 300, h: 190, pad: 26 });
+        f.seg(A0, X).seg(B0, Y).seg(A, M).seg(M, B).seg(M, Z, { dash: true, accent: true });
+        f.angle(X, A, M, al + '°', { r: 26 }).angle(Y, B, M, be + '°', { r: 26 }).angle(A, M, B, '?', { r: 18, accent: true });
+        f.point(A, 'A', 'n').point(B, 'B', 's').point(X, 'X', 'n').point(Y, 'Y', 's').point(M, 'M', 'e').label(Z, 'z', 'o');
+        return {
+          enonce: 'Les droites $(AX)$ et $(BY)$ sont parallèles, et $M$ est un point situé entre elles. On sait que $' + w('XAM') + ' = ' + dg(al) + '$ et $' + w('YBM') + ' = ' + dg(be) + '$. On trace la demi-droite $[Mz)$ parallèle à $(AX)$ (en pointillés).<br>a) Calculer $' + w('AMz') + '$.<br>b) Calculer $' + w('zMB') + '$.<br>c) En déduire $' + w('AMB') + '$.',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('AMz') + ' =$', al, '°'), qnum('b) $' + w('zMB') + ' =$', be, '°'), qnum('c) $' + w('AMB') + ' =$', al + be, '°')],
+          indices: ['La droite $(Mz)$ est parallèle à $(AX)$ ; elle est donc aussi parallèle à $(BY)$.', 'Repère deux paires d\'angles alternes-internes : l\'une avec la sécante $(AM)$, l\'autre avec la sécante $(BM)$.'],
+          solution: [
+            'Les droites $(Mz)$ et $(AX)$ sont parallèles et coupées par la sécante $(AM)$ : $' + w('AMz') + '$ et $' + w('XAM') + '$ sont alternes-internes, donc égaux : $' + w('AMz') + ' = ' + dg(al) + '$.',
+            '$(Mz) \\parallel (AX)$ et $(AX) \\parallel (BY)$, donc $(Mz) \\parallel (BY)$. Avec la sécante $(BM)$ : $' + w('zMB') + '$ et $' + w('YBM') + '$ sont alternes-internes, donc $' + w('zMB') + ' = ' + dg(be) + '$.',
+            'Les angles $' + w('AMz') + '$ et $' + w('zMB') + '$ sont adjacents : $' + w('AMB') + ' = ' + dg(al) + ' + ' + dg(be) + ' = ' + dg(al + be) + '$.'
+          ]
+        };
+      }
+      // niveau 3 : la somme des angles d'un triangle retrouvée avec deux parallèles
+      var b3 = rng.int(35, 75), c3 = rng.int(35, 75);
+      var tri = triAngles(b3, c3, 6), pA = tri[0], pB = tri[1], pC = tri[2];
+      var Xl = [pA[0] - 3, pA[1]], Yr = [pA[0] + 3, pA[1]];
+      f = EM.fig.fit([pB, pC, Xl, Yr, [-1, 0], [7, 0]], { w: 300, h: 200, pad: 26 });
+      f.seg(Xl, Yr).seg([-1, 0], [7, 0]).poly([pA, pB, pC]);
+      f.angle(Xl, pA, pB, b3 + '°', { r: 24 }).angle(Yr, pA, pC, c3 + '°', { r: 24 }).angle(pB, pA, pC, '?', { r: 18, accent: true });
+      f.point(pA, 'A', 'n').point(pB, 'B', 's').point(pC, 'C', 's').label(Xl, 'x', 'o').label(Yr, 'y', 'e');
+      return {
+        enonce: 'La droite $(xy)$ passe par $A$ et est parallèle à $(BC)$. On sait que $' + w('xAB') + ' = ' + dg(b3) + '$ et $' + w('yAC') + ' = ' + dg(c3) + '$.<br>a) Calculer $' + w('ABC') + '$ et $' + w('ACB') + '$.<br>b) Calculer $' + w('BAC') + '$.<br>c) Calculer la somme des angles du triangle $ABC$.',
+        figure: f.svg(),
+        questions: [qnum('a) $' + w('ABC') + ' =$', b3, '°'), qnum('a) $' + w('ACB') + ' =$', c3, '°'), qnum('b) $' + w('BAC') + ' =$', 180 - b3 - c3, '°'), qnum('c) Somme :', 180, '°')],
+        indices: ['Avec la sécante $(AB)$, les angles $' + w('xAB') + '$ et $' + w('ABC') + '$ sont alternes-internes.', 'Les angles $' + w('xAB') + '$, $' + w('BAC') + '$ et $' + w('CAy') + '$ forment l\'angle plat $' + w('xAy') + '$.'],
+        solution: [
+          '$(xy) \\parallel (BC)$ avec la sécante $(AB)$ : $' + w('ABC') + '$ et $' + w('xAB') + '$ sont alternes-internes, donc $' + w('ABC') + ' = ' + dg(b3) + '$. De même avec la sécante $(AC)$ : $' + w('ACB') + ' = ' + w('yAC') + ' = ' + dg(c3) + '$.',
+          'Les angles $' + w('xAB') + '$, $' + w('BAC') + '$ et $' + w('CAy') + '$ forment l\'angle plat $' + w('xAy') + '$ : $' + w('BAC') + ' = 180^\\circ - ' + dg(b3) + ' - ' + dg(c3) + ' = ' + dg(180 - b3 - c3) + '$.',
+          'Somme : $' + dg(b3) + ' + ' + dg(c3) + ' + ' + dg(180 - b3 - c3) + ' = 180^\\circ$. On vient de redémontrer que la somme des angles d\'un triangle vaut $180^\\circ$.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Triangles : droites remarquables et cercle circonscrit          */
+  /* ================================================================== */
+  var REMARQ = {
+    mediatrice: ['la médiatrice de $[BC]$', 'le centre du cercle circonscrit', 'médiatrices'],
+    hauteur: ['la hauteur issue de $A$', 'l\'orthocentre', 'hauteurs'],
+    mediane: ['la médiane issue de $A$', 'le centre de gravité', 'médianes'],
+    bissectrice: ['la bissectrice de l\'angle $' + w('BAC') + '$', 'le centre du cercle inscrit', 'bissectrices']
+  };
+
+  EM.gen.register({
+    id: '5e-plus-droites-remarquables',
+    titre: 'Reconnaître une droite remarquable ; centre du cercle circonscrit',
+    chapitres: ['5e-triangles'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var type = rng.pick(Object.keys(REMARQ));
+        var xa = rng.bool() ? rng.dec(1.2, 2.2, 1) : rng.dec(3.8, 4.8, 1), ya = rng.dec(3, 4.5, 1);
+        var A = [xa, ya], B = [0, 0], C = [6, 0], I = [3, 0], H = [xa, 0];
+        var AB = dist(A, B), AC = dist(A, C), D = [6 * AB / (AB + AC), 0];
+        f = EM.fig.fit([A, B, C, [3, -1.3], [3, 5.2]], { w: 260, h: 230 });
+        f.poly([A, B, C]);
+        var lab = [];
+        if (type === 'mediatrice') {
+          f.seg([3, -1.2], [3, 5], { accent: true }).ticks(B, I, 1).ticks(I, C, 1).rightAngle(C, I, [3, 1]);
+          lab.push([I, 'I', 'so']);
+        } else if (type === 'hauteur') {
+          f.seg(A, H, { accent: true }).rightAngle(C, H, A);
+          lab.push([H, 'H', 's']);
+        } else if (type === 'mediane') {
+          f.seg(A, I, { accent: true }).ticks(B, I, 1).ticks(I, C, 1);
+          lab.push([I, 'I', 's']);
+        } else {
+          f.seg(A, D, { accent: true });
+          codeAngle(f, B, A, D, 30, 1); codeAngle(f, D, A, C, 30, 1);
+          lab.push([D, 'D', 's']);
+        }
+        f.point(A, 'A', 'n').point(B, 'B', 'so').point(C, 'C', 'se');
+        lab.forEach(function (l) { f.point(l[0], l[1], l[2]); });
+        var R0 = REMARQ[type];
+        return {
+          enonce: 'Dans le triangle $ABC$, on a tracé en couleur une droite remarquable, avec son codage.<br>a) De quelle droite s\'agit-il ?<br>b) Les trois ' + R0[2] + ' d\'un triangle sont concourantes. Comment s\'appelle leur point commun ?',
+          figure: f.svg(),
+          questions: [qcm(rng, 'a) La droite en couleur est :', R0[0], Object.keys(REMARQ).map(function (k) { return REMARQ[k][0]; })), qcm(rng, 'b) Point de concours :', R0[1], Object.keys(REMARQ).map(function (k) { return REMARQ[k][1]; }))],
+          indices: ['Lis le codage : angle droit, longueurs égales, angles égaux. Regarde aussi si la droite passe par un sommet.', 'Médiatrice : perpendiculaire au côté en son milieu. Hauteur : passe par un sommet, perpendiculaire au côté opposé. Médiane : joint un sommet au milieu du côté opposé. Bissectrice : partage un angle en deux angles égaux.'],
+          solution: [
+            type === 'mediatrice' ? 'La droite est perpendiculaire à $[BC]$ (angle droit) et passe par son milieu $I$ (longueurs égales) : c\'est la médiatrice de $[BC]$. Elle ne passe pas par $A$ en général.'
+              : type === 'hauteur' ? 'La droite passe par $A$ et est perpendiculaire au côté opposé $[BC]$ (angle droit en $H$), sans que $H$ soit le milieu : c\'est la hauteur issue de $A$.'
+                : type === 'mediane' ? 'La droite joint le sommet $A$ au milieu $I$ de $[BC]$ (longueurs égales codées), sans angle droit : c\'est la médiane issue de $A$.'
+                  : 'La droite passe par $A$ et partage l\'angle $' + w('BAC') + '$ en deux angles de même mesure (codage) : c\'est la bissectrice de cet angle.',
+            'Les trois ' + R0[2] + ' d\'un triangle se coupent en un même point : ' + R0[1] + '.'
+          ]
+        };
+      }
+      // niveau 2 : cercle circonscrit
+      var x = rng.int(20, 70), aob = 180 - 2 * x, r = rng.int(5, 15) / 2, phi = rng.int(190, 250);
+      var O = [0, 0], pA = pt(O, phi, 1), pB = pt(O, phi + aob, 1);
+      var rest = 360 - aob, pC = pt(O, phi + aob + rest * rng.dec(0.35, 0.65, 2), 1);
+      f = EM.fig.fit([[-1.1, -1.1], [1.1, 1.1]], { w: 240, h: 240, title: 'Cercle circonscrit' });
+      f.circle(O, 1, { light: true }).poly([pA, pB, pC]).seg(O, pA, { accent: true }).seg(O, pB, { accent: true }).seg(O, pC, { accent: true, dash: true });
+      f.angle(O, pA, pB, x + '°', { r: 26 });
+      f.point(pA, 'A', posAngle(phi)).point(pB, 'B', posAngle(phi + aob)).point(pC, 'C', posAngle(phi + aob + rest / 2)).point(O, 'O', posLibre([phi, phi + aob, phi + aob + rest / 2]));
+      return {
+        enonce: 'Le point $O$ est le centre du cercle circonscrit au triangle $ABC$, et $OA = ' + n(r) + '$ cm. On sait que $' + w('OAB') + ' = ' + dg(x) + '$.<br>a) Le point $O$ est le point d\'intersection de quelles droites du triangle ?<br>b) Donner $OC$.<br>c) Calculer $' + w('AOB') + '$.',
+        figure: f.svg(),
+        questions: [qcm(rng, 'a) $O$ est l\'intersection :', 'des médiatrices', ['des médiatrices', 'des hauteurs', 'des médianes', 'des bissectrices']), qnum('b) $OC =$', r, 'cm'), qnum('c) $' + w('AOB') + ' =$', aob, '°')],
+        indices: ['Le centre du cercle circonscrit est à la même distance des trois sommets.', 'Le triangle $OAB$ est isocèle en $O$ : ses angles à la base sont égaux.'],
+        solution: [
+          'Le centre du cercle circonscrit est le point de concours des médiatrices des côtés : il est équidistant des trois sommets.',
+          'Donc $OA = OB = OC$ : $OC = ' + n(r) + '$ cm (c\'est le rayon du cercle).',
+          'Le triangle $OAB$ est isocèle en $O$ ($OA = OB$) : $' + w('OBA') + ' = ' + w('OAB') + ' = ' + dg(x) + '$. Donc $' + w('AOB') + ' = 180^\\circ - 2 \\times ' + dg(x) + ' = ' + dg(aob) + '$.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Triangles : angle extérieur, triangles imbriqués, côtés possibles */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '5e-plus-triangle-raisonnement',
+    titre: 'Triangles : angle extérieur, triangles isocèles imbriqués, longueurs possibles',
+    chapitres: ['5e-triangles'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f, i;
+      if (niveau === 1) {
+        var a = rng.int(30, 90), b = rng.int(25, 120 - a), c = 180 - a - b;
+        var tri = triAngles(b, c, 6), pA = tri[0], pB = tri[1], pC = tri[2], pD = [9, 0];
+        f = EM.fig.fit([pA, pB, pD], { w: 300, h: 190 });
+        f.poly([pA, pB, pC]).seg(pC, pD);
+        f.angle(pB, pA, pC, a + '°', { r: 22 }).angle(pC, pB, pA, b + '°', { r: 22 }).angle(pA, pC, pD, '?', { r: 22, accent: true });
+        f.point(pA, 'A', 'n').point(pB, 'B', 'so').point(pC, 'C', 's').point(pD, 'D', 's');
+        return {
+          enonce: 'Dans le triangle $ABC$, $' + w('BAC') + ' = ' + dg(a) + '$ et $' + w('ABC') + ' = ' + dg(b) + '$. Le point $D$ est sur la demi-droite $[BC)$, au-delà de $C$.<br>a) Calculer $' + w('ACB') + '$.<br>b) Calculer $' + w('ACD') + '$. Que remarques-tu ?',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('ACB') + ' =$', c, '°'), qnum('b) $' + w('ACD') + ' =$', a + b, '°')],
+          indices: ['La somme des angles du triangle vaut $180^\\circ$.', 'Les angles $' + w('ACB') + '$ et $' + w('ACD') + '$ sont adjacents et forment un angle plat.'],
+          solution: [
+            '$' + w('ACB') + ' = 180^\\circ - ' + dg(a) + ' - ' + dg(b) + ' = ' + dg(c) + '$.',
+            '$B$, $C$, $D$ sont alignés : $' + w('ACB') + ' + ' + w('ACD') + ' = 180^\\circ$, donc $' + w('ACD') + ' = 180^\\circ - ' + dg(c) + ' = ' + dg(a + b) + '$.',
+            'On remarque que $' + w('ACD') + ' = ' + w('BAC') + ' + ' + w('ABC') + '$ : l\'angle « extérieur » en $C$ est égal à la somme des deux autres angles du triangle.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var b2, c2, g = 0;
+        do { b2 = rng.int(25, 55); c2 = rng.int(25, 80); g++; } while (g < 200 && 180 - 2 * b2 - c2 < 15);
+        var tri2 = triAngles(b2, c2, 6), A2 = tri2[0], B2 = tri2[1], C2 = tri2[2];
+        var BD = (dist(A2, B2) / 2) / Math.cos(rad(b2)), D2 = [BD, 0];
+        f = EM.fig.fit([A2, B2, C2], { w: 300, h: 200 });
+        f.poly([A2, B2, C2]).seg(A2, D2, { accent: true }).ticks(D2, A2, 1).ticks(B2, D2, 1);
+        f.angle(D2, B2, A2, b2 + '°', { r: 24 }).angle(A2, C2, B2, c2 + '°', { r: 24 });
+        f.point(A2, 'A', 'n').point(B2, 'B', 'so').point(C2, 'C', 'se').point(D2, 'D', 's');
+        var adb = 180 - 2 * b2, adc = 2 * b2, dac = 180 - 2 * b2 - c2;
+        return {
+          enonce: 'Dans le triangle $ABC$, $' + w('ABC') + ' = ' + dg(b2) + '$ et $' + w('ACB') + ' = ' + dg(c2) + '$. Le point $D$ du segment $[BC]$ est tel que $DA = DB$.<br>a) Calculer $' + w('ADB') + '$.<br>b) Calculer $' + w('ADC') + '$.<br>c) Calculer $' + w('DAC') + '$.',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('ADB') + ' =$', adb, '°'), qnum('b) $' + w('ADC') + ' =$', adc, '°'), qnum('c) $' + w('DAC') + ' =$', dac, '°')],
+          indices: ['Le triangle $ABD$ est isocèle en $D$ : ses angles à la base $' + w('DBA') + '$ et $' + w('DAB') + '$ sont égaux.', 'Les angles $' + w('ADB') + '$ et $' + w('ADC') + '$ forment un angle plat ; puis utilise la somme des angles du triangle $ADC$.'],
+          solution: [
+            '$DA = DB$ : le triangle $ABD$ est isocèle en $D$, donc $' + w('DAB') + ' = ' + w('DBA') + ' = ' + dg(b2) + '$, et $' + w('ADB') + ' = 180^\\circ - 2 \\times ' + dg(b2) + ' = ' + dg(adb) + '$.',
+            '$B$, $D$, $C$ sont alignés : $' + w('ADC') + ' = 180^\\circ - ' + dg(adb) + ' = ' + dg(adc) + '$.',
+            'Dans le triangle $ADC$ : $' + w('DAC') + ' = 180^\\circ - ' + dg(adc) + ' - ' + dg(c2) + ' = ' + dg(dac) + '$.'
+          ]
+        };
+      }
+      // niveau 3 : longueurs entières possibles du troisième côté
+      var a3 = rng.int(2, 6), b3 = rng.int(a3 + 1, a3 + 7);
+      var poss = [];
+      for (i = b3 - a3 + 1; i <= a3 + b3 - 1; i++) poss.push(i);
+      var iso = [a3, b3].filter(function (v) { return poss.indexOf(v) >= 0; });
+      var lieu = rng.pick(['un enclos triangulaire pour les moutons de Tabaski', 'un panneau triangulaire', 'un jardin triangulaire']);
+      return {
+        enonce: 'On veut fabriquer ' + lieu + ' : deux côtés mesurent ' + u(a3, 'm') + ' et ' + u(b3, 'm') + ', et la longueur du troisième côté est un nombre entier de mètres.<br>a) Donner toutes les longueurs possibles du troisième côté.<br>b) Lesquelles donnent un triangle isocèle ?',
+        questions: [{ label: 'a) Longueurs possibles (m) :', type: 'set', reponse: poss }, { label: 'b) Triangle isocèle (m) :', type: 'set', reponse: iso }],
+        indices: ['Inégalité triangulaire : chaque côté est strictement plus petit que la somme des deux autres.', 'Le troisième côté $c$ doit vérifier $' + b3 + ' - ' + a3 + ' < c < ' + b3 + ' + ' + a3 + '$.'],
+        solution: [
+          'Le troisième côté $c$ doit être plus petit que $' + a3 + ' + ' + b3 + ' = ' + (a3 + b3) + '$ (sinon il serait trop long).',
+          'Le côté de ' + b3 + ' m doit être plus petit que $' + a3 + ' + c$ : donc $c > ' + b3 + ' - ' + a3 + ' = ' + (b3 - a3) + '$.',
+          'Donc $' + (b3 - a3) + ' < c < ' + (a3 + b3) + '$ : les entiers possibles sont $' + T.set(poss) + '$. (Pour $c = ' + (b3 - a3) + '$ ou $c = ' + (a3 + b3) + '$, les trois sommets seraient alignés.)',
+          'Le triangle est isocèle si deux côtés sont égaux : $c = ' + a3 + '$' + (poss.indexOf(a3) < 0 ? ' n\'est pas possible ici' : '') + ' ou $c = ' + b3 + '$. Réponse : $' + T.set(iso) + '$.'
+        ],
+        aide: 'Sépare les nombres par « ; ».'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Parallélogrammes : preuves, coordonnées, angles                 */
+  /* ================================================================== */
+  var HYP_PARA = [
+    ['$O$ est le milieu de $[AC]$ et de $[BD]$', 'Oui, car ses diagonales ont le même milieu', 'Un quadrilatère dont les diagonales ont le même milieu est un parallélogramme.'],
+    ['$AB = CD$ et $AD = BC$ (et $ABCD$ n\'est pas croisé)', 'Oui, car ses côtés opposés ont deux à deux la même longueur', 'Un quadrilatère non croisé dont les côtés opposés ont deux à deux la même longueur est un parallélogramme.'],
+    ['$(AB) \\parallel (CD)$ et $AB = CD$ (et $ABCD$ n\'est pas croisé)', 'Oui, car deux côtés opposés sont parallèles et de même longueur', 'Un quadrilatère non croisé qui a deux côtés opposés parallèles et de même longueur est un parallélogramme.'],
+    ['$(AB) \\parallel (CD)$ et $(AD) \\parallel (BC)$', 'Oui, car ses côtés opposés sont parallèles deux à deux', 'C\'est la définition du parallélogramme : ses côtés opposés sont parallèles deux à deux.'],
+    ['$(AB) \\parallel (CD)$ et $AD = BC$', 'Non, on ne peut pas conclure', 'Un trapèze isocèle vérifie ces conditions sans être un parallélogramme.'],
+    ['$O$ est le milieu de $[AC]$ (seulement)', 'Non, on ne peut pas conclure', 'Il faudrait aussi que $O$ soit le milieu de $[BD]$.'],
+    ['$AB = BC$ et $CD = DA$', 'Non, on ne peut pas conclure', 'Ce sont des côtés consécutifs : un « cerf-volant » vérifie ces conditions sans être un parallélogramme.']
+  ];
+
+  EM.gen.register({
+    id: '5e-plus-parallelogramme-preuves',
+    titre: 'Parallélogramme : justifier, construire par coordonnées, calculer des angles',
+    chapitres: ['5e-parallelogrammes'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var H0 = rng.pick(HYP_PARA), toutes = HYP_PARA.map(function (h) { return h[1]; }).filter(function (x, i, t) { return t.indexOf(x) === i; });
+        var autres = rng.shuffle(toutes.filter(function (x) { return x !== H0[1]; })).slice(0, 3);
+        if (H0[1] !== 'Non, on ne peut pas conclure' && autres.indexOf('Non, on ne peut pas conclure') < 0) autres[2] = 'Non, on ne peut pas conclure';
+        return {
+          enonce: '$ABCD$ est un quadrilatère et $O$ est le point d\'intersection de ses diagonales. On sait que : ' + H0[0] + '.<br>Peut-on affirmer que $ABCD$ est un parallélogramme ?',
+          questions: [qcm(rng, 'Réponse :', H0[1], autres)],
+          indices: ['Un quadrilatère est un parallélogramme si : ses diagonales ont le même milieu, ou ses côtés opposés sont parallèles deux à deux, ou ses côtés opposés ont deux à deux la même longueur (non croisé), ou deux côtés opposés sont parallèles et de même longueur (non croisé).', 'Fais une figure à main levée et cherche un contre-exemple.'],
+          solution: [H0[1].indexOf('Non') === 0 ? 'On ne peut pas conclure. ' + H0[2] : 'Oui. ' + H0[2]]
+        };
+      }
+      if (niveau === 2) {
+        var P = {}, g = 0;
+        do {
+          ['A', 'B', 'C'].forEach(function (k) { P[k] = [rng.nz(-4, 4), rng.nz(-4, 4)]; });
+          P.D = [P.A[0] + P.C[0] - P.B[0], P.A[1] + P.C[1] - P.B[1]];
+          g++;
+        } while (g < 300 && (Math.abs((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0])) < 6 || Math.abs(P.D[0]) > 5 || Math.abs(P.D[1]) > 5 || dist(P.A, P.C) < 3 || P.D[0] === 0 || P.D[1] === 0));
+        var I = [(P.A[0] + P.C[0]) / 2, (P.A[1] + P.C[1]) / 2];
+        f = repere(-6, 6, -6, 6, 270);
+        f.seg(P.A, P.B).seg(P.B, P.C).seg(P.A, P.C, { dash: true });
+        var ctr = centre([P.A, P.B, P.C, P.D]);
+        f.point(P.A, 'A', posQuadrant(P.A)).point(P.B, 'B', posQuadrant(P.B)).point(P.C, 'C', posQuadrant(P.C));
+        return {
+          enonce: 'Dans un repère orthonormé, on donne $A' + cpl(P.A[0], P.A[1]) + '$, $B' + cpl(P.B[0], P.B[1]) + '$ et $C' + cpl(P.C[0], P.C[1]) + '$.<br>a) Calculer les coordonnées du milieu $I$ de $[AC]$.<br>b) En déduire les coordonnées du point $D$ tel que $ABCD$ soit un parallélogramme.',
+          figure: f.svg(),
+          questions: [qtuple('a) Coordonnées de $I$ :', I), qtuple('b) Coordonnées de $D$ :', P.D)],
+          indices: ['Le milieu de $[AC]$ a pour coordonnées $\\left(\\dfrac{x_A + x_C}{2} \\,;\\, \\dfrac{y_A + y_C}{2}\\right)$.', '$ABCD$ est un parallélogramme si ses diagonales $[AC]$ et $[BD]$ ont le même milieu : $I$ doit aussi être le milieu de $[BD]$.'],
+          solution: [
+            '$x_I = \\dfrac{' + n(P.A[0]) + ' + ' + T.par(P.C[0]) + '}{2} = ' + n(I[0]) + '$ et $y_I = \\dfrac{' + n(P.A[1]) + ' + ' + T.par(P.C[1]) + '}{2} = ' + n(I[1]) + '$ : $I' + cpl(I[0], I[1]) + '$.',
+            '$ABCD$ est un parallélogramme lorsque ses diagonales ont le même milieu : $I$ doit être le milieu de $[BD]$, c\'est-à-dire que $D$ est le symétrique de $B$ par rapport à $I$.',
+            '$x_D = 2x_I - x_B = ' + n(2 * I[0]) + ' - ' + T.par(P.B[0]) + ' = ' + n(P.D[0]) + '$ et $y_D = 2y_I - y_B = ' + n(2 * I[1]) + ' - ' + T.par(P.B[1]) + ' = ' + n(P.D[1]) + '$ : $D' + cpl(P.D[0], P.D[1]) + '$.'
+          ],
+          aide: 'Écris des coordonnées sous la forme (2 ; -3) ; tu peux utiliser des décimaux (1,5).'
+        };
+      }
+      // niveau 3 : angles dans un parallélogramme avec une diagonale
+      var a = rng.int(50, 120), b = rng.int(20, 150 - a - 10);
+      var Bang = 180 - a - b;
+      var AB = 5, AD = AB * Math.sin(rad(Bang)) / Math.sin(rad(b));
+      var pA = [0, 0], pB = [AB, 0], pD = pt(pA, a, AD), pC = [pB[0] + pD[0], pB[1] + pD[1]];
+      f = EM.fig.fit([pA, pB, pC, pD], { w: 300, h: 200 });
+      f.poly([pA, pB, pC, pD]).seg(pB, pD);
+      f.angle(pB, pA, pD, a + '°', { r: 22 }).angle(pA, pD, pB, b + '°', { r: 26 });
+      var c4 = centre([pA, pB, pC, pD]);
+      ['A', 'B', 'C', 'D'].forEach(function (l, j) { f.point([pA, pB, pC, pD][j], l, posLoin([pA, pB, pC, pD][j], c4)); });
+      return {
+        enonce: '$ABCD$ est un parallélogramme. On sait que $' + w('DAB') + ' = ' + dg(a) + '$ et $' + w('ADB') + ' = ' + dg(b) + '$.<br>a) Calculer $' + w('ABD') + '$.<br>b) Calculer $' + w('DBC') + '$.<br>c) Calculer $' + w('ABC') + '$ et $' + w('BCD') + '$.',
+        figure: f.svg(),
+        questions: [qnum('a) $' + w('ABD') + ' =$', Bang, '°'), qnum('b) $' + w('DBC') + ' =$', b, '°'), qnum('c) $' + w('ABC') + ' =$', 180 - a, '°'), qnum('c) $' + w('BCD') + ' =$', a, '°')],
+        indices: ['Dans le triangle $ABD$, la somme des angles vaut $180^\\circ$.', 'Les côtés $(AD)$ et $(BC)$ sont parallèles : avec la sécante $(BD)$, cherche des angles alternes-internes.'],
+        solution: [
+          'Dans le triangle $ABD$ : $' + w('ABD') + ' = 180^\\circ - ' + dg(a) + ' - ' + dg(b) + ' = ' + dg(Bang) + '$.',
+          '$(AD) \\parallel (BC)$ (côtés opposés du parallélogramme) et $(BD)$ est une sécante : $' + w('DBC') + '$ et $' + w('ADB') + '$ sont alternes-internes, donc $' + w('DBC') + ' = ' + dg(b) + '$.',
+          '$' + w('ABC') + ' = ' + w('ABD') + ' + ' + w('DBC') + ' = ' + dg(Bang) + ' + ' + dg(b) + ' = ' + dg(180 - a) + '$ (deux angles consécutifs d\'un parallélogramme sont bien supplémentaires).',
+          'Les angles opposés d\'un parallélogramme sont égaux : $' + w('BCD') + ' = ' + w('DAB') + ' = ' + dg(a) + '$.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 5e — Prisme et cylindre : éléments, patron, abreuvoir                */
+  /* ================================================================== */
+  var BASES = [[3, 'triangulaire'], [4, 'quadrilatère'], [5, 'pentagonale'], [6, 'hexagonale'], [8, 'octogonale']];
+
+  EM.gen.register({
+    id: '5e-plus-prisme-patron-debit',
+    titre: 'Prisme et cylindre : compter les éléments, patron, remplir un abreuvoir',
+    chapitres: ['5e-prisme-cylindre'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      if (niveau === 1) {
+        var B0 = rng.pick(BASES), k = B0[0];
+        var nomP = 'un prisme droit à base ' + (k === 4 ? 'quadrilatère' : B0[1]);
+        return {
+          enonce: 'On considère ' + nomP + ' (ses deux bases sont des polygones à ' + k + ' côtés).<br>Combien a-t-il de faces, d\'arêtes et de sommets ? Quelle est la nature de ses faces latérales ?',
+          questions: [qnum('Nombre de faces :', k + 2), qnum('Nombre d\'arêtes :', 3 * k), qnum('Nombre de sommets :', 2 * k), qcm(rng, 'Faces latérales :', 'des rectangles', ['des rectangles', 'des triangles', 'des polygones à ' + k + ' côtés', 'des disques'])],
+          indices: ['Chaque côté d\'une base correspond à une face latérale.', 'Les arêtes : celles de la base du dessous, celles de la base du dessus, et les arêtes latérales qui les relient.'],
+          solution: [
+            'Faces : 2 bases et ' + k + ' faces latérales (une par côté de la base), soit $2 + ' + k + ' = ' + (k + 2) + '$ faces.',
+            'Arêtes : ' + k + ' sur chaque base et ' + k + ' arêtes latérales, soit $3 \\times ' + k + ' = ' + (3 * k) + '$ arêtes.',
+            'Sommets : ' + k + ' sur chaque base, soit $2 \\times ' + k + ' = ' + (2 * k) + '$ sommets.',
+            'Dans un prisme droit, les faces latérales sont des rectangles.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var r = rng.pick([3, 3.5, 4, 4.5, 5, 6, 7.5]), h = rng.int(8, 20), Lr = 2 * Math.PI * r;
+        var Ltot = R(Lr, 1), Atot = Math.round(2 * Math.PI * r * h + 2 * Math.PI * r * r);
+        var objet = rng.pick(['une boîte de concentré de tomate', 'une boîte de lait en poudre', 'un pot de peinture', 'une tirelire cylindrique']);
+        return {
+          enonce: 'On fabrique le patron d\'' + objet + ' : un cylindre de rayon ' + u(r, 'cm') + ' et de hauteur ' + u(h, 'cm') + '. Le patron est formé d\'un rectangle et de deux disques.<br>a) Quelles sont les dimensions du rectangle ? (Donner la longueur au millimètre près.)<br>b) Calculer l\'aire totale du patron, arrondie au cm².',
+          questions: [qnum('a) Longueur du rectangle :', Ltot, 'cm', 0.051), qnum('a) Largeur du rectangle :', h, 'cm'), qnum('b) Aire totale :', Atot, 'cm²', 1)],
+          indices: ['Quand on enroule le rectangle, sa longueur fait le tour d\'un disque de base : c\'est le périmètre $2\\pi r$.', 'Aire totale = aire du rectangle $(2\\pi r \\times h)$ + aire des deux disques $(2 \\times \\pi r^2)$.'],
+          solution: [
+            'La longueur du rectangle est le périmètre du disque de base : $2 \\times \\pi \\times ' + n(r) + ' \\approx ' + n(Ltot) + '$ cm. Sa largeur est la hauteur du cylindre : ' + u(h, 'cm') + '.',
+            'Aire du rectangle : $2\\pi \\times ' + n(r) + ' \\times ' + h + ' \\approx ' + n(R(2 * Math.PI * r * h, 1)) + '$ cm².',
+            'Aire des deux disques : $2 \\times \\pi \\times ' + n(r) + '^2 \\approx ' + n(R(2 * Math.PI * r * r, 1)) + '$ cm².',
+            'Aire totale $\\approx ' + n(Atot) + '$ cm².'
+          ]
+        };
+      }
+      // niveau 3 : abreuvoir en forme de prisme à base triangulaire
+      var larg = rng.pick([40, 50, 60, 80]), prof = rng.pick([30, 40, 45, 50]), long = rng.pick([2, 2.5, 3, 4, 5]);
+      var Bm = (larg / 100) * (prof / 100) / 2, V = R(Bm * long, 6), L = R(V * 1000, 3), debit = rng.pick([10, 15, 20, 25, 30, 40]);
+      var tmin = L / debit;
+      var mn = Math.floor(tmin), sec = Math.round((tmin - mn) * 60);
+      var village = rng.pick(['du Ferlo', 'près de Linguère', 'près de Dahra', 'près de Matam']);
+      return {
+        enonce: 'Un abreuvoir pour le bétail, dans un forage ' + village + ', a la forme d\'un prisme droit couché. Sa base est un triangle de ' + u(larg, 'cm') + ' de large (en haut) et de ' + u(prof, 'cm') + ' de profondeur ; sa longueur est de ' + u(long, 'm') + '.<br>a) Calculer le volume de l\'abreuvoir en m³, puis sa contenance en litres.<br>b) Le robinet du forage débite ' + debit + ' litres par minute. Combien de minutes faut-il pour remplir l\'abreuvoir vide ? (Arrondir à la minute.)',
+        questions: [qnum('a) Volume (m³) :', V, 'm³'), qnum('a) Contenance (L) :', L, 'L'), qnum('b) Durée (min) :', Math.round(tmin), 'min', 0.5)],
+        indices: ['Convertis d\'abord toutes les longueurs en mètres. Aire de la base (triangle) $= \\dfrac{\\text{largeur} \\times \\text{profondeur}}{2}$.', '$V = \\mathcal{B} \\times h$ et $1$ m³ $= 1\\,000$ L. Durée = contenance ÷ débit.'],
+        solution: [
+          'En mètres : largeur $' + n(larg / 100) + '$ m, profondeur $' + n(prof / 100) + '$ m. Aire de la base : $\\dfrac{' + n(larg / 100) + ' \\times ' + n(prof / 100) + '}{2} = ' + n(Bm) + '$ m².',
+          'Volume : $V = ' + n(Bm) + ' \\times ' + n(long) + ' = ' + n(V) + '$ m³, soit $' + n(L) + '$ L.',
+          'Durée de remplissage : $' + n(L) + ' \\div ' + debit + ' \\approx ' + n(R(tmin, 2)) + '$ min, soit environ ' + Math.round(tmin) + ' minutes' + (sec && mn ? ' (' + mn + ' min ' + sec + ' s)' : '') + '.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Rationnels : comparer, ranger, partager                        */
+  /* ================================================================== */
+  /** fraction a/b écrite telle quelle (signe devant, dénominateur positif) */
+  function frx(a, b) {
+    if (b < 0) { a = -a; b = -b; }
+    if (b === 1) return n(a);
+    return (a < 0 ? '-' : '') + '\\dfrac{' + Math.abs(a) + '}{' + b + '}';
+  }
+
+  EM.gen.register({
+    id: '4e-plus-rationnels-comparer-partage',
+    titre: 'Rationnels : comparer, ranger, inverse et opposé, problème de partage',
+    chapitres: ['4e-rationnels'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      if (niveau === 1) {
+        var a, b, c, d, g = 0;
+        do {
+          a = rng.nz(-12, 12); b = rng.int(2, 12);
+          if (rng.bool(0.2)) { var k = rng.int(2, 3); c = a * k; d = b * k; if (rng.bool(0.5)) { c = -c; } }
+          else { c = rng.nz(-12, 12); d = rng.intExcept(2, 12, [b]); }
+          g++;
+        } while (g < 200 && (a % b === 0 || c % d === 0 || (a * d === c * b && c * a < 0)));
+        var r1 = F(a, b), r2 = F(c, d), cmp = r1.cmp(r2), signe = cmp < 0 ? '<' : cmp > 0 ? '>' : '=';
+        var L = ar.lcm(b, d), N1 = a * L / b, N2 = c * L / d;
+        var sol = [];
+        if (a * c < 0) sol.push('Les deux nombres sont de signes contraires : le nombre négatif est le plus petit. Donc $' + frx(a, b) + ' ' + signe + ' ' + frx(c, d) + '$.');
+        else {
+          sol.push('On les écrit avec le même dénominateur positif $' + L + '$ : $' + frx(a, b) + ' = ' + frx(N1, L) + '$ et $' + frx(c, d) + ' = ' + frx(N2, L) + '$.');
+          sol.push('On compare les numérateurs : $' + n(N1) + ' ' + signe + ' ' + n(N2) + '$, donc $' + frx(a, b) + ' ' + signe + ' ' + frx(c, d) + '$.' + '');
+        }
+        sol.push('L\'inverse de $' + frx(a, b) + '$ est $' + frx(b, a) + (F(b, a).d !== Math.abs(a) || F(b, a).n !== (a < 0 ? -b : b) ? ' = ' + F(b, a).tex() : '') + '$ (même signe) ; son opposé est $' + frx(-a, b) + '$ (signe contraire).');
+        return {
+          enonce: 'a) Comparer les nombres $' + frx(a, b) + '$ et $' + frx(c, d) + '$.<br>b) Donner l\'inverse, puis l\'opposé, du nombre $' + frx(a, b) + '$.',
+          questions: [qcm(rng, 'a) $' + frx(a, b) + ' \\;\\ldots\\; ' + frx(c, d) + '$', '$' + signe + '$', ['$<$', '$>$', '$=$']), qnum('b) Inverse :', F(b, a)), qnum('b) Opposé :', F(-a, b))],
+          indices: ['Pour comparer deux fractions, écris-les avec le même dénominateur positif, puis compare les numérateurs (attention aux signes).', 'Inverse de $\\dfrac{a}{b}$ : $\\dfrac{b}{a}$ (même signe). Opposé : $-\\dfrac{a}{b}$.'],
+          solution: sol,
+          aide: 'Écris une fraction avec « / », par exemple -7/3.'
+        };
+      }
+      if (niveau === 2) {
+        var vals = [], g2 = 0;
+        do {
+          vals = [];
+          var dens = rng.sample([2, 3, 4, 5, 6, 8, 10, 12], 4);
+          dens.forEach(function (dd) { var nn; do { nn = rng.nz(-11, 11); } while (nn % dd === 0); vals.push([nn, dd]); });
+          var fv = vals.map(function (v) { return v[0] / v[1]; });
+          var distincts = fv.every(function (x, i) { return fv.every(function (y, j) { return i === j || Math.abs(x - y) > 1e-9; }); });
+          g2++;
+        } while (g2 < 200 && (!distincts || !vals.some(function (v) { return v[0] < 0; }) || !vals.some(function (v) { return v[0] > 0; })));
+        var tex = function (v) { return frx(v[0], v[1]); };
+        var tri = vals.slice().sort(function (x, y) { return x[0] / x[1] - y[0] / y[1]; });
+        var parNum = vals.slice().sort(function (x, y) { return x[0] - y[0] || x[1] - y[1]; });
+        var parAbs = vals.slice().sort(function (x, y) { return Math.abs(x[0] / x[1]) - Math.abs(y[0] / y[1]); });
+        var inv = tri.slice().reverse();
+        var ecr = function (arr) { return '$' + arr.map(tex).join(' < ') + '$'; };
+        var choix = [ecr(parNum), ecr(parAbs), ecr(inv), ecr([tri[1], tri[0], tri[2], tri[3]]), ecr([tri[0], tri[2], tri[1], tri[3]])];
+        var LL = vals.reduce(function (acc, v) { return ar.lcm(acc, v[1]); }, 1);
+        return {
+          enonce: 'Ranger dans l\'ordre croissant les nombres : $' + rng.shuffle(vals).map(tex).join(' \\;;\\; ') + '$.',
+          questions: [qcm(rng, 'Ordre croissant :', ecr(tri), choix.filter(function (x) { return x !== ecr(tri); }).slice(0, 3))],
+          indices: ['Sépare d\'abord les négatifs (plus petits) des positifs.', 'Écris tous les nombres avec le même dénominateur positif $' + LL + '$, puis compare les numérateurs.'],
+          solution: [
+            'Avec le dénominateur commun $' + LL + '$ : ' + vals.map(function (v) { return '$' + tex(v) + ' = ' + frx(v[0] * LL / v[1], LL) + '$'; }).join(' ; ') + '.',
+            'On range les numérateurs : $' + tri.map(function (v) { return n(v[0] * LL / v[1]); }).join(' < ') + '$.',
+            'Ordre croissant : ' + ecr(tri) + '.'
+          ]
+        };
+      }
+      // niveau 3 : partage d'un champ
+      var P1 = rng.pick([[1, 3], [2, 5], [1, 4], [3, 8], [2, 7], [1, 6], [3, 10], [1, 5]]), Q1 = rng.pick([[1, 3], [1, 2], [2, 3], [1, 4], [3, 4], [2, 5], [3, 5]]);
+      var p1 = F(P1[0], P1[1]), reste = F(1).sub(p1), mil = F(Q1[0], Q1[1]).mul(reste), nie = F(1).sub(p1).sub(mil);
+      var D = ar.lcm(ar.lcm(p1.d, mil.d), nie.d), kS = Math.max(1, Math.ceil(10 / D)), S = D * kS;
+      if (S > 120) S = D;
+      var nom = personne(rng, 'm').nom, lieu = rng.pick(['Nioro du Rip', 'Kaffrine', 'Gossas', 'Sokone', 'Koungheul']);
+      var aNie = nie.mul(S);
+      return {
+        enonce: 'Le champ familial ' + de(nom) + ', près de ' + lieu + ', mesure ' + u(S, 'ha') + '. Les $' + frx(P1[0], P1[1]) + '$ du champ sont cultivés en arachide, les $' + frx(Q1[0], Q1[1]) + '$ du reste en mil, et le reste en niébé.<br>a) Quelle fraction du champ est cultivée en mil ?<br>b) Quelle fraction du champ est cultivée en niébé ?<br>c) Calculer la surface cultivée en niébé.',
+        questions: [qnum('a) Fraction en mil :', mil), qnum('b) Fraction en niébé :', nie), qnum('c) Surface en niébé :', aNie.value(), 'ha')],
+        indices: ['Le reste après l\'arachide représente $1 - ' + frx(P1[0], P1[1]) + '$ du champ.', 'Prendre les $' + frx(Q1[0], Q1[1]) + '$ du reste, c\'est multiplier le reste par $' + frx(Q1[0], Q1[1]) + '$.'],
+        solution: [
+          'Après l\'arachide, il reste $1 - ' + frx(P1[0], P1[1]) + ' = ' + reste.tex() + '$ du champ.',
+          'Mil : $' + frx(Q1[0], Q1[1]) + ' \\times ' + reste.tex() + ' = ' + frx(Q1[0] * reste.n, Q1[1] * reste.d) + (F(Q1[0] * reste.n, Q1[1] * reste.d).d !== Q1[1] * reste.d ? ' = ' + mil.tex() : '') + '$ du champ.',
+          'Niébé : $1 - ' + p1.tex() + ' - ' + mil.tex() + ' = ' + nie.tex() + '$ du champ.',
+          'Surface en niébé : $' + nie.tex() + ' \\times ' + S + ' = ' + n(aNie.value()) + '$ ha.'
+        ],
+        aide: 'Écris une fraction avec « / », par exemple 3/10.'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Applications linéaires : graphique, tableau, propriétés         */
+  /* ================================================================== */
+  var CTX_LIN = [
+    { lin: true, x: 'Nombre de pains', y: 'Prix (F CFA)', a: 150, b: 0, xs: [2, 3, 5, 8], txt: 'le prix payé à la boulangerie en fonction du nombre de pains achetés', unite: 'F CFA', q: 12 },
+    { lin: true, x: 'Masse de mangues (kg)', y: 'Prix (F CFA)', a: 350, b: 0, xs: [2, 4, 5, 7], txt: 'le prix de mangues au marché de Ziguinchor en fonction de la masse achetée', unite: 'F CFA', q: 10 },
+    { lin: true, x: 'Longueur de tissu (m)', y: 'Prix (F CFA)', a: 2500, b: 0, xs: [1.5, 2, 3, 4], txt: 'le prix d\'un tissu wax au marché HLM en fonction de la longueur achetée', unite: 'F CFA', q: 6 },
+    { lin: false, x: 'Distance (km)', y: 'Prix (F CFA)', a: 250, b: 500, xs: [2, 4, 6, 10], txt: 'le prix d\'une course de taxi (prise en charge comprise) en fonction de la distance', unite: 'F CFA' },
+    { lin: false, x: 'Durée (h)', y: 'Prix (F CFA)', a: 2000, b: 5000, xs: [1, 2, 3, 5], txt: 'le prix de location d\'une pirogue (forfait de départ compris) en fonction de la durée', unite: 'F CFA' },
+    { lin: false, x: 'Consommation (kWh)', y: 'Facture (F CFA)', a: 100, b: 1500, xs: [50, 100, 150, 200], txt: 'le montant d\'une facture d\'électricité (prime fixe comprise) en fonction de la consommation', unite: 'F CFA' }
+  ];
+
+  EM.gen.register({
+    id: '4e-plus-lineaire-graphique',
+    titre: 'Application linéaire : lire un graphique, reconnaître un tableau, utiliser la linéarité',
+    chapitres: ['4e-applications-lineaires'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      if (niveau === 1) {
+        var x0 = rng.int(1, 4), y0, g = 0;
+        do { y0 = rng.nz(-6, 6); g++; } while (g < 50 && Math.abs(y0) === x0);
+        var A = F(y0, x0), k1 = rng.nz(-5, 5) * (A.d), img = A.mul(k1);
+        var t = rng.nz(-4, 4) * A.d, yt = A.mul(t);
+        while (Math.abs(img.value()) > 99 || k1 === x0) { k1 = rng.nz(-5, 5); img = A.mul(k1); }
+        var f = repere(-6, 6, -6, 6, 270);
+        f.line([0, 0], [x0, y0], { accent: true }).point([x0, y0], 'A', posQuadrant([x0, y0]));
+        return {
+          enonce: 'La droite tracée dans le repère est la représentation graphique d\'une application linéaire $f$. Elle passe par le point $A$, dont les coordonnées se lisent sur le quadrillage.<br>a) Déterminer le coefficient $a$ de $f$.<br>b) Calculer $f(' + n(k1) + ')$.<br>c) Calculer l\'antécédent de $' + yt.tex() + '$ par $f$.',
+          figure: f.svg(),
+          questions: [qnum('a) $a =$', A), qnum('b) $f(' + n(k1) + ') =$', img), qnum('c) Antécédent :', t)],
+          indices: ['Lis les coordonnées du point $A$ : $A(x_A ; y_A)$ avec $y_A = f(x_A) = a \\times x_A$.', 'Donc $a = \\dfrac{y_A}{x_A}$. Image : multiplier par $a$ ; antécédent : diviser par $a$.'],
+          solution: [
+            'On lit $A' + cpl(x0, y0) + '$ : $f(' + x0 + ') = ' + y0 + '$.',
+            '$a = \\dfrac{f(' + x0 + ')}{' + x0 + '} = ' + frx(y0, x0) + (A.d !== x0 ? ' = ' + A.tex() : '') + '$, donc $f(x) = ' + T.mono(A, 'x', true) + '$.',
+            '$f(' + n(k1) + ') = ' + A.tex() + ' \\times ' + T.par(k1) + ' = ' + img.tex() + '$.',
+            'Antécédent de $' + yt.tex() + '$ : on résout $' + T.mono(A, 'x', true) + ' = ' + yt.tex() + '$, d\'où $x = ' + yt.tex() + ' \\div ' + (A.n < 0 ? '\\left(' + A.tex() + '\\right)' : A.tex()) + ' = ' + n(t) + '$.'
+          ],
+          aide: 'Écris une fraction avec « / », par exemple -5/2.'
+        };
+      }
+      if (niveau === 2) {
+        var C = rng.pick(CTX_LIN), ys = C.xs.map(function (x) { return R(C.a * x + C.b); });
+        var quo = R(ys[0] / C.xs[0], 4), quos = C.xs.map(function (x, i) { return R(ys[i] / x, 4); });
+        var qs = [qcm(rng, 'a) Est-ce un tableau de proportionnalité ?', C.lin ? 'Oui : $y$ est une fonction linéaire de $x$' : 'Non : ce n\'est pas une application linéaire', ['Oui : $y$ est une fonction linéaire de $x$', 'Non : ce n\'est pas une application linéaire']), qnum('b) Quotient $\\dfrac{y}{x}$ pour la première colonne :', quo)];
+        if (C.lin) qs.push(qnum('c) Valeur de $y$ pour $x = ' + C.q + '$ :', C.a * C.q, C.unite));
+        var sol = ['On calcule le quotient $\\dfrac{y}{x}$ pour chaque colonne : ' + C.xs.map(function (x, i) { return '$\\dfrac{' + n(ys[i]) + '}{' + n(x) + '} = ' + n(quos[i]) + '$'; }).join(' ; ') + '.'];
+        if (C.lin) {
+          sol.push('Tous les quotients sont égaux à ' + m(C.a) + ' : c\'est un tableau de proportionnalité. $y = ' + n(C.a) + 'x$ : l\'application $x \\mapsto ' + n(C.a) + 'x$ est linéaire, de coefficient ' + m(C.a) + '.');
+          sol.push('Pour $x = ' + C.q + '$ : $y = ' + n(C.a) + ' \\times ' + C.q + ' = ' + n(C.a * C.q) + '$.');
+        } else {
+          sol.push('Les quotients ne sont pas tous égaux : ce n\'est pas un tableau de proportionnalité, donc pas une application linéaire.');
+          sol.push('On s\'en doutait : une somme fixe de ' + m(C.b) + ' F' + NB + 'CFA est payée même pour $x$ très petit. Ici $y = ' + n(C.a) + 'x + ' + n(C.b) + '$ (on verra en 3e que c\'est une application affine).');
+        }
+        return {
+          enonce: 'Le tableau donne ' + C.txt + '.' + tableau([[C.x].concat(C.xs.map(m)), [C.y].concat(ys.map(m))]) +
+            'a) Ce tableau est-il un tableau de proportionnalité ? Autrement dit, $y$ est-il une fonction linéaire de $x$ ?<br>b) Calculer le quotient $\\dfrac{y}{x}$ pour la première colonne.' + (C.lin ? '<br>c) Calculer $y$ pour $x = ' + C.q + '$.' : ''),
+          questions: qs,
+          indices: ['Une application est linéaire si $y = ax$ : le quotient $\\dfrac{y}{x}$ est le même pour toutes les colonnes.', 'Calcule le quotient pour chaque colonne et compare.'],
+          solution: sol
+        };
+      }
+      // niveau 3 : propriétés de linéarité
+      var p = rng.nz(-7, 7), q = rng.pick([1, 2, 3, 4, 5]);
+      if (ar.gcd(Math.abs(p), q) !== 1) q = 1;
+      if (q === 1 && Math.abs(p) === 1) p = 3 * p;
+      var Af = F(p, q), a1 = q * rng.int(1, 6), a2, g3 = 0;
+      do { a2 = q * rng.int(1, 6); g3++; } while (a2 === a1 && g3 < 50);
+      var b1 = Af.mul(a1).value(), b2 = Af.mul(a2).value(), kk = rng.pick([2, 3, 4, 5, 10]);
+      return {
+        enonce: '$f$ est une application linéaire telle que $f(' + a1 + ') = ' + n(b1) + '$ et $f(' + a2 + ') = ' + n(b2) + '$.<br>Sans calculer le coefficient de $f$, calculer :<br>a) $f(' + (a1 + a2) + ')$ ;<br>b) $f(' + (kk * a1) + ')$ ;<br>c) $f(' + (a1 - a2) + ')$.',
+        questions: [qnum('a) $f(' + (a1 + a2) + ') =$', b1 + b2), qnum('b) $f(' + (kk * a1) + ') =$', kk * b1), qnum('c) $f(' + (a1 - a2) + ') =$', b1 - b2)],
+        indices: ['Pour une application linéaire : $f(x + x\') = f(x) + f(x\')$ et $f(kx) = k\\,f(x)$.', 'Écris $' + (a1 + a2) + ' = ' + a1 + ' + ' + a2 + '$, $' + (kk * a1) + ' = ' + kk + ' \\times ' + a1 + '$ et $' + (a1 - a2) + ' = ' + a1 + ' - ' + a2 + '$.'],
+        solution: [
+          '$f(' + (a1 + a2) + ') = f(' + a1 + ' + ' + a2 + ') = f(' + a1 + ') + f(' + a2 + ') = ' + n(b1) + ' + ' + T.par(b2) + ' = ' + n(b1 + b2) + '$.',
+          '$f(' + (kk * a1) + ') = f(' + kk + ' \\times ' + a1 + ') = ' + kk + ' \\times f(' + a1 + ') = ' + kk + ' \\times ' + T.par(b1) + ' = ' + n(kk * b1) + '$.',
+          '$f(' + (a1 - a2) + ') = f(' + a1 + ') - f(' + a2 + ') = ' + n(b1) + ' - ' + T.par(b2) + ' = ' + n(b1 - b2) + '$.',
+          'Vérification : le coefficient est $a = \\dfrac{' + n(b1) + '}{' + a1 + '} = ' + Af.tex() + '$, et par exemple $' + Af.tex() + ' \\times ' + T.par(a1 - a2) + ' = ' + n(b1 - b2) + '$.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Statistiques : histogramme, regroupement en classes             */
+  /* ================================================================== */
+  var CTX_HIST = [
+    { t: 'la taille (en cm) des élèves de 4e d\'un collège de ' + 'Kaolack', a0: 140, h: 10, k: 5, u: 'cm', nom: 'Taille (cm)', ind: 'élèves' },
+    { t: 'la masse (en kg) des sacs de riz livrés à une boutique de Saint-Louis', a0: 20, h: 5, k: 5, u: 'kg', nom: 'Masse (kg)', ind: 'sacs' },
+    { t: 'la durée (en min) du trajet domicile-collège des élèves d\'une classe de Thiès', a0: 0, h: 10, k: 5, u: 'min', nom: 'Durée (min)', ind: 'élèves' },
+    { t: 'la recette journalière (en milliers de F CFA) des vendeuses de poisson du marché de Mbour', a0: 0, h: 20, k: 5, u: 'milliers de F CFA', nom: 'Recette', ind: 'vendeuses' }
+  ];
+  function figHisto(C, ef) {
+    var k = ef.length, top = 2 * Math.ceil((Math.max.apply(null, ef) + 1) / 2);
+    var x0 = C.a0, x1 = C.a0 + k * C.h, sp = x1 - x0;
+    var f = EM.fig.create({ w: 320, h: 230, xmin: x0 - sp * 0.16, xmax: x1 + sp * 0.06, ymin: -top * 0.14, ymax: top * 1.08, title: 'Histogramme' });
+    for (var y = 0; y <= top; y += 1) {
+      ligneGrille(f, [x0, y], [x1, y]);
+      if (y % 2 === 0) f.text([x0 - sp * 0.025, y - top * 0.018], String(y), { small: true, anchor: 'end' });
+    }
+    ef.forEach(function (e, i) { f.rect(x0 + i * C.h, 0, C.h, e); });
+    for (var i = 0; i <= k; i++) f.text([x0 + i * C.h, -top * 0.085], String(x0 + i * C.h), { small: true });
+    f.seg([x0, 0], [x1 + sp * 0.03, 0]).seg([x0, 0], [x0, top * 1.04]);
+    return f.svg();
+  }
+
+  EM.gen.register({
+    id: '4e-plus-histogramme-classes',
+    titre: 'Lire un histogramme, regrouper des données en classes',
+    chapitres: ['4e-statistiques'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var C = rng.pick(CTX_HIST), k = C.k, ef = [], i;
+      var cls = function (j) { return '$[' + n(C.a0 + j * C.h) + ' \\,;\\, ' + n(C.a0 + (j + 1) * C.h) + '[$'; };
+      if (niveau === 1 || niveau === 3) {
+        for (i = 0; i < k; i++) ef.push(rng.int(2, 13));
+        var N = EM.util.sum(ef);
+        if (niveau === 1) {
+          var j = rng.int(0, k - 1), mb = rng.int(1, k - 1), sens = rng.bool(), borne = C.a0 + mb * C.h;
+          var nb = sens ? EM.util.sum(ef.slice(0, mb)) : EM.util.sum(ef.slice(mb));
+          return {
+            enonce: 'L\'histogramme représente ' + C.t + '. Les classes ont toutes la même amplitude.<br>a) Quel est l\'effectif de la classe ' + cls(j) + ' ?<br>b) Quel est l\'effectif total ?<br>c) Combien ' + (/^[aeéiou]/.test(C.ind) ? 'd\'' : 'de ') + C.ind + ' ont une valeur ' + (sens ? 'strictement inférieure à ' : 'supérieure ou égale à ') + m(borne) + ' ?',
+            figure: figHisto(C, ef),
+            questions: [qnum('a) Effectif de ' + cls(j) + ' :', ef[j]), qnum('b) Effectif total :', N), qnum('c) Nombre ' + (/^[aeéiou]/.test(C.ind) ? 'd\'' : 'de ') + C.ind + ' :', nb)],
+            indices: ['La hauteur de chaque rectangle donne l\'effectif de la classe : lis-la sur l\'axe vertical.', 'Une classe $[a ; b[$ contient $a$ mais pas $b$. Additionne les effectifs des classes concernées.'],
+            solution: [
+              'Effectifs lus : ' + ef.map(function (e, jj) { return cls(jj) + ' : ' + e; }).join(' ; ') + '.',
+              'Effectif de la classe ' + cls(j) + ' : ' + m(ef[j]) + '. Effectif total : $' + ef.join(' + ') + ' = ' + N + '$.',
+              (sens ? 'Valeurs strictement inférieures à ' + m(borne) + ' : classes ' + EM.util.range(0, mb - 1).map(cls).join(', ') : 'Valeurs supérieures ou égales à ' + m(borne) + ' : classes ' + EM.util.range(mb, k - 1).map(cls).join(', ')) + ', soit ' + m(nb) + ' ' + C.ind + '.'
+            ]
+          };
+        }
+        var S = 0, cen = [];
+        for (i = 0; i < k; i++) { cen.push(C.a0 + (i + 0.5) * C.h); S += cen[i] * ef[i]; }
+        var moy = S / N, exact = ar.isInt(moy * 10);
+        var mb3 = rng.int(1, k - 1), pc = 100 * EM.util.sum(ef.slice(0, mb3)) / N, exPc = ar.isInt(pc * 10);
+        return {
+          enonce: 'L\'histogramme représente ' + C.t + '.<br>a) Calculer une valeur approchée de la moyenne à l\'aide des centres des classes' + (exact ? '.' : ', arrondie au dixième.') + '<br>b) Quel pourcentage des ' + C.ind + ' ont une valeur strictement inférieure à ' + m(C.a0 + mb3 * C.h) + (exPc ? ' ?' : ' ? (Arrondir au dixième.)'),
+          figure: figHisto(C, ef),
+          questions: [qnum('a) Moyenne :', R(moy, 1), null, exact ? null : 0.06), qnum('b) Pourcentage :', R(pc, 1), '%', exPc ? null : 0.06)],
+          indices: ['Le centre de la classe $[a ; b[$ est $\\dfrac{a + b}{2}$. Moyenne $= \\dfrac{\\sum \\text{centre} \\times \\text{effectif}}{\\text{effectif total}}$.', 'Pourcentage $= \\dfrac{\\text{effectif concerné}}{\\text{effectif total}} \\times 100$.'],
+          solution: [
+            'Effectifs lus : ' + ef.join(' ; ') + ' ; effectif total ' + m(N) + '. Centres des classes : ' + cen.map(m).join(' ; ') + '.',
+            'Somme des produits : $' + cen.map(function (c, jj) { return n(c) + ' \\times ' + ef[jj]; }).join(' + ') + ' = ' + n(S) + '$.',
+            'Moyenne : $\\dfrac{' + n(S) + '}{' + N + '} ' + (exact ? '= ' : '\\approx ') + n(R(moy, 1)) + '$ ' + C.u + '.',
+            'Valeurs strictement inférieures à ' + m(C.a0 + mb3 * C.h) + ' : $' + ef.slice(0, mb3).join(' + ') + ' = ' + EM.util.sum(ef.slice(0, mb3)) + '$, soit $\\dfrac{' + EM.util.sum(ef.slice(0, mb3)) + '}{' + N + '} \\times 100 ' + (exPc ? '= ' : '\\approx ') + n(R(pc, 1)) + '$ %.'
+          ]
+        };
+      }
+      // niveau 2 : regrouper des données brutes en classes
+      var NN = rng.pick([20, 25]), dat = [], lo = 150, h2 = 50, kk = 4;
+      for (i = 0; i < NN; i++) dat.push(lo + rng.int(0, kk * h2 - 1));
+      for (i = 0; i < 3; i++) dat[rng.int(0, NN - 1)] = lo + h2 * rng.int(1, kk - 1);
+      var jc = rng.int(0, kk - 1), bas = lo + jc * h2, haut = bas + h2;
+      var dedans = dat.filter(function (v) { return v >= bas && v < haut; });
+      var eff = dedans.length, freq = 100 * eff / NN;
+      return {
+        enonce: 'Au marché de Ziguinchor, on a pesé ' + NN + ' mangues (masses en grammes) :<br>$' + dat.map(n).join(' \\;;\\; ') + '$.<br>On regroupe ces masses en classes d\'amplitude ' + m(h2) + ' g : $[150 \\,;\\, 200[$, $[200 \\,;\\, 250[$, $[250 \\,;\\, 300[$, $[300 \\,;\\, 350[$.<br>a) Quel est l\'effectif de la classe $[' + bas + ' \\,;\\, ' + haut + '[$ ?<br>b) Quelle est sa fréquence, en pourcentage ?',
+        questions: [qnum('a) Effectif :', eff), qnum('b) Fréquence :', freq, '%')],
+        indices: ['La classe $[' + bas + ' \\,;\\, ' + haut + '[$ contient les masses $m$ telles que $' + bas + ' \\leq m < ' + haut + '$ : ' + m(bas) + ' est dedans, mais pas ' + m(haut) + '.', 'Fréquence $= \\dfrac{\\text{effectif de la classe}}{\\text{effectif total}} \\times 100$.'],
+        solution: [
+          'Masses de la classe $[' + bas + ' \\,;\\, ' + haut + '[$ : ' + (eff ? '$' + dedans.map(n).join(' \\,;\\, ') + '$' : 'aucune') + ', soit ' + m(eff) + ' mangue' + (eff > 1 ? 's' : '') + '.',
+          'Fréquence : $\\dfrac{' + eff + '}{' + NN + '} \\times 100 = ' + n(freq) + '$ %.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Pythagore : réciproque sur le terrain                           */
+  /* ================================================================== */
+  var HYPOS = { 10: [[6, 8]], 13: [[5, 12]], 15: [[9, 12]], 17: [[8, 15]], 20: [[12, 16]], 25: [[7, 24], [15, 20]], 26: [[10, 24]], 29: [[20, 21]], 30: [[18, 24]], 50: [[14, 48], [30, 40]] };
+
+  EM.gen.register({
+    id: '4e-plus-pythagore-reciproque-terrain',
+    titre: 'Réciproque de Pythagore : vérifier un angle droit sur le terrain',
+    chapitres: ['4e-pythagore'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var t = rng.pick([[30, 40, 50], [60, 80, 100], [45, 60, 75], [50, 120, 130], [80, 150, 170], [90, 120, 150], [36, 48, 60], [70, 240, 250]]);
+        var droit = rng.bool(), bc = droit ? t[2] : t[2] + rng.pick([-3, -2, -1, 1, 2, 3]);
+        var ab = t[0], ac = t[1], s = ab * ab + ac * ac, nom = personne(rng, 'm').nom;
+        f = EM.fig.fit([[0, 0], [ab, 0], [0, ac]], { w: 220, h: 210, pad: 40 });
+        f.seg([0, 0], [ab * 1.3, 0]).seg([0, 0], [0, ac * 1.15]).seg([ab, 0], [0, ac], { dash: true, accent: true });
+        f.point([0, 0], 'A', 'so').point([ab, 0], 'B', 's').point([0, ac], 'C', 'o');
+        f.segLabel([0, 0], [ab, 0], ab + ' cm', { flip: false, inside: [0, ac] }).segLabel([0, 0], [0, ac], ac + ' cm', { inside: [ab, 0], k: 26 }).segLabel([ab, 0], [0, ac], bc + ' cm', { inside: [0, 0], k: 20 });
+        return {
+          enonce: nom + ', maçon à ' + rng.pick(VILLES) + ', veut vérifier que le mur qu\'il construit est bien perpendiculaire au sol. Il marque au pied du mur un point $A$, sur le sol un point $B$ tel que $AB = ' + ab + '$ cm, et sur le mur un point $C$ tel que $AC = ' + ac + '$ cm. Il mesure alors $BC = ' + bc + '$ cm.<br>a) Calculer $AB^2 + AC^2$ et $BC^2$.<br>b) Le mur est-il perpendiculaire au sol ?',
+          figure: f.svg(),
+          questions: [qnum('a) $AB^2 + AC^2 =$', s), qnum('a) $BC^2 =$', bc * bc), qcm(rng, 'b) Le mur est-il perpendiculaire au sol ?', droit ? 'Oui, le triangle $ABC$ est rectangle en $A$' : 'Non, le triangle $ABC$ n\'est pas rectangle', ['Oui, le triangle $ABC$ est rectangle en $A$', 'Non, le triangle $ABC$ n\'est pas rectangle'])],
+          indices: ['Dans le triangle $ABC$, le plus grand côté est $[BC]$ : compare $BC^2$ à $AB^2 + AC^2$.', 'Égalité : la réciproque de Pythagore donne un angle droit en $A$. Sinon, le triangle n\'est pas rectangle.'],
+          solution: [
+            '$AB^2 + AC^2 = ' + ab + '^2 + ' + ac + '^2 = ' + n(ab * ab) + ' + ' + n(ac * ac) + ' = ' + n(s) + '$ et $BC^2 = ' + bc + '^2 = ' + n(bc * bc) + '$.',
+            droit ? 'On a $BC^2 = AB^2 + AC^2$ : d\'après la réciproque du théorème de Pythagore, le triangle $ABC$ est rectangle en $A$. Le mur est bien perpendiculaire au sol.'
+              : 'On a $BC^2 \\neq AB^2 + AC^2$ : le triangle $ABC$ n\'est pas rectangle (s\'il l\'était, l\'égalité de Pythagore serait vraie). Le mur n\'est pas perpendiculaire au sol : ' + nom + ' doit le corriger.',
+            'Remarque : ' + ab + ', ' + ac + ', ' + t[2] + ' sont proportionnels à un triplet de Pythagore ; c\'est la « règle du 3-4-5 » des maçons.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var keys = Object.keys(HYPOS), hyp = Number(rng.pick(keys)), paires = HYPOS[hyp];
+        var p1 = rng.pick(paires).slice(), p2 = rng.pick(paires).slice();
+        if (rng.bool()) p1.reverse();
+        if (rng.bool()) p2.reverse();
+        var AB = p1[0], AD = p1[1], BC = p2[0], CD = p2[1];
+        var A = [0, 0], B = [AB, 0], D = [0, AD];
+        var uu = [(D[0] - B[0]) / hyp, (D[1] - B[1]) / hyp], beta = Math.acos(BC / hyp);
+        var rot = function (v, a) { return [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)]; };
+        var v1 = rot(uu, beta), v2 = rot(uu, -beta);
+        var C1 = [B[0] + BC * v1[0], B[1] + BC * v1[1]], C2 = [B[0] + BC * v2[0], B[1] + BC * v2[1]];
+        var cote = function (P) { return (D[0] - B[0]) * (P[1] - B[1]) - (D[1] - B[1]) * (P[0] - B[0]); };
+        var C = cote(C1) * cote(A) < 0 ? C1 : C2;
+        var aire = AB * AD / 2 + BC * CD / 2;
+        f = EM.fig.fit([A, B, C, D], { w: 280, h: 230, pad: 34 });
+        f.poly([A, B, C, D], { fill: true }).seg(B, D, { dash: true }).rightAngle(B, A, D);
+        var ct = centre([A, B, C, D]);
+        f.segLabel(A, B, AB + ' m', { inside: ct }).segLabel(A, D, AD + ' m', { inside: ct, k: 22 }).segLabel(B, C, BC + ' m', { inside: ct, k: 22 }).segLabel(C, D, CD + ' m', { inside: ct, k: 22 });
+        ['A', 'B', 'C', 'D'].forEach(function (l, j) { var P = [A, B, C, D][j]; f.point(P, l, posLoin(P, ct)); });
+        return {
+          enonce: 'Un champ de mil a la forme du quadrilatère $ABCD$ ci-contre (dimensions en mètres). L\'angle en $A$ est droit.<br>a) Calculer la longueur de la diagonale $BD$.<br>b) Démontrer que le triangle $BCD$ est rectangle et préciser en quel sommet.<br>c) Calculer l\'aire du champ.',
+          figure: f.svg(),
+          questions: [qnum('a) $BD =$', hyp, 'm'), qcm(rng, 'b) Le triangle $BCD$ est :', 'rectangle en $C$', ['rectangle en $C$', 'rectangle en $B$', 'rectangle en $D$', 'non rectangle']), qnum('c) Aire du champ :', aire, 'm²')],
+          indices: ['Dans le triangle $ABD$ rectangle en $A$, applique le théorème de Pythagore.', 'Dans le triangle $BCD$, compare $BD^2$ à $BC^2 + CD^2$ (réciproque). Puis découpe le champ en deux triangles rectangles.'],
+          solution: [
+            'Le triangle $ABD$ est rectangle en $A$ : $BD^2 = AB^2 + AD^2 = ' + AB + '^2 + ' + AD + '^2 = ' + (AB * AB) + ' + ' + (AD * AD) + ' = ' + hyp * hyp + '$, donc $BD = \\sqrt{' + hyp * hyp + '} = ' + hyp + '$ m.',
+            'Dans le triangle $BCD$, le plus grand côté est $[BD]$ : $BC^2 + CD^2 = ' + BC + '^2 + ' + CD + '^2 = ' + (BC * BC) + ' + ' + (CD * CD) + ' = ' + (BC * BC + CD * CD) + ' = BD^2$. D\'après la réciproque du théorème de Pythagore, $BCD$ est rectangle en $C$.',
+            'Aire de $ABD$ : $\\dfrac{' + AB + ' \\times ' + AD + '}{2} = ' + n(AB * AD / 2) + '$ m². Aire de $BCD$ : $\\dfrac{' + BC + ' \\times ' + CD + '}{2} = ' + n(BC * CD / 2) + '$ m².',
+            'Aire du champ : $' + n(AB * AD / 2) + ' + ' + n(BC * CD / 2) + ' = ' + n(aire) + '$ m².'
+          ]
+        };
+      }
+      // niveau 3 : un terrain est-il rectangulaire ?
+      var tr = rng.pick([[12, 16, 20], [15, 20, 25], [18, 24, 30], [21, 28, 35], [24, 32, 40], [20, 48, 52], [24, 45, 51], [9, 40, 41], [16, 30, 34]]);
+      var rect = rng.bool(), L = tr[1], l = tr[0], dm = rect ? tr[2] : R(tr[2] + rng.pick([-0.6, -0.4, 0.4, 0.6]), 1);
+      var s3 = L * L + l * l, d2 = R(dm * dm, 4);
+      var lieu = rng.pick(['une parcelle à bâtir à Diamniadio', 'le terrain de basket d\'un collège de Kolda', 'un terrain de maraîchage à Mboro', 'la cour d\'une maison à Kaolack']);
+      var bon = rect ? 'un rectangle' : 'un parallélogramme qui n\'est pas un rectangle';
+      return {
+        enonce: 'Pour vérifier que ' + lieu + ' est bien rectangulaire, on mesure ses côtés : $AB = CD = ' + L + '$ m et $BC = AD = ' + l + '$ m, puis sa diagonale : $AC = ' + n(dm) + '$ m.<br>a) Calculer $AB^2 + BC^2$ et $AC^2$.<br>b) Quelle est la nature du quadrilatère $ABCD$ ?',
+        questions: [qnum('a) $AB^2 + BC^2 =$', s3), qnum('a) $AC^2 =$', d2), qcm(rng, 'b) $ABCD$ est :', bon, ['un rectangle', 'un parallélogramme qui n\'est pas un rectangle', 'un losange', 'un carré'])],
+        indices: ['Les côtés opposés ont la même longueur : que peux-tu dire de $ABCD$ ?', 'Dans le triangle $ABC$, compare $AC^2$ et $AB^2 + BC^2$ pour savoir si l\'angle en $B$ est droit.'],
+        solution: [
+          '$ABCD$ (non croisé) a ses côtés opposés deux à deux de même longueur : c\'est un parallélogramme. Ses côtés consécutifs n\'ont pas la même longueur : ce n\'est ni un losange ni un carré.',
+          '$AB^2 + BC^2 = ' + L + '^2 + ' + l + '^2 = ' + (L * L) + ' + ' + (l * l) + ' = ' + s3 + '$ et $AC^2 = ' + n(dm) + '^2 = ' + n(d2) + '$.',
+          rect ? 'Égalité : d\'après la réciproque de Pythagore, le triangle $ABC$ est rectangle en $B$. Un parallélogramme qui a un angle droit est un rectangle : le terrain est bien rectangulaire.'
+            : '$AC^2 \\neq AB^2 + BC^2$ : l\'angle $' + w('ABC') + '$ n\'est pas droit. $ABCD$ est un parallélogramme qui n\'est pas un rectangle : le terrain n\'est pas rectangulaire.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Pythagore : diagonale, pignon de toit, cercle circonscrit       */
+  /* ================================================================== */
+  var PIGNONS = [[2.4, 1.8, 3], [3, 1.6, 3.4], [2.4, 1, 2.6], [3.2, 2.4, 4], [2, 1.5, 2.5], [3, 2.25, 3.75], [1.6, 1.2, 2], [3.6, 1.5, 3.9], [4, 3, 5]];
+
+  EM.gen.register({
+    id: '4e-plus-pythagore-situations',
+    titre: 'Pythagore en situation : diagonale, pignon de toit, cercle circonscrit',
+    chapitres: ['4e-pythagore'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var L = rng.int(90, 110), l = rng.int(55, 75), d = Math.sqrt(L * L + l * l), dr = R(d, 1), gain = R(L + l - d, 1);
+        var nom = personne(rng);
+        return {
+          enonce: 'Le terrain de football d\'un stade de ' + rng.pick(VILLES) + ' est un rectangle de ' + u(L, 'm') + ' sur ' + u(l, 'm') + '. ' + nom.nom + ' va d\'un coin au coin opposé en traversant le terrain en ligne droite (en diagonale).<br>a) Calculer la longueur de la diagonale, arrondie au dixième de mètre.<br>b) Combien de mètres ' + nom.il + ' économise-t-' + nom.il + ' par rapport au trajet le long des deux côtés ? (Arrondir au dixième.)',
+          questions: [qnum('a) Diagonale :', dr, 'm', 0.06), qnum('b) Économie :', gain, 'm', 0.11)],
+          indices: ['La diagonale partage le rectangle en deux triangles rectangles dont elle est l\'hypoténuse.', 'Le trajet le long des côtés mesure longueur + largeur.'],
+          solution: [
+            'La diagonale est l\'hypoténuse d\'un triangle rectangle de côtés ' + u(L, 'm') + ' et ' + u(l, 'm') + ' : $d^2 = ' + L + '^2 + ' + l + '^2 = ' + n(L * L) + ' + ' + n(l * l) + ' = ' + n(L * L + l * l) + '$.',
+            '$d = \\sqrt{' + n(L * L + l * l) + '} \\approx ' + n(dr) + '$ m.',
+            'Le long des côtés : $' + L + ' + ' + l + ' = ' + (L + l) + '$ m. Économie : $' + (L + l) + ' - ' + n(R(d, 2)) + ' \\approx ' + n(gain) + '$ m.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var P = rng.pick(PIGNONS), hb = P[0], hh = P[1], c = P[2], b = R(2 * hb, 2), aire = R(b * hh / 2, 4);
+        var A = [-hb, 0], B = [hb, 0], S = [0, hh], H = [0, 0];
+        f = EM.fig.fit([A, B, S], { w: 280, h: 170, pad: 34 });
+        f.poly([A, B, S], { fill: true }).seg(S, H, { dash: true, accent: true }).rightAngle(B, H, S).ticks(A, S, 1).ticks(S, B, 1).ticks(A, H, 2).ticks(H, B, 2);
+        f.point(A, 'A', 'so').point(B, 'B', 'se').point(S, 'S', 'n').point(H, 'H', 's');
+        f.segLabel(S, B, tx(c) + ' m', { inside: A, k: 18 }).segLabel(A, B, tx(b) + ' m', { inside: S, k: 30 });
+        return {
+          enonce: 'Le pignon (la partie triangulaire de la façade) du toit d\'un magasin est un triangle $ABS$ isocèle en $S$, avec $SA = SB = ' + n(c) + '$ m et $AB = ' + n(b) + '$ m. Le point $H$ est le milieu de $[AB]$.<br>a) Calculer la hauteur $SH$ du pignon.<br>b) Calculer l\'aire du pignon, qu\'on veut peindre.',
+          figure: f.svg(),
+          questions: [qnum('a) $SH =$', hh, 'm'), qnum('b) Aire :', aire, 'm²')],
+          indices: ['Dans un triangle isocèle, la médiane issue du sommet principal est aussi la hauteur : le triangle $SHB$ est rectangle en $H$.', '$HB = \\dfrac{AB}{2}$, puis applique le théorème de Pythagore dans $SHB$.'],
+          solution: [
+            'Le triangle $ABS$ est isocèle en $S$ et $H$ est le milieu de $[AB]$ : $(SH)$ est la médiane et aussi la hauteur, donc $SHB$ est rectangle en $H$, avec $HB = ' + n(b) + ' \\div 2 = ' + n(hb) + '$ m.',
+            'D\'après le théorème de Pythagore : $SH^2 = SB^2 - HB^2 = ' + n(c) + '^2 - ' + n(hb) + '^2 = ' + n(R(c * c, 4)) + ' - ' + n(R(hb * hb, 4)) + ' = ' + n(R(hh * hh, 4)) + '$, donc $SH = ' + n(hh) + '$ m.',
+            'Aire : $\\dfrac{AB \\times SH}{2} = \\dfrac{' + n(b) + ' \\times ' + n(hh) + '}{2} = ' + n(aire) + '$ m².'
+          ]
+        };
+      }
+      // niveau 3 : cercle circonscrit à un triangle rectangle
+      var varA = rng.bool(), t3 = rng.pick([[6, 8, 10], [5, 12, 13], [9, 12, 15], [8, 15, 17], [7, 24, 25], [12, 16, 20]]);
+      var O = [0, 0];
+      if (varA) {
+        var ab = rng.int(3, 9), ac = rng.int(3, 9), exact = rng.bool(0.5);
+        if (exact) { ab = t3[0]; ac = t3[1]; }
+        var bc = Math.sqrt(ab * ab + ac * ac), bcr = exact ? t3[2] : R(bc, 2), ray = exact ? t3[2] / 2 : R(bc / 2, 2);
+        var pA = [0, 0], pB = [ab, 0], pC = [0, ac], pO = [ab / 2, ac / 2];
+        f = EM.fig.fit([[pO[0] - bc / 2, pO[1] - bc / 2], [pO[0] + bc / 2, pO[1] + bc / 2]], { w: 240, h: 240, pad: 20 });
+        f.circle(pO, bc / 2, { light: true }).poly([pA, pB, pC]).rightAngle(pB, pA, pC).seg(pO, pA, { dash: true, accent: true });
+        f.point(pA, 'A', 'so').point(pB, 'B', 'se').point(pC, 'C', 'no').point(pO, 'O', 'ne');
+        return {
+          enonce: 'Le triangle $ABC$ est rectangle en $A$, avec $AB = ' + ab + '$ cm et $AC = ' + ac + '$ cm. On note $O$ le centre de son cercle circonscrit.<br>a) Calculer $BC$' + (exact ? '.' : ', arrondi au centième.') + '<br>b) Où se trouve le point $O$ ? Calculer le rayon du cercle et la longueur $OA$.',
+          figure: f.svg(),
+          questions: [qnum('a) $BC =$', bcr, 'cm', exact ? null : 0.006), qcm(rng, 'b) Le point $O$ est :', 'le milieu de $[BC]$', ['le milieu de $[BC]$', 'le milieu de $[AB]$', 'le milieu de $[AC]$', 'le point $A$']), qnum('b) Rayon $= OA =$', ray, 'cm', exact ? null : 0.006)],
+          indices: ['Applique le théorème de Pythagore dans le triangle rectangle $ABC$.', 'Le centre du cercle circonscrit à un triangle rectangle est le milieu de l\'hypoténuse.'],
+          solution: [
+            'D\'après le théorème de Pythagore : $BC^2 = AB^2 + AC^2 = ' + ab + '^2 + ' + ac + '^2 = ' + (ab * ab + ac * ac) + '$, donc $BC = \\sqrt{' + (ab * ab + ac * ac) + '}' + (exact ? ' = ' : ' \\approx ') + n(bcr) + '$ cm.',
+            'Le triangle étant rectangle en $A$, le centre $O$ de son cercle circonscrit est le milieu de l\'hypoténuse $[BC]$, et le rayon vaut $\\dfrac{BC}{2}' + (exact ? ' = ' : ' \\approx ') + n(ray) + '$ cm.',
+            '$A$ est sur le cercle, donc $OA$ est un rayon : $OA = OB = OC ' + (exact ? '= ' : '\\approx ') + n(ray) + '$ cm.'
+          ]
+        };
+      }
+      var dd = t3[2], x = t3[0], y = t3[1];
+      if (rng.bool()) { x = t3[1]; y = t3[0]; }
+      var pB2 = [-dd / 2, 0], pC2 = [dd / 2, 0];
+      var pA2 = [-dd / 2 + x * Math.cos(Math.atan2(y, x)), x * Math.sin(Math.atan2(y, x))];
+      f = EM.fig.fit([[-dd / 2, -dd / 2], [dd / 2, dd / 2]], { w: 240, h: 240, pad: 20 });
+      f.circle(O, dd / 2, { light: true }).poly([pA2, pB2, pC2]).point(O, 'O', 's');
+      f.point(pA2, 'A', 'n').point(pB2, 'B', 'o').point(pC2, 'C', 'e');
+      return {
+        enonce: 'Le segment $[BC]$ est un diamètre d\'un cercle de centre $O$, avec $BC = ' + dd + '$ cm. Le point $A$ est sur ce cercle et $AB = ' + x + '$ cm.<br>a) Quelle est la nature du triangle $ABC$ ?<br>b) Calculer $AC$.',
+        figure: f.svg(),
+        questions: [qcm(rng, 'a) Le triangle $ABC$ est :', 'rectangle en $A$', ['rectangle en $A$', 'rectangle en $B$', 'isocèle en $A$', 'équilatéral']), qnum('b) $AC =$', y, 'cm')],
+        indices: ['Si un triangle est inscrit dans un cercle et qu\'un de ses côtés est un diamètre, alors il est rectangle.', 'L\'hypoténuse est le diamètre $[BC]$ : $AC^2 = BC^2 - AB^2$.'],
+        solution: [
+          'Le triangle $ABC$ est inscrit dans le cercle et son côté $[BC]$ est un diamètre : il est rectangle en $A$ (le sommet opposé au diamètre).',
+          'D\'après le théorème de Pythagore : $AC^2 = BC^2 - AB^2 = ' + dd + '^2 - ' + x + '^2 = ' + (dd * dd) + ' - ' + (x * x) + ' = ' + (y * y) + '$, donc $AC = ' + y + '$ cm.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Droite des milieux : quadrilatère des milieux, trapèze          */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-plus-milieux-quadrilatere-trapeze',
+    titre: 'Droite des milieux : quadrilatère des milieux, segment médian d\'un trapèze',
+    chapitres: ['4e-droite-milieux'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      function quad(theta, s1, s2, t1, t2) {
+        var P = [0, 0], uu = [1, 0], vv = [Math.cos(rad(theta)), Math.sin(rad(theta))];
+        return [[P[0] + s1 * uu[0], P[1] + s1 * uu[1]], [P[0] + t1 * vv[0], P[1] + t1 * vv[1]], [P[0] - s2 * uu[0], P[1] - s2 * uu[1]], [P[0] - t2 * vv[0], P[1] - t2 * vv[1]]];
+      }
+      function dessine(Q, codePerp) {
+        var M = [milieu(Q[0], Q[1]), milieu(Q[1], Q[2]), milieu(Q[2], Q[3]), milieu(Q[3], Q[0])];
+        f = EM.fig.fit(Q, { w: 280, h: 220, pad: 28 });
+        f.poly(Q).seg(Q[0], Q[2], { dash: true, light: true }).seg(Q[1], Q[3], { dash: true, light: true }).poly(M, { accent: true });
+        if (codePerp) f.rightAngle(Q[0], [0, 0], Q[1], { light: true });
+        var ct = centre(Q);
+        ['A', 'B', 'C', 'D'].forEach(function (l, j) { f.point(Q[j], l, posLoin(Q[j], ct)); });
+        ['I', 'J', 'K', 'L'].forEach(function (l, j) { f.point(M[j], l, posLoin(M[j], ct)); });
+        return f.svg();
+      }
+      var intro = '$ABCD$ est un quadrilatère. Les points $I$, $J$, $K$ et $L$ sont les milieux respectifs de $[AB]$, $[BC]$, $[CD]$ et $[DA]$.';
+      if (niveau === 1) {
+        var ac = rng.int(40, 140) / 10, bd = rng.int(40, 140) / 10, th = rng.int(50, 130), s1 = ac * rng.dec(0.3, 0.7, 2), t1 = bd * rng.dec(0.3, 0.7, 2);
+        var fig = dessine(quad(th, s1, ac - s1, t1, bd - t1));
+        return {
+          enonce: intro + ' On donne $AC = ' + n(ac) + '$ cm et $BD = ' + n(bd) + '$ cm.<br>a) Calculer $IJ$ et $JK$.<br>b) Calculer le périmètre du quadrilatère $IJKL$.',
+          figure: fig,
+          questions: [qnum('a) $IJ =$', R(ac / 2), 'cm'), qnum('a) $JK =$', R(bd / 2), 'cm'), qnum('b) Périmètre de $IJKL$ :', R(ac + bd), 'cm')],
+          indices: ['Dans le triangle $ABC$, $I$ et $J$ sont les milieux de deux côtés : utilise le théorème de la droite des milieux.', 'De même dans les triangles $BCD$, $CDA$ et $DAB$.'],
+          solution: [
+            'Dans le triangle $ABC$, $I$ et $J$ sont les milieux de $[AB]$ et $[BC]$ : $IJ = \\dfrac{AC}{2} = ' + n(ac / 2) + '$ cm. De même, dans le triangle $ACD$ : $LK = \\dfrac{AC}{2} = ' + n(ac / 2) + '$ cm.',
+            'Dans le triangle $BCD$ : $JK = \\dfrac{BD}{2} = ' + n(bd / 2) + '$ cm, et dans le triangle $ABD$ : $IL = \\dfrac{BD}{2} = ' + n(bd / 2) + '$ cm.',
+            'Périmètre de $IJKL$ : $2 \\times ' + n(ac / 2) + ' + 2 \\times ' + n(bd / 2) + ' = AC + BD = ' + n(ac + bd) + '$ cm.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var cas = rng.pick(['aucune', 'perp', 'egales', 'deux']), th2, AC, BD;
+        th2 = cas === 'perp' || cas === 'deux' ? 90 : rng.pick([rng.int(50, 72), rng.int(108, 130)]);
+        AC = rng.int(6, 10); BD = cas === 'egales' || cas === 'deux' ? AC : AC + rng.pick([-3, -2, 2, 3]);
+        var a1 = AC * rng.dec(0.3, 0.7, 2), b1 = BD * rng.dec(0.3, 0.7, 2);
+        var fig2 = dessine(quad(th2, a1, AC - a1, b1, BD - b1), th2 === 90);
+        var NAT = { aucune: 'un parallélogramme (quelconque)', perp: 'un rectangle', egales: 'un losange', deux: 'un carré' };
+        var hyp = { aucune: 'Les diagonales $[AC]$ et $[BD]$ ne sont ni perpendiculaires ni de même longueur ($AC = ' + AC + '$ cm, $BD = ' + BD + '$ cm).', perp: 'Les diagonales $[AC]$ et $[BD]$ sont perpendiculaires, et $AC = ' + AC + '$ cm, $BD = ' + BD + '$ cm.', egales: 'Les diagonales $[AC]$ et $[BD]$ ont la même longueur, ' + u(AC, 'cm') + ', et ne sont pas perpendiculaires.', deux: 'Les diagonales $[AC]$ et $[BD]$ sont perpendiculaires et ont la même longueur, ' + u(AC, 'cm') + '.' }[cas];
+        var sol = [
+          'Dans le triangle $ABC$ : $(IJ) \\parallel (AC)$ et $IJ = \\dfrac{AC}{2}$. Dans le triangle $ADC$ : $(LK) \\parallel (AC)$ et $LK = \\dfrac{AC}{2}$. Donc $(IJ) \\parallel (LK)$ et $IJ = LK$ : $IJKL$ est un parallélogramme.',
+          'De même, $(JK) \\parallel (BD) \\parallel (IL)$ et $JK = IL = \\dfrac{BD}{2}$.'
+        ];
+        if (cas === 'perp' || cas === 'deux') sol.push('Comme $(AC) \\perp (BD)$, $(IJ)$, parallèle à $(AC)$, est perpendiculaire à $(JK)$, parallèle à $(BD)$ : le parallélogramme $IJKL$ a un angle droit, c\'est un rectangle.');
+        if (cas === 'egales' || cas === 'deux') sol.push('Comme $AC = BD$, on a $IJ = JK$ : le parallélogramme $IJKL$ a deux côtés consécutifs égaux, c\'est un losange.');
+        sol.push('Conclusion : $IJKL$ est ' + NAT[cas] + '.');
+        return {
+          enonce: intro + ' ' + hyp + '<br>Quelle est la nature la plus précise du quadrilatère $IJKL$ ?',
+          figure: fig2,
+          questions: [qcm(rng, '$IJKL$ est :', NAT[cas], ['un parallélogramme (quelconque)', 'un rectangle', 'un losange', 'un carré'])],
+          indices: ['Le théorème de la droite des milieux dans les triangles $ABC$ et $ADC$ montre que $(IJ) \\parallel (AC) \\parallel (LK)$.', 'Les côtés de $IJKL$ sont parallèles aux diagonales de $ABCD$ et mesurent leur moitié.'],
+          solution: sol
+        };
+      }
+      // niveau 3 : trapèze
+      var ab = rng.int(8, 16), cd = rng.int(3, ab - 2), hT = rng.dec(3, 5, 1), dec = rng.dec(-1, 2, 1);
+      var A = [0, 0], B = [ab, 0], D = [dec + (ab - cd) / 2 - 1, hT], C = [D[0] + cd, hT];
+      var I = milieu(A, D), K = milieu(A, C), J = milieu(B, C);
+      f = EM.fig.fit([A, B, C, D], { w: 300, h: 190, pad: 26 });
+      f.poly([A, B, C, D]).seg(A, C, { dash: true }).seg(I, J, { accent: true });
+      f.ticks(A, I, 1).ticks(I, D, 1);
+      f.point(A, 'A', 'so').point(B, 'B', 'se').point(C, 'C', 'ne').point(D, 'D', 'no').point(I, 'I', 'o').point(K, 'K', 'n').point(J, 'J', 'e');
+      return {
+        enonce: '$ABCD$ est un trapèze de bases $[AB]$ et $[CD]$ : $(AB) \\parallel (CD)$, avec $AB = ' + ab + '$ cm et $CD = ' + cd + '$ cm. Le point $I$ est le milieu de $[AD]$. La parallèle à $(AB)$ passant par $I$ coupe $[AC]$ en $K$ et $[BC]$ en $J$.<br>a) Calculer $IK$.<br>b) Calculer $KJ$.<br>c) En déduire $IJ$.',
+        figure: f.svg(),
+        questions: [qnum('a) $IK =$', R(cd / 2), 'cm'), qnum('b) $KJ =$', R(ab / 2), 'cm'), qnum('c) $IJ =$', R((ab + cd) / 2), 'cm')],
+        indices: ['Dans le triangle $ADC$ : $I$ est le milieu de $[AD]$ et $(IK) \\parallel (DC)$. Utilise la réciproque, puis le théorème de la droite des milieux.', 'Puis dans le triangle $ABC$ : $K$ est le milieu de $[AC]$ et $(KJ) \\parallel (AB)$.'],
+        solution: [
+          'Dans le triangle $ADC$, la droite $(IK)$ passe par le milieu $I$ de $[AD]$ et est parallèle à $(DC)$ (car parallèle à $(AB)$) : d\'après la réciproque, $K$ est le milieu de $[AC]$. Donc $IK = \\dfrac{DC}{2} = ' + n(cd / 2) + '$ cm.',
+          'Dans le triangle $ABC$, la droite $(KJ)$ passe par le milieu $K$ de $[AC]$ et est parallèle à $(AB)$ : $J$ est le milieu de $[BC]$, et $KJ = \\dfrac{AB}{2} = ' + n(ab / 2) + '$ cm.',
+          '$I$, $K$, $J$ sont alignés dans cet ordre : $IJ = IK + KJ = ' + n(cd / 2) + ' + ' + n(ab / 2) + ' = ' + n((ab + cd) / 2) + '$ cm. C\'est la moyenne des deux bases : $\\dfrac{AB + CD}{2}$.'
         ]
       };
     }

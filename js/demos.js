@@ -486,8 +486,8 @@
   }
   function segmented(key, label, opts, val) {
     var id = nid(key);
-    return '<div class="demo-control" style="flex-basis:100%"><span id="' + id + '">' + md(label) + '</span><div><div class="levels" role="group" aria-labelledby="' + id + '" data-seg="' + key + '">' +
-      opts.map(function (o, i) { return '<button type="button" data-i="' + i + '" aria-pressed="' + (i === val ? 'true' : 'false') + '">' + esc(o) + '</button>'; }).join('') + '</div></div></div>';
+    return '<div class="demo-control" style="flex-basis:100%"><span id="' + id + '">' + md(label) + '</span><div role="group" aria-labelledby="' + id + '" data-seg="' + key + '" style="display:flex;flex-wrap:wrap;gap:6px">' +
+      opts.map(function (o, i) { return '<button type="button" class="btn sm' + (i === val ? '' : ' ghost') + '" data-i="' + i + '" aria-pressed="' + (i === val ? 'true' : 'false') + '">' + esc(o) + '</button>'; }).join('') + '</div></div>';
   }
   function checkbox(key, label, checked) {
     return '<label class="check" style="flex-basis:100%"><input type="checkbox" data-k="' + key + '"' + (checked ? ' checked' : '') + '> <span>' + md(label) + '</span></label>';
@@ -530,7 +530,10 @@
       var b = e.target.closest ? e.target.closest('button') : null;
       if (!b || !g.contains(b)) return;
       var bs = g.querySelectorAll('button');
-      for (var i = 0; i < bs.length; i++) bs[i].setAttribute('aria-pressed', bs[i] === b ? 'true' : 'false');
+      for (var i = 0; i < bs.length; i++) {
+        bs[i].setAttribute('aria-pressed', bs[i] === b ? 'true' : 'false');
+        bs[i].className = 'btn sm' + (bs[i] === b ? '' : ' ghost');
+      }
       cb(+b.getAttribute('data-i'));
     });
   }
@@ -915,5 +918,1067 @@
     }
   });
 
-  /* FIN DES DÉMONSTRATIONS */
+  /* ================================================================== */
+  /* 5. Symétries et translation                                         */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'symetries-translation',
+    titre: 'Symétries et translation : point et image',
+    chapitres: ['6e-symetrie-orthogonale', '5e-symetrie-centrale', '4e-vecteurs', '2s-transformations'],
+    resume: 'Déplace le triangle, l\'axe, le centre ou le vecteur : l\'image se construit en direct et les longueurs sont conservées.',
+    render: function (el) {
+      var F = new Frame(-6, 6, -4.4, 4.4, 340);
+      var st = { mode: 0, T: [[-4, 1], [-1.5, 0.5], [-3, 3.5]], D: [[0, -3], [0, 3]], O: [0.5, 0], U: [[-5, -2.5], [0, -3.5]] };
+      var NAMES = ['A', 'B', 'C'];
+      var NOTES = [
+        md('Observe : $(d)$ est la médiatrice de chaque segment $[AA\']$, $[BB\']$, $[CC\']$ (les petits traits codent les longueurs égales). Les longueurs, les angles et les aires sont conservés, mais la figure est retournée, comme dans un miroir.'),
+        md('Observe : $O$ est le milieu de chaque segment $[AA\']$, $[BB\']$, $[CC\']$. La symétrie centrale est un demi-tour autour de $O$ : la figure n\'est pas retournée, et chaque côté de l\'image est parallèle au côté de départ.'),
+        md('Observe : dans la translation de vecteur $\\vec{u}$, tous les points glissent de la même façon : $\\overrightarrow{AA\'} = \\overrightarrow{BB\'} = \\overrightarrow{CC\'} = \\vec{u}$ (même direction, même sens, même longueur).')
+      ];
+      var VU = md('$\\vec{u}$');
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Triangle ABC et son image par la transformation choisie'),
+        controls: segmented('mode', 'Transformation', ['Axiale', 'Centrale', 'Translation'], 0),
+        readout: '<div data-o="r1"></div><div data-o="r2"></div><div data-o="r3"></div>',
+        note: '<span data-o="note"></span>'
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
+      S.draw('bg', gridOnly(F, 1));
+      function sp(x, y) { return [clamp(snap(x, 0.5), -5.5, 5.5), clamp(snap(y, 0.5), -4, 4)]; }
+      function pairHandle(key, i, label, col) {
+        return S.handle({
+          label: label, color: col, step: 0.5,
+          get: function () { return st[key][i]; },
+          set: function (x, y) {
+            var p = sp(x, y), o = st[key][1 - i];
+            if (p[0] !== o[0] || p[1] !== o[1]) st[key][i] = p;
+          }
+        });
+      }
+      var hD = [pairHandle('D', 0, 'Point de l\'axe (d)', C.line), pairHandle('D', 1, 'Point de l\'axe (d)', C.line)];
+      var hO = S.handle({ label: 'Centre O', color: C.line, step: 0.5, get: function () { return st.O; }, set: function (x, y) { st.O = sp(x, y); } });
+      var hU = [pairHandle('U', 0, 'Origine du vecteur u', C.acc), pairHandle('U', 1, 'Extrémité du vecteur u', C.acc)];
+      [0, 1, 2].forEach(function (i) {
+        S.handle({ label: 'Sommet ' + NAMES[i], color: C.blue, step: 0.5, get: function () { return st.T[i]; }, set: function (x, y) { st.T[i] = sp(x, y); } });
+      });
+      bindSeg(el, 'mode', function (m) { st.mode = m; update(); });
+      S.onchange = update;
+      function proj(p) {
+        var d1 = st.D[0], d2 = st.D[1], ux = d2[0] - d1[0], uy = d2[1] - d1[1];
+        var k = ((p[0] - d1[0]) * ux + (p[1] - d1[1]) * uy) / (ux * ux + uy * uy);
+        return [d1[0] + k * ux, d1[1] + k * uy];
+      }
+      function img(p) {
+        if (st.mode === 0) { var h = proj(p); return [2 * h[0] - p[0], 2 * h[1] - p[1]]; }
+        if (st.mode === 1) return [2 * st.O[0] - p[0], 2 * st.O[1] - p[1]];
+        return [p[0] + st.U[1][0] - st.U[0][0], p[1] + st.U[1][1] - st.U[0][1]];
+      }
+      function cen(a) { return [(a[0][0] + a[1][0] + a[2][0]) / 3, (a[0][1] + a[1][1] + a[2][1]) / 3]; }
+      function L(x) { return nt(rnd(x, 2), 2); }
+      function update() {
+        var m = st.mode, T = st.T, I = T.map(img), s = '', i;
+        var tp = T.map(function (p) { return F.P(p); }), ip = I.map(function (p) { return F.P(p); });
+        hD[0].hidden = hD[1].hidden = m !== 0;
+        hO.hidden = m !== 1;
+        hU[0].hidden = hU[1].hidden = m !== 2;
+        if (m === 0) {
+          var d1 = F.P(st.D[0]), d2 = F.P(st.D[1]), ud = unit([d2[0] - d1[0], d2[1] - d1[1]]);
+          s += fullLine(F, st.D[0], st.D[1], stroke(C.line, 1.8, 'stroke-dasharray:10 4 2 4;'));
+          s += lab(d2, '(d)', [-ud[1], ud[0]], { k: 20, F: F });
+        }
+        if (m === 2) {
+          var u0 = F.P(st.U[0]), u1 = F.P(st.U[1]), nu = unit([-(u1[1] - u0[1]), u1[0] - u0[0]]);
+          if (nu[1] > 0) nu = [-nu[0], -nu[1]];
+          s += arrow(u0, u1, C.acc, 2.4, 10);
+          s += vecLab([(u0[0] + u1[0]) / 2 + nu[0] * 14, (u0[1] + u1[1]) / 2 + nu[1] * 14 + 5], 'u', C.acc);
+        }
+        for (i = 0; i < 3; i++) {
+          if (m === 2) { if (dist(tp[i], ip[i]) > 14) s += arrow(tp[i], ip[i], C.muted, 1.1, 7); continue; }
+          var c = F.P(m === 0 ? proj(T[i]) : st.O);
+          s += line(tp[i], ip[i], stroke(C.muted, 1.1, DASH)) + ticks(tp[i], c, i + 1, C.muted) + ticks(c, ip[i], i + 1, C.muted);
+        }
+        if (m === 0) {
+          var h0 = F.P(proj(T[0]));
+          if (dist(h0, tp[0]) > 8) s += rightMark(h0, tp[0], [h0[0] + ud[0] * 20, h0[1] + ud[1] * 20], 8);
+        }
+        s += polygon(tp, shape(C.blue, 0.14, C.blue, 2)) + polygon(ip, shape(C.acc, 0.14, C.acc, 2));
+        var gt = F.P(cen(T)), gi = F.P(cen(I));
+        for (i = 0; i < 3; i++) {
+          s += dot(ip[i], C.acc, 3.5) + lab(ip[i], NAMES[i] + PRIME, [ip[i][0] - gi[0], ip[i][1] - gi[1]], { color: C.acc, k: 15, F: F });
+          s += lab(tp[i], NAMES[i], [tp[i][0] - gt[0], tp[i][1] - gt[1]], { color: C.blue, k: 20, F: F });
+        }
+        if (m === 1) s += lab(F.P(st.O), 'O', [-0.7, 0.75], { k: 19, F: F });
+        S.draw('main', s);
+        S.sync();
+        var AB = L(dist(T[0], T[1])), aire = nt(rnd(aireTri(T[0], T[1], T[2]), 3), 3);
+        var A1 = it('A' + PRIME), B1 = it('B' + PRIME);
+        if (m === 0) {
+          out.r1.innerHTML = it('A') + ' et ' + A1 + ' sont à la même distance de (' + it('d') + ') : <b>' + L(dist(T[0], proj(T[0]))) + '</b> et <b>' + L(dist(I[0], proj(I[0]))) + '</b>.';
+          out.r2.innerHTML = it('AB') + ' = <b>' + AB + '</b> et ' + A1 + B1 + ' = <b>' + L(dist(I[0], I[1])) + '</b> : les longueurs sont conservées.';
+        } else if (m === 1) {
+          out.r1.innerHTML = it('OA') + ' = <b>' + L(dist(st.O, T[0])) + '</b> et ' + it('O') + A1 + ' = <b>' + L(dist(st.O, I[0])) + '</b> : ' + it('O') + ' est le milieu de [' + it('A') + A1 + '].';
+          out.r2.innerHTML = it('AB') + ' = ' + A1 + B1 + ' = <b>' + AB + '</b> et (' + it('AB') + ') ∥ (' + A1 + B1 + ').';
+        } else {
+          var ux = st.U[1][0] - st.U[0][0], uy = st.U[1][1] - st.U[0][1];
+          out.r1.innerHTML = VU + ' (' + nt(ux) + ' ; ' + nt(uy) + ') : ' + it('AA' + PRIME) + ' = ' + it('BB' + PRIME) + ' = ' + it('CC' + PRIME) + ' = <b>' + L(Math.sqrt(ux * ux + uy * uy)) + '</b>.';
+          out.r2.innerHTML = it('ABB' + PRIME + 'A' + PRIME) + ' est un parallélogramme : ' + it('AB') + ' = ' + A1 + B1 + ' = <b>' + AB + '</b>.';
+        }
+        out.r3.innerHTML = 'Aire de ' + it('ABC') + ' = aire de ' + it('A' + PRIME + 'B' + PRIME + 'C' + PRIME) + ' = <b>' + aire + '</b> carreaux.';
+        out.note.innerHTML = NOTES[m];
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 6. Fonction affine                                                  */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'fonction-affine',
+    titre: 'Fonction affine : le rôle de a et de b',
+    chapitres: ['3e-applications-affines', '4e-applications-lineaires', '2l-fonctions', '3e-reperage', '2s-droites'],
+    resume: 'Règle a et b avec les curseurs ou en déplaçant deux points : la droite, le tableau de valeurs et l\'expression f(x) = ax + b changent ensemble.',
+    render: function (el) {
+      var F = new Frame(-4.5, 4.5, -5, 5, 320);
+      var st = { a: 1.5, b: -1 };
+      var XS = [-2, -1, 0, 1, 2];
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Droite représentant la fonction affine f', { max: 470 }),
+        controls: slider('a', 'Coefficient directeur $a$', -3, 3, 0.5, st.a) + slider('b', 'Ordonnée à l\'origine $b$', -4, 4, 0.5, st.b),
+        readout: '<div data-o="expr" style="font-size:1.1em"></div><div class="table-wrap" style="margin:6px 0"><table class="t"><tbody><tr><th>' + md('$x$') + '</th>' +
+          XS.map(function (x) { return '<td>' + nt(x) + '</td>'; }).join('') + '</tr><tr><th>' + md('$f(x)$') + '</th>' +
+          XS.map(function (x, i) { return '<td data-o="v' + i + '"></td>'; }).join('') + '</tr></tbody></table></div><p data-o="msg" style="margin:0"></p>',
+        note: md('Observe : $a$ règle l\'inclinaison ; quand $x$ augmente de $1$, $f(x)$ augmente de $a$, à n\'importe quel endroit de la droite (regarde le tableau). ' +
+          '$b$ fait monter ou descendre la droite, qui coupe toujours l\'axe des ordonnées au point $(0\\,;\\,b)$ : c\'est l\'ordonnée à l\'origine.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
+      S.draw('bg', axes(F, { gx: 1, xname: 'x', yname: 'y' }));
+      var rA = bindRange(el, 'a', function (v) { return nt(v); }, function (v) { st.a = v; update(); });
+      var rB = bindRange(el, 'b', function (v) { return nt(v); }, function (v) { st.b = v; update(); });
+      S.handle({
+        label: 'Point (0 ; b)', color: C.green,
+        get: function () { return [0, st.b]; },
+        set: function (x, y) { st.b = clamp(snap(y, 0.5), -4, 4); },
+        key: function (dx, dy) { st.b = clamp(st.b + 0.5 * (dy || dx), -4, 4); }
+      });
+      var hA = S.handle({
+        label: 'Point (1 ; a + b)', color: C.acc,
+        get: function () { return [1, st.a + st.b]; },
+        set: function (x, y) { st.a = clamp(snap(y - st.b, 0.5), -3, 3); },
+        key: function (dx, dy) { st.a = clamp(st.a + 0.5 * (dy || dx), -3, 3); }
+      });
+      S.onchange = function () { rA.set(st.a); rB.set(st.b); update(); };
+      function update() {
+        var a = st.a, b = st.b, s = '';
+        var P0 = F.P([0, b]), Q = F.P([1, b]), P1 = F.P([1, a + b]);
+        hA.hidden = Math.abs(a + b) > 4.8;
+        s += fullLine(F, [0, b], [1, a + b], stroke(C.blue, 2.6));
+        s += line(P0, Q, stroke(C.green, 2, DASH)) + text([(P0[0] + Q[0]) / 2, P0[1] + (a >= 0 ? 16 : -8)], '1', { size: 13, bold: true, color: C.green });
+        if (a !== 0 && !hA.hidden) {
+          s += arrow(Q, P1, C.acc, 2.2, 8);
+          s += text([Q[0] + 9, (Q[1] + P1[1]) / 2 + 4], 'a = ' + nt(a), { size: 13, bold: true, color: C.acc, anchor: 'start' });
+        }
+        s += text([P0[0] - 12, P0[1] + (a > 0 ? -9 : 18)], 'b', { size: 15, bold: true, italic: true, color: C.green, anchor: 'end' });
+        if (a !== 0) {
+          var x0 = -b / a;
+          if (Math.abs(x0) < 4.4) s += circle(F.P([x0, 0]), 4, 'fill:var(--demo-bg,var(--surface-2));stroke:var(--fig-curve);stroke-width:2');
+        }
+        S.draw('main', s);
+        S.sync();
+        out.expr.innerHTML = md('$f(x) = ' + affTeX(a, b) + '$');
+        XS.forEach(function (x, i) { out['v' + i].textContent = nt(a * x + b); });
+        var msg = a > 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' augmente de ' + nt(a) + ' : ' + it('f') + ' est <b>croissante</b>.' :
+          a < 0 ? 'Quand ' + it('x') + ' augmente de 1, ' + it('f(x)') + ' diminue de ' + nt(-a) + ' : ' + it('f') + ' est <b>décroissante</b>.' :
+            it('a') + ' = 0 : ' + it('f') + ' est <b>constante</b>, la droite est parallèle à l\'axe des abscisses.';
+        msg += ' ' + (b === 0 ? it('b') + ' = 0 : ' + it('f') + ' est <b>linéaire</b>, la droite passe par l\'origine (proportionnalité).' :
+          'La droite coupe l\'axe des ordonnées au point (0 ; ' + nt(b) + ').');
+        if (a !== 0) msg += ' Elle coupe l\'axe des abscisses pour ' + it('x') + ' ' + eqv(-b / a + 0, 2) + '.';
+        out.msg.innerHTML = msg;
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 7. Second degré                                                     */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'second-degre-parabole',
+    titre: 'Second degré : parabole et discriminant',
+    chapitres: ['2s-second-degre', '1s-polynomes', '1l-equations'],
+    resume: 'Règle a, b et c : la parabole bouge, le discriminant change de signe et les racines apparaissent ou disparaissent sur l\'axe des abscisses.',
+    render: function (el) {
+      var F = new Frame(-6, 6, -8, 8, 340, 300);
+      var st = { a: 1, b: -2, c: -3 };
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Parabole représentant f(x) = ax² + bx + c'),
+        controls: slider('a', 'Coefficient $a$', -3, 3, 0.5, st.a) + slider('b', 'Coefficient $b$', -6, 6, 0.5, st.b) + slider('c', 'Coefficient $c$', -6, 6, 0.5, st.c),
+        readout: '<div data-o="expr" style="font-size:1.1em"></div><div>' + md('$\\Delta = b^2 - 4ac$') + ' = <b data-o="delta"></b></div>' +
+          '<p data-o="roots" style="margin:6px 0"></p><div data-o="vertex"></div><div data-o="canon" style="margin-top:4px"></div>',
+        note: md('Observe : le signe de $\\Delta$ donne le nombre de racines, c\'est-à-dire de points d\'intersection avec l\'axe des abscisses ; le signe de $a$ dit si la parabole est tournée vers le haut ou vers le bas. ' +
+          'Le sommet est toujours sur l\'axe de symétrie, la droite d\'équation $x = -\\frac{b}{2a}$.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
+      S.draw('bg', axes(F, { gx: 1, lx: 2, xname: 'x', yname: 'y' }));
+      ['a', 'b', 'c'].forEach(function (k) { bindRange(el, k, function (v) { return nt(v); }, function (v) { st[k] = v; update(); }); });
+      function update() {
+        var a = st.a, b = st.b, c = st.c, s = '';
+        function f(x) { return a * x * x + b * x + c; }
+        out.expr.innerHTML = md('$f(x) = ' + polyTeX([a, b, c]) + '$');
+        if (a === 0) {
+          S.draw('main', path(F.curve(f), stroke(C.blue, 2.6)));
+          out.delta.textContent = '—';
+          out.roots.innerHTML = md('$a = 0$ : $f$ n\'est plus un trinôme du second degré, sa courbe est une droite.');
+          out.vertex.innerHTML = ''; out.canon.innerHTML = '';
+          return;
+        }
+        var D = b * b - 4 * a * c, al = -b / (2 * a), be = f(al);
+        var alF = EM.F(-b).div(EM.F(2 * a)), beF = EM.F(c).sub(EM.F(b).mul(EM.F(b)).div(EM.F(4 * a)));
+        s += line(F.P([al, F.ymin]), F.P([al, F.ymax]), stroke(C.muted, 1.3, DASH));
+        s += path(F.curve(f, null, null, 240), stroke(C.blue, 2.6));
+        var roots = D > 0 ? [(-b - Math.sqrt(D)) / (2 * a), (-b + Math.sqrt(D)) / (2 * a)].sort(function (u, v) { return u - v; }) : D === 0 ? [al] : [];
+        var Sp = F.P([al, be]);
+        s += dot(Sp, C.line, 4.5) + lab(Sp, 'S', [0, a > 0 ? 1 : -1], { k: 13, F: F });
+        roots.forEach(function (x, i) {
+          var p = F.P([x, 0]);
+          s += dot(p, C.acc, 5);
+          var nm = roots.length === 1 ? 'x' + subs(0) : 'x' + subs(i + 1);
+          var close = roots.length === 2 && F.X(roots[1]) - F.X(roots[0]) < 46;
+          var dir = roots.length === 1 ? [0, a > 0 ? -1 : 1] : [(i === 0) === (a > 0 && !close) ? 0.8 : -0.8, -0.8];
+          s += lab(p, nm, dir, { color: C.acc, k: 14, F: F });
+        });
+        S.draw('main', s);
+        var X = it('x');
+        out.delta.textContent = nt(D, 2);
+        out.roots.innerHTML = D > 0 ? '<b>Δ &gt; 0</b> : deux racines, ' + X + '<sub>1</sub> ' + eqv(roots[0], 2) + ' et ' + X + '<sub>2</sub> ' + eqv(roots[1], 2) + ' ; la parabole coupe l\'axe des abscisses en deux points.' :
+          D === 0 ? '<b>Δ = 0</b> : une racine double ' + X + '<sub>0</sub> ' + eqv(al, 2) + ' ; la parabole touche l\'axe des abscisses en son sommet.' :
+            '<b>Δ &lt; 0</b> : pas de racine réelle ; la parabole ne coupe pas l\'axe des abscisses.';
+        var at = alF.tex({ small: true }), bt = beF.tex({ small: true });
+        out.vertex.innerHTML = md('Sommet $S\\left(' + at + '\\,;\\,' + bt + '\\right)$ ; ' +
+          (a > 0 ? 'parabole tournée vers le haut ($a > 0$) : minimum $' + bt + '$.' : 'parabole tournée vers le bas ($a < 0$) : maximum $' + bt + '$.'));
+        var inner = alF.isZero() ? 'x^2' : '\\left(x ' + (alF.n > 0 ? '- ' : '+ ') + alF.abs().tex({ small: true }) + '\\right)^2';
+        out.canon.innerHTML = md('Forme canonique : $f(x) = ' + (a === 1 ? '' : a === -1 ? '-' : tn(a)) + inner +
+          (beF.isZero() ? '' : (beF.n > 0 ? ' + ' : ' - ') + beF.abs().tex({ small: true })) + '$');
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 8. Cercle trigonométrique                                           */
+  /* ================================================================== */
+  /** Valeurs exactes de cos et sin pour les angles remarquables (en degrés entiers). */
+  function trigExact(d) {
+    var r = mod(d, 360);
+    if (r % 30 !== 0 && r % 45 !== 0) return null;
+    function ex(v) {
+      var a = Math.abs(v), sg = v < -1e-9 ? '-' : '';
+      if (a < 1e-9) return '0';
+      if (Math.abs(a - 0.5) < 1e-9) return sg + '\\dfrac{1}{2}';
+      if (Math.abs(a - Math.SQRT2 / 2) < 1e-9) return sg + '\\dfrac{\\sqrt{2}}{2}';
+      if (Math.abs(a - Math.sqrt(3) / 2) < 1e-9) return sg + '\\dfrac{\\sqrt{3}}{2}';
+      if (Math.abs(a - 1) < 1e-9) return sg + '1';
+      return null;
+    }
+    return { c: ex(Math.cos(rad(r))), s: ex(Math.sin(rad(r))) };
+  }
+  /** Mesure en radians sous forme de fraction de π (si le dénominateur est petit). */
+  function radTeX(d) {
+    if (d === 0) return '0';
+    var g = gcd(d, 180), p = d / g, qd = 180 / g;
+    if (qd > 12) return null;
+    var num = (p === 1 ? '' : p) + '\\pi';
+    return qd === 1 ? num : '\\dfrac{' + num + '}{' + qd + '}';
+  }
+  EM.demos.register({
+    id: 'cercle-trigonometrique',
+    titre: 'Cercle trigonométrique : cosinus et sinus',
+    chapitres: ['2s-trigonometrie', '1s-trigonometrie', '3e-trigonometrie'],
+    resume: 'Fais tourner le point M sur le cercle : ses coordonnées sont cos θ et sin θ, et les courbes du cosinus et du sinus se tracent au fur et à mesure.',
+    render: function (el) {
+      var Fc = new Frame(-1.42, 1.42, -1.42, 1.42, 300);
+      var Fg = new Frame(-0.5, 6.75, -1.62, 1.45, 340, 170);
+      var st = { th: 60 }, acc = 60;
+      el.innerHTML = layout({
+        stage: '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center">' +
+          svgTag('c', Fc, 'Cercle trigonométrique et point M', { max: 330, style: 'flex:1 1 240px;min-width:0;margin:0' }) +
+          svgTag('g', Fg, 'Courbes du cosinus et du sinus', { max: 560, style: 'flex:2 1 300px;min-width:0;margin:0' }) + '</div>',
+        controls: slider('th', 'Angle $\\theta$ (en degrés)', 0, 360, 1, st.th) + buttons(button('play', 'Faire tourner', ' ')),
+        readout: '<div>' + md('$\\theta$') + ' = <b data-o="deg"></b> <span data-o="rad"></span></div>' +
+          '<div>' + sw(C.blue, md('$\\cos\\theta$')) + ' <span data-o="cos"></span></div>' +
+          '<div>' + sw(C.acc, md('$\\sin\\theta$')) + ' <span data-o="sin"></span></div>' +
+          '<div class="small" style="margin-top:4px">' + md('$\\cos^2\\theta + \\sin^2\\theta = 1$') + ' : <span data-o="pyth"></span></div>',
+        note: md('Observe : $M$ a pour coordonnées $(\\cos\\theta\\,;\\,\\sin\\theta)$. Le cosinus se lit sur l\'axe horizontal, le sinus sur l\'axe vertical ; ' +
+          'ils restent entre $-1$ et $1$. Après un tour complet ($360°$, soit $2\\pi$ radians), tout recommence : ces fonctions sont périodiques.')
+      });
+      var Sc = new Stage(el.querySelector('[data-s="c"]'), Fc), Sg = new Stage(el.querySelector('[data-s="g"]'), Fg), out = outs(el);
+      var o = Fc.P([0, 0]), R = Fc.X(1) - Fc.X(0), bg = '', k;
+      bg += arrow(Fc.P([-1.32, 0]), Fc.P([1.36, 0]), C.muted, 1.2, 7) + arrow(Fc.P([0, -1.32]), Fc.P([0, 1.36]), C.muted, 1.2, 7);
+      bg += circle(o, q(R), stroke(C.line, 1.8));
+      for (k = 0; k < 360; k += 15) if (k % 30 === 0 || k % 45 === 0) bg += dot(Fc.P([Math.cos(rad(k)), Math.sin(rad(k))]), C.muted, 1.8);
+      bg += text([Fc.X(1) + 5, o[1] + 15], '1', { size: 12, color: C.muted, anchor: 'start' }) + text([Fc.X(-1) - 5, o[1] + 15], '\u22121', { size: 12, color: C.muted, anchor: 'end' });
+      bg += text([o[0] - 6, Fc.Y(1) - 5], '1', { size: 12, color: C.muted, anchor: 'end' }) + text([o[0] - 6, Fc.Y(-1) + 15], '\u22121', { size: 12, color: C.muted, anchor: 'end' });
+      Sc.draw('bg', bg);
+      var gb = '', GRID = 'stroke:var(--fig-grid);stroke-width:1', LBL = ['\u03c0/2', '\u03c0', '3\u03c0/2', '2\u03c0'];
+      [-1, 1].forEach(function (y) { gb += line([Fg.X(0), Fg.Y(y)], [Fg.X(6.6), Fg.Y(y)], GRID) + text([Fg.X(0) - 5, Fg.Y(y) + 4], y > 0 ? '1' : '\u22121', { size: 11, color: C.muted, anchor: 'end' }); });
+      for (k = 1; k <= 4; k++) gb += line([Fg.X(k * PI / 2), Fg.Y(1.25)], [Fg.X(k * PI / 2), Fg.Y(-1.25)], GRID) + text([Fg.X(k * PI / 2), Fg.Y(0) + 15], LBL[k - 1], { size: 11, color: C.muted });
+      gb += arrow([Fg.X(-0.3), Fg.Y(0)], [Fg.X(6.72), Fg.Y(0)], C.muted, 1.2, 7) + arrow([Fg.X(0), Fg.Y(-1.4)], [Fg.X(0), Fg.Y(1.43)], C.muted, 1.2, 7);
+      gb += path(Fg.curve(Math.cos, 0, 2 * PI), stroke(C.blue, 1.3, 'stroke-opacity:.35;' + DASH)) + path(Fg.curve(Math.sin, 0, 2 * PI), stroke(C.acc, 1.3, 'stroke-opacity:.35;' + DASH));
+      gb += text([Fg.w - 60, Fg.h - 7], 'cos θ', { size: 12, bold: true, color: C.blue, anchor: 'end' }) + text([Fg.w - 8, Fg.h - 7], 'sin θ', { size: 12, bold: true, color: C.acc, anchor: 'end' });
+      Sg.draw('bg', gb);
+      var rTh = bindRange(el, 'th', function (v) { return v + '°'; }, function (v) { st.th = v; acc = v; update(); });
+      Sc.handle({
+        label: 'Point M', color: C.line,
+        get: function () { return [Math.cos(rad(st.th)), Math.sin(rad(st.th))]; },
+        set: function (x, y) {
+          var t = mod(Math.round(deg(Math.atan2(y, x))), 360), n15 = Math.round(t / 15) * 15;
+          if (Math.abs(t - n15) <= 2) t = n15 % 360;
+          st.th = t; acc = t;
+        },
+        key: function (dx, dy) { st.th = clamp(st.th + ((dx || dy) > 0 ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)), 0, 360); acc = st.th; }
+      });
+      Sg.fallback = Sg.handle({
+        label: 'Angle θ sur l\'axe des abscisses', color: C.gold, r: 5,
+        get: function () { return [rad(st.th), 0]; },
+        set: function (x) { st.th = clamp(Math.round(deg(x)), 0, 360); acc = st.th; },
+        key: function (dx, dy) { st.th = clamp(st.th + (dx || dy), 0, 360); acc = st.th; }
+      });
+      Sc.onchange = Sg.onchange = function () { rTh.set(st.th); update(); };
+      var loop = new Loop(function (dt) {
+        acc += dt * 0.06;
+        if (acc >= 360) { acc = 360; st.th = 360; rTh.set(360); update(); return false; }
+        st.th = Math.floor(acc); rTh.set(st.th); update();
+      });
+      bindPlay(el.querySelector('[data-act="play"]'), loop, 'Faire tourner', 'Pause', function () { if (st.th >= 360) { acc = 0; st.th = 0; } else acc = st.th; });
+      var cache = {};
+      function texts(t) {
+        if (cache[t]) return cache[t];
+        var ex = trigExact(t), rt = radTeX(t), c = Math.cos(rad(t)), s = Math.sin(rad(t));
+        function val(e, v) {
+          if (e) return md('$= ' + e + '$') + (/\\/.test(e) ? ' \u2248 ' + nf(v, 3) : '');
+          return '\u2248 ' + nf(v, 3);
+        }
+        var c2 = rnd(c * c, 3);
+        cache[t] = {
+          rad: rt != null ? md('$= ' + rt + '$ rad') : '\u2248 ' + nf(rad(t), 2) + ' rad',
+          cos: val(ex && ex.c, c), sin: val(ex && ex.s, s),
+          pyth: nf(c2, 3) + ' + ' + nf(rnd(1 - c2, 3), 3) + ' = 1'
+        };
+        return cache[t];
+      }
+      function update() {
+        var t = st.th, tr = rad(t), c = Math.cos(tr), sn = Math.sin(tr);
+        var M = Fc.P([c, sn]), H = Fc.P([c, 0]), K = Fc.P([0, sn]), s = '';
+        if (t > 0 && t < 360) {
+          s += path(arcD(o, 24, 0, -tr), stroke(C.gold, 1.8));
+          if (t >= 14) s += text([o[0] + 37 * Math.cos(-tr / 2), o[1] + 37 * Math.sin(-tr / 2) + 5], 'θ', { size: 14, italic: true, color: C.gold });
+        } else if (t === 360) s += circle(o, 24, stroke(C.gold, 1.8));
+        s += line(M, H, stroke(C.muted, 1.2, DASH)) + line(M, K, stroke(C.muted, 1.2, DASH));
+        s += line(o, H, stroke(C.blue, 4.5, 'stroke-linecap:butt;')) + line(o, K, stroke(C.acc, 4.5, 'stroke-linecap:butt;'));
+        s += line(o, M, stroke(C.line, 2)) + dot(H, C.blue, 4) + dot(K, C.acc, 4);
+        s += text([H[0], H[1] + (sn >= 0 ? 18 : -9)], 'cos θ', { size: 12, bold: true, color: C.blue });
+        s += text([K[0] + (c >= 0 ? -8 : 8), K[1] + 4], 'sin θ', { size: 12, bold: true, color: C.acc, anchor: c >= 0 ? 'end' : 'start' });
+        s += lab(M, 'M', [c, -sn], { k: 19 });
+        Sc.draw('main', s);
+        var g = '', n = Math.max(2, Math.round(t / 2)), X = Fg.X(tr);
+        g += path(Fg.curve(Math.cos, 0, tr, n), stroke(C.blue, 2.4)) + path(Fg.curve(Math.sin, 0, tr, n), stroke(C.acc, 2.4));
+        g += line([X, Fg.Y(1.3)], [X, Fg.Y(-1.3)], stroke(C.muted, 1, DASH)) + dot([X, Fg.Y(c)], C.blue, 4.5) + dot([X, Fg.Y(sn)], C.acc, 4.5);
+        Sg.draw('main', g);
+        Sc.sync(); Sg.sync();
+        var tx = texts(t);
+        out.deg.textContent = t + '°';
+        out.rad.innerHTML = tx.rad; out.cos.innerHTML = tx.cos; out.sin.innerHTML = tx.sin; out.pyth.textContent = tx.pyth;
+      }
+      update();
+      return function () { loop.stop(); Sc.destroy(); Sg.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 9. Sécante, tangente et nombre dérivé                               */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'tangente-nombre-derive',
+    titre: 'De la sécante à la tangente : le nombre dérivé',
+    chapitres: ['1s-derivation', 'ts-derivabilite', '1l-fonctions'],
+    resume: 'Rapproche le point M du point A sur la courbe : la sécante (AM) tend vers la tangente et le taux d\'accroissement tend vers le nombre dérivé.',
+    render: function (el) {
+      var FN = [
+        { nom: 'f(x) = x²/2', tex: 'f(x) = \\dfrac{x^2}{2}', dtex: 'f\'(x) = x', f: function (x) { return x * x / 2; }, d: function (x) { return x; }, win: [-3.2, 3.2, -1.4, 4.6], a: 1, h: 1.5 },
+        { nom: 'f(x) = x³/3 − x', tex: 'f(x) = \\dfrac{x^3}{3} - x', dtex: 'f\'(x) = x^2 - 1', f: function (x) { return x * x * x / 3 - x; }, d: function (x) { return x * x - 1; }, win: [-3.2, 3.2, -3, 3], a: -1.5, h: 2 },
+        { nom: 'f(x) = sin x', tex: 'f(x) = \\sin x', dtex: 'f\'(x) = \\cos x', f: Math.sin, d: Math.cos, win: [-3.6, 3.6, -1.9, 1.9], a: 0.5, h: 1.5 }
+      ];
+      var W = 340, H = 270;
+      function frame(i) { var w = FN[i].win; return new Frame(w[0], w[1], w[2], w[3], W, H); }
+      var fn = FN[0], F = frame(0), st = { a: fn.a, h: fn.h };
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Courbe de f, sécante (AM) et tangente en A'),
+        controls: selectBox('f', 'Fonction', FN.map(function (x) { return x.nom; }), 0) +
+          slider('a', 'Abscisse $a$ du point $A$', -2.5, 2.5, 0.05, st.a) + slider('h', 'Écart $h$ entre $A$ et $M$', -2, 2, 0.01, st.h) +
+          buttons(button('lim', 'Faire tendre h vers 0', ' ')),
+        readout: '<div data-o="fx"></div>' +
+          '<div>' + sw(C.acc, 'Pente de la sécante') + ' ' + md('$\\dfrac{f(a+h)-f(a)}{h}$') + ' = <b data-o="tx"></b></div>' +
+          '<div>' + sw(C.green, 'Nombre dérivé') + ' ' + md('$f\'(a)$') + ' = <b data-o="fp"></b></div>' +
+          '<div data-o="eq"></div><p data-o="msg" style="margin:6px 0 0"></p>',
+        note: md('Observe : la sécante $(AM)$ a pour pente le taux d\'accroissement $\\frac{f(a+h)-f(a)}{h}$. Quand $h$ tend vers $0$, $M$ se rapproche de $A$, ' +
+          'la sécante pivote vers la tangente (en vert) et sa pente tend vers le nombre dérivé $f\'(a)$.')
+      });
+      var MSG = {
+        zero: md('$h = 0$ : la sécante n\'existe plus ; il ne reste que la tangente, sa position limite.'),
+        tiny: md('$h$ est tout petit : la sécante et la tangente sont presque confondues.'),
+        std: md('Rapproche $M$ de $A$ : la pente de la sécante va tendre vers $f\'(a)$.')
+      };
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), fxCache = {};
+      var rA = bindRange(el, 'a', function (v) { return nt(v); }, function (v) { st.a = v; update(); });
+      var rH = bindRange(el, 'h', function (v) { return nf(v, 2); }, function (v) { st.h = v; update(); });
+      S.handle({
+        label: 'Point A', color: C.green,
+        get: function () { return [st.a, fn.f(st.a)]; },
+        set: function (x) { st.a = clamp(rnd(snap(x, 0.05), 2), -2.5, 2.5); },
+        key: function (dx, dy) { st.a = clamp(rnd(st.a + 0.05 * (dx || dy), 2), -2.5, 2.5); }
+      });
+      S.handle({
+        label: 'Point M', color: C.acc,
+        get: function () { return [st.a + st.h, fn.f(st.a + st.h)]; },
+        set: function (x) { st.h = clamp(rnd(x - st.a, 2), -2, 2); },
+        key: function (dx, dy) { st.h = clamp(rnd(st.h + 0.05 * (dx || dy), 2), -2, 2); }
+      });
+      S.onchange = function () { loop.stop(); rA.set(st.a); rH.set(st.h); update(); };
+      function setFn(i) {
+        fn = FN[i]; F = frame(i); S.F = F; st.a = fn.a; st.h = fn.h;
+        rA.set(st.a); rH.set(st.h);
+        S.draw('bg', axes(F, { gx: 1, xname: 'x', yname: 'y' }));
+        update();
+      }
+      bindSelect(el, 'f', function (i) { loop.stop(); setFn(i); });
+      var loop = new Loop(function (dt) {
+        st.h = st.h * Math.pow(0.5, dt / 450);
+        if (Math.abs(st.h) <= 0.01) { st.h = st.h < 0 ? -0.01 : 0.01; rH.set(st.h); update(); return false; }
+        rH.set(rnd(st.h, 2)); update();
+      });
+      bindPlay(el.querySelector('[data-act="lim"]'), loop, 'Faire tendre h vers 0', 'Pause', function () { if (Math.abs(st.h) < 0.02) st.h = 1.5; });
+      function update() {
+        var f = fn.f, a = st.a, h = st.h, A = [a, f(a)], m = fn.d(a), s = '', pa = F.P(A);
+        s += path(F.curve(f, null, null, 240), stroke(C.blue, 2.4));
+        s += fullLine(F, A, [a + 1, f(a) + m], stroke(C.green, 2.2));
+        if (h !== 0) {
+          var M = [a + h, f(a + h)], Hh = F.P([a + h, f(a)]), pm = F.P(M);
+          s += fullLine(F, A, M, stroke(C.acc, 2));
+          s += line(pa, Hh, stroke(C.muted, 1.2, DASH)) + line(Hh, pm, stroke(C.muted, 1.2, DASH));
+          if (Math.abs(Hh[0] - pa[0]) > 20) s += text([(pa[0] + Hh[0]) / 2, pa[1] + (M[1] >= A[1] ? 16 : -8)], 'h', { size: 13, italic: true, color: C.muted });
+          s += lab(pm, 'M', [h >= 0 ? 0.8 : -0.8, -0.7], { color: C.acc, k: 18, F: F });
+        }
+        s += lab(pa, 'A', [h >= 0 ? -0.8 : 0.8, -0.7], { color: C.green, k: 18, F: F });
+        S.draw('main', s);
+        S.sync();
+        if (!fxCache[fn.nom]) fxCache[fn.nom] = md('$' + fn.tex + '$, donc $' + fn.dtex + '$.');
+        out.fx.innerHTML = fxCache[fn.nom];
+        out.tx.textContent = h === 0 ? '—' : nf((f(a + h) - f(a)) / h, 3);
+        out.fp.textContent = nf(m, 3);
+        out.eq.innerHTML = 'Tangente en ' + it('A') + ' : ' + it('y') + ' = ' + affHtml(m, f(a) - m * a, 3);
+        out.msg.innerHTML = h === 0 ? MSG.zero : Math.abs(h) <= 0.05 ? MSG.tiny : MSG.std;
+      }
+      setFn(0);
+      return function () { loop.stop(); S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 10. Suite récurrente : escalier et escargot                         */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'suite-recurrente-toile',
+    titre: 'Suite récurrente : l\'escalier et l\'escargot',
+    chapitres: ['ts-suites', '1s-suites', 'tl-suites'],
+    resume: 'Construis les termes d\'une suite définie par récurrence avec la courbe de f et la droite d\'équation y = x : on voit si elle converge, oscille ou diverge.',
+    render: function (el) {
+      var F = new Frame(-0.6, 7.4, -1.2, 7.4, 320);
+      var FN = [
+        { nom: 'f(x) = 0,5x + 2', tex: 'u_{n+1} = 0{,}5\\,u_n + 2', f: function (x) { return 0.5 * x + 2; }, l: 4, lt: '4', kind: 'mono', u0: 0.5, min: 0 },
+        { nom: 'f(x) = −0,6x + 4', tex: 'u_{n+1} = -0{,}6\\,u_n + 4', f: function (x) { return -0.6 * x + 4; }, l: 2.5, lt: '2{,}5', kind: 'osc', u0: 0.5, min: 0 },
+        { nom: 'f(x) = √(2x + 3)', tex: 'u_{n+1} = \\sqrt{2u_n + 3}', f: function (x) { return Math.sqrt(2 * x + 3); }, l: 3, lt: '3', kind: 'mono', u0: 0.2, min: 0 },
+        { nom: 'f(x) = 1,5x − 2', tex: 'u_{n+1} = 1{,}5\\,u_n - 2', f: function (x) { return 1.5 * x - 2; }, l: 4, lt: '4', kind: 'div', u0: 4.3, min: 0 },
+        { nom: 'f(x) = 6/x', tex: 'u_{n+1} = \\dfrac{6}{u_n}', f: function (x) { return 6 / x; }, l: Math.sqrt(6), lt: '\\sqrt{6}', kind: 'cycle', u0: 1.5, min: 0.5, from: 0.75 }
+      ];
+      var fn = FN[0], st = { u0: fn.u0, n: 6 };
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Courbe de f, droite y = x et construction des termes de la suite', { max: 470 }),
+        controls: selectBox('f', 'Fonction $f$', FN.map(function (x) { return x.nom; }), 0) +
+          slider('u0', 'Premier terme $u_0$', 0, 7, 0.1, st.u0) + slider('n', 'Nombre d\'étapes $n$', 1, 30, 1, st.n),
+        readout: '<div data-o="rec"></div><div data-o="terms" style="margin:4px 0"></div><p data-o="msg" style="margin:0"></p>',
+        note: md('Observe : on part de $u_0$ sur l\'axe des abscisses, on monte jusqu\'à la courbe pour lire $u_1 = f(u_0)$, on rabat ce nombre sur l\'axe grâce à la droite $y = x$, et on recommence. ' +
+          'Si la suite converge, c\'est vers l\'abscisse $\\ell$ du point commun à la courbe et à la droite : $f(\\ell) = \\ell$.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), cache = {};
+      S.draw('bg', axes(F, { gx: 1, xname: 'x', yname: 'y' }));
+      var rU = bindRange(el, 'u0', function (v) { return nt(v, 1); }, function (v) { st.u0 = v; update(); });
+      bindRange(el, 'n', function (v) { return String(v); }, function (v) { st.n = v; update(); });
+      S.handle({
+        label: 'Premier terme u0', color: C.acc,
+        get: function () { return [st.u0, 0]; },
+        set: function (x) { st.u0 = clamp(rnd(snap(x, 0.1), 1), fn.min, 7); },
+        key: function (dx, dy) { st.u0 = clamp(rnd(st.u0 + 0.1 * (dx || dy), 1), fn.min, 7); }
+      });
+      S.onchange = function () { rU.set(st.u0); update(); };
+      bindSelect(el, 'f', function (i) {
+        fn = FN[i]; rU.input.min = fn.min; st.u0 = fn.u0; rU.set(st.u0); update();
+      });
+      function M(s) { if (!cache[s]) cache[s] = md(s); return cache[s]; }
+      function update() {
+        var u = [st.u0], i, s = '';
+        for (i = 0; i < st.n; i++) {
+          var v = fn.f(u[i]);
+          if (!isFinite(v) || Math.abs(v) > 1e6) break;
+          u.push(v);
+        }
+        s += fullLine(F, [0, 0], [1, 1], stroke(C.muted, 1.4, DASH));
+        s += text(F.P([6.15, 6.75]), 'y = x', { size: 12, italic: true, color: C.muted, anchor: 'end' });
+        s += path(F.curve(fn.f, fn.from != null ? fn.from : F.xmin, F.xmax, 240), stroke(C.blue, 2.4));
+        var l = fn.l, pl = F.P([l, l]);
+        s += line(pl, F.P([l, 0]), stroke(C.green, 1.2, 'stroke-dasharray:2 3;'));
+        var web = [[u[0], 0]];
+        for (i = 1; i < u.length; i++) { web.push([u[i - 1], u[i]]); web.push([u[i], u[i]]); }
+        s += polyline(web.map(function (p) { return F.P([clamp(p[0], -50, 60), clamp(p[1], -50, 60)]); }), stroke(C.acc, 1.8));
+        var used = [];
+        for (i = 0; i < Math.min(u.length, 4); i++) {
+          var px = F.P([u[i], 0]);
+          if (u[i] < F.xmin || u[i] > F.xmax) continue;
+          if (i > 0) s += line(F.P([u[i], u[i]]), px, stroke(C.acc, 1, 'stroke-opacity:.6;stroke-dasharray:2 3;'));
+          var free = used.every(function (x) { return Math.abs(x - px[0]) > 20; });
+          s += dot(px, C.acc, 3);
+          if (free) { s += text([px[0], px[1] + 32], 'u' + subs(i), { size: 14, italic: true, color: C.acc }); used.push(px[0]); }
+        }
+        s += dot(pl, C.green, 4.5) + lab(pl, 'ℓ', [-1, -0.6], { color: C.green, k: 12, size: 16 });
+        S.draw('main', s);
+        S.sync();
+        out.rec.innerHTML = md('$' + fn.tex + '$ avec $u_0 = ' + tn(st.u0, 1) + '$');
+        var T = [], U = it('u');
+        for (i = 0; i < Math.min(u.length, 5); i++) T.push(U + '<sub>' + i + '</sub> ' + eqv(u[i], 3));
+        var last = u.length - 1;
+        if (last < st.n) T.push('… puis les termes dépassent 10<sup>6</sup> en valeur absolue');
+        else if (last >= 5) T.push('…', U + '<sub>' + last + '</sub> ' + eqv(u[last], 3));
+        out.terms.innerHTML = T.join(' ; ');
+        var u0 = st.u0, msg;
+        if (Math.abs(u0 - l) < 1e-9) msg = M('$u_0 = \\ell$ : la suite est constante.');
+        else if (fn.kind === 'mono') msg = M('La suite est ' + (u0 < l ? 'croissante' : 'décroissante') + ' et converge vers $\\ell = ' + fn.lt + '$ (en escalier).');
+        else if (fn.kind === 'osc') msg = M('Les termes sont alternativement de part et d\'autre de $\\ell = ' + fn.lt + '$ et s\'en rapprochent (en escargot) : la suite converge vers $\\ell$ sans être monotone.');
+        else if (fn.kind === 'div') msg = M('La suite est ' + (u0 > l ? 'croissante et tend vers $+\\infty$' : 'décroissante et tend vers $-\\infty$') + ' : elle diverge, les termes s\'éloignent de $\\ell = ' + fn.lt + '$.');
+        else msg = M('Les termes valent alternativement $u_0$ et $\\frac{6}{u_0}$ : la suite ne converge pas (sauf si $u_0 = \\sqrt{6}$).');
+        out.msg.innerHTML = msg;
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 11. Intégrale et sommes de rectangles                               */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'integrale-rectangles',
+    titre: 'L\'intégrale, limite des sommes de rectangles',
+    chapitres: ['ts-integrales', 'ts-primitives'],
+    resume: 'Augmente le nombre n de rectangles : la somme de leurs aires se rapproche de l\'intégrale, c\'est-à-dire de l\'aire sous la courbe.',
+    render: function (el) {
+      var FN = [
+        { nom: 'x²/4 + 1 sur [0 ; 4]', f: function (x) { return x * x / 4 + 1; }, a: 0, b: 4, I: 28 / 3, itex: '\\int_0^4 \\left(\\frac{x^2}{4} + 1\\right) \\mathrm{d}x = \\frac{28}{3}', win: [-0.45, 4.5, -0.6, 5.6], gy: 1 },
+        { nom: '√x sur [0 ; 4]', f: Math.sqrt, a: 0, b: 4, I: 16 / 3, itex: '\\int_0^4 \\sqrt{x}\\,\\mathrm{d}x = \\frac{16}{3}', win: [-0.45, 4.5, -0.32, 2.45], gy: 0.5 },
+        { nom: '1/x sur [1 ; 4]', f: function (x) { return 1 / x; }, a: 1, b: 4, I: Math.log(4), itex: '\\int_1^4 \\frac{1}{x}\\,\\mathrm{d}x = \\ln 4', win: [-0.4, 4.5, -0.22, 1.6], gy: 0.5, from: 0.55 },
+        { nom: 'sin x sur [0 ; π]', f: Math.sin, a: 0, b: PI, I: 2, itex: '\\int_0^{\\pi} \\sin x\\,\\mathrm{d}x = 2', win: [-0.35, 3.6, -0.2, 1.3], gy: 0.5 }
+      ];
+      var W = 340, H = 230;
+      function frame(i) { var w = FN[i].win; return new Frame(w[0], w[1], w[2], w[3], W, H); }
+      var fn = FN[0], F = frame(0), st = { n: 4, m: 0 }, itex = {};
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Courbe de f et rectangles sous la courbe'),
+        controls: selectBox('f', 'Fonction', FN.map(function (x) { return x.nom; }), 0) +
+          selectBox('m', 'Hauteur des rectangles', ['Valeur à gauche', 'Valeur à droite', 'Valeur au milieu'], 0) +
+          slider('n', 'Nombre de rectangles $n$', 1, 100, 1, st.n) + buttons(button('play', 'Augmenter n', ' ')),
+        readout: '<div>Somme des aires ' + md('$S_n$') + ' = <b data-o="sn" style="color:' + C.acc + '"></b></div>' +
+          '<div data-o="ex"></div><div>Écart : <b data-o="err"></b></div><p data-o="msg" class="small" style="margin:6px 0 0"></p>',
+        note: md('Observe : chaque rectangle a pour largeur $\\frac{b-a}{n}$. Quand $n$ augmente, les rectangles épousent la courbe et la somme de leurs aires se rapproche de l\'intégrale $\\int_a^b f(x)\\,\\mathrm{d}x$ : l\'écart tend vers $0$.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
+      var rN = bindRange(el, 'n', function (v) { return String(v); }, function (v) { st.n = v; update(); });
+      bindSelect(el, 'f', function (i) { fn = FN[i]; F = frame(i); S.F = F; drawBg(); update(); });
+      bindSelect(el, 'm', function (i) { st.m = i; update(); });
+      var tAcc = 0;
+      var loop = new Loop(function (dt) {
+        tAcc += dt;
+        if (tAcc < 110) return;
+        tAcc = 0;
+        if (st.n >= 100) return false;
+        st.n += 1; rN.set(st.n); update();
+      });
+      bindPlay(el.querySelector('[data-act="play"]'), loop, 'Augmenter n', 'Pause', function () { if (st.n >= 100) { st.n = 1; rN.set(1); update(); } tAcc = 0; });
+      function drawBg() {
+        var s = axes(F, { gx: 1, gy: fn.gy, xname: 'x', yname: 'y' });
+        if (fn.b === PI) s += text([F.X(PI), F.Y(0) + 15], 'π', { size: 12, color: C.muted });
+        S.draw('bg', s);
+      }
+      function update() {
+        var f = fn.f, a = fn.a, b = fn.b, n = st.n, dx = (b - a) / n, Sn = 0, s = '', y0 = F.Y(0);
+        var stl = n <= 40 ? shape(C.acc, 0.2, C.acc, 1) : fill(C.acc, 0.3);
+        for (var i = 0; i < n; i++) {
+          var x0 = a + i * dx, xs = st.m === 0 ? x0 : st.m === 1 ? x0 + dx : x0 + dx / 2, hy = f(xs);
+          Sn += hy * dx;
+          var X0 = F.X(x0), X1 = F.X(x0 + dx), Yh = F.Y(hy);
+          s += polygon([[X0, y0], [X1, y0], [X1, Yh], [X0, Yh]], stl);
+          if (n <= 24) s += dot([F.X(xs), Yh], C.acc, 2.4);
+        }
+        s += path(F.curve(f, fn.from != null ? fn.from : Math.max(F.xmin, -0.2), F.xmax, 240), stroke(C.blue, 2.4));
+        s += line([F.X(a), y0], [F.X(a), F.Y(f(a))], stroke(C.blue, 1, DASH)) + line([F.X(b), y0], [F.X(b), F.Y(f(b))], stroke(C.blue, 1, DASH));
+        S.draw('main', s);
+        if (!itex[fn.nom]) itex[fn.nom] = md('$' + fn.itex + '$');
+        out.sn.textContent = nf(Sn, 4);
+        out.ex.innerHTML = 'Intégrale : ' + itex[fn.nom] + ' \u2248 <b>' + nf(fn.I, 4) + '</b>';
+        out.err.textContent = nf(Math.abs(Sn - fn.I), 4);
+        out.msg.innerHTML = Math.abs(Sn - fn.I) < 5e-5 ? 'Avec cette précision, la somme et l\'intégrale sont égales.' :
+          Sn < fn.I ? 'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est inférieure à l\'intégrale : c\'est une valeur approchée par défaut.' :
+            'Ici ' + it('S') + '<sub>' + it('n') + '</sub> est supérieure à l\'intégrale : c\'est une valeur approchée par excès.';
+      }
+      drawBg();
+      update();
+      return function () { loop.stop(); S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 12. Loi des grands nombres                                          */
+  /* ================================================================== */
+  function grp(x) { return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f'); }
+  EM.demos.register({
+    id: 'loi-grands-nombres',
+    titre: 'Loi des grands nombres : la fréquence se stabilise',
+    chapitres: ['ts-probabilites', 'tl-probabilites', '5e-statistiques'],
+    resume: 'Lance une pièce ou un dé des centaines de fois : la fréquence d\'apparition se rapproche de la probabilité.',
+    render: function (el) {
+      var MAX = 20000, W = 340, HG = 200, HB = 132;
+      var MODES = [
+        { nom: 'Pièce : obtenir Pile', faces: ['Pile', 'Face'], target: 0, p: 0.5, ptxt: 'p = 1/2', ev: '« Pile »' },
+        { nom: 'Dé : obtenir 6', faces: ['1', '2', '3', '4', '5', '6'], target: 5, p: 1 / 6, ptxt: 'p = 1/6', ev: '« 6 »' }
+      ];
+      var mo = MODES[1], N = 0, hits = 0, counts = [], hist = [], last = [];
+      el.innerHTML = layout({
+        stage: svgTag('g', new Frame(0, 1, 0, 1, W, HG), 'Fréquence en fonction du nombre de lancers') + '<div style="height:8px"></div>' +
+          svgTag('b', new Frame(0, 1, 0, 1, W, HB), 'Fréquence de chaque résultat'),
+        controls: selectBox('mode', 'Expérience', MODES.map(function (x) { return x.nom; }), 1) +
+          buttons(button('1', '+1 lancer') + button('10', '+10') + button('100', '+100') + button('play', 'Lancer en continu', ' ') + button('reset', 'Recommencer')),
+        readout: '<div style="' + ROW + '"><span>Lancers : <b data-o="n"></b></span><span>Nombre de <span data-o="ev"></span> : <b data-o="k"></b></span></div>' +
+          '<div style="' + ROW + '"><span>Fréquence : <b data-o="f" style="color:' + C.blue + '"></b></span><span>Probabilité : <b data-o="p" style="color:' + C.acc + '"></b></span><span>Écart : <b data-o="e"></b></span></div>' +
+          '<div class="small" style="margin-top:4px">Derniers résultats : <span data-o="last"></span></div>',
+        note: md('Observe : au début, la fréquence saute beaucoup d\'un lancer à l\'autre. Plus le nombre de lancers augmente, plus elle se stabilise autour de la probabilité $p$ (le trait en pointillés) : c\'est la loi des grands nombres. ' +
+          'En bas, la fréquence de chaque résultat se stabilise elle aussi autour de sa probabilité.')
+      });
+      var Sg = new Stage(el.querySelector('[data-s="g"]'), new Frame(0, 1, 0, 1, W, HG)), Sb = new Stage(el.querySelector('[data-s="b"]'), new Frame(0, 1, 0, 1, W, HB)), out = outs(el);
+      var GRID = 'stroke:var(--fig-grid);stroke-width:1';
+      function reset() { N = 0; hits = 0; counts = mo.faces.map(function () { return 0; }); hist = []; last = []; }
+      function throwOne() {
+        var r = Math.floor(Math.random() * mo.faces.length);
+        counts[r] += 1; N += 1;
+        if (r === mo.target) hits += 1;
+        hist.push(hits / N); last.push(r);
+        if (last.length > 12) last.shift();
+      }
+      function add(k) { for (var i = 0; i < k && N < MAX; i++) throwOne(); draw(); }
+      function draw() {
+        var xmax = Math.max(10, N), F = new Frame(0, xmax, 0, 1, W, HG, { l: 40, r: 14, t: 12, b: 26 }), s = '', i;
+        [0, 0.25, 0.5, 0.75, 1].forEach(function (y) {
+          s += line([F.X(0), F.Y(y)], [F.X(xmax), F.Y(y)], GRID) + text([F.l - 6, F.Y(y) + 4], nt(y, 2), { size: 11, color: C.muted, anchor: 'end' });
+        });
+        var stp = niceStep(xmax / 4);
+        for (var x = 0; x <= xmax + 1e-9; x += stp) s += text([F.X(x), HG - 8], grp(x), { size: 11, color: C.muted, anchor: x === 0 ? 'start' : 'middle' });
+        s += line([F.X(0), F.Y(0)], [F.X(xmax), F.Y(0)], stroke(C.muted, 1.2)) + line([F.X(0), F.Y(0)], [F.X(0), F.Y(1)], stroke(C.muted, 1.2));
+        s += line([F.X(0), F.Y(mo.p)], [F.X(xmax), F.Y(mo.p)], stroke(C.acc, 1.6, DASH)) + text([F.X(0) + 6, F.Y(mo.p) - 6], mo.ptxt, { size: 12, bold: true, color: C.acc, anchor: 'start' });
+        if (N) {
+          var pts0 = [], step = Math.max(1, N / 400);
+          for (var k = 0; k < N; k += step) { i = Math.floor(k); pts0.push([F.X(i + 1), F.Y(hist[i])]); }
+          pts0.push([F.X(N), F.Y(hist[N - 1])]);
+          s += polyline(pts0, stroke(C.blue, 1.8)) + dot(pts0[pts0.length - 1], C.blue, 3.5);
+        } else s += text([(F.l + W - F.r) / 2, F.Y(0.86)], 'Appuie sur « +1 lancer » ou « Lancer en continu »', { size: 12, color: C.muted });
+        Sg.draw('main', s);
+        // diagramme des fréquences de chaque résultat
+        var nf0 = mo.faces.length, fr = counts.map(function (c) { return N ? c / N : 0; });
+        var ymax = Math.min(1, Math.ceil(Math.max(2 * mo.p, Math.max.apply(null, fr)) * 10 - 1e-9) / 10);
+        var B = new Frame(0, nf0, 0, ymax, W, HB, { l: 40, r: 14, t: 18, b: 22 }), b = '';
+        b += line([B.X(0), B.Y(0)], [B.X(nf0), B.Y(0)], stroke(C.muted, 1.2));
+        b += text([B.l - 6, B.Y(0) + 4], '0', { size: 11, color: C.muted, anchor: 'end' }) + text([B.l - 6, B.Y(ymax) + 4], nt(ymax, 1), { size: 11, color: C.muted, anchor: 'end' });
+        for (i = 0; i < nf0; i++) {
+          var col = i === mo.target ? C.acc : C.blue, x0 = B.X(i + 0.2), x1 = B.X(i + 0.8), yt = B.Y(fr[i]);
+          b += polygon([[x0, B.Y(0)], [x1, B.Y(0)], [x1, yt], [x0, yt]], shape(col, 0.5, col, 1.2));
+          b += text([(x0 + x1) / 2, HB - 6], mo.faces[i], { size: 12, color: C.line });
+          if (N) b += text([(x0 + x1) / 2, yt - 5], nf(fr[i], 2), { size: 11, color: col });
+        }
+        b += line([B.X(0), B.Y(mo.p)], [B.X(nf0), B.Y(mo.p)], stroke(C.acc, 1.4, DASH));
+        Sb.draw('main', b);
+        out.n.textContent = grp(N);
+        out.ev.textContent = mo.ev;
+        out.k.textContent = grp(hits);
+        out.f.textContent = N ? nf(hits / N, 3) : '—';
+        out.p.textContent = mo.p === 0.5 ? '0,5' : '\u2248 ' + nf(mo.p, 3);
+        out.e.textContent = N ? nf(Math.abs(hits / N - mo.p), 3) : '—';
+        out.last.textContent = last.length ? last.map(function (r) { return mo.faces[r]; }).join(' · ') : '—';
+      }
+      var loop = new Loop(function () {
+        var k = clamp(Math.floor(N / 60), 1, 300);
+        for (var i = 0; i < k && N < MAX; i++) throwOne();
+        draw();
+        if (N >= MAX) return false;
+      });
+      bindPlay(el.querySelector('[data-act="play"]'), loop, 'Lancer en continu', 'Pause', function () { if (N >= MAX) { reset(); } });
+      onAct(el, {
+        '1': function () { add(1); }, '10': function () { add(10); }, '100': function () { add(100); },
+        reset: function () { loop.stop(); reset(); draw(); }
+      });
+      bindSelect(el, 'mode', function (i) { loop.stop(); mo = MODES[i]; reset(); draw(); });
+      reset();
+      draw();
+      return function () { loop.stop(); Sg.destroy(); Sb.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 13. Loi binomiale                                                   */
+  /* ================================================================== */
+  function binom(n, k) { var r = 1; for (var i = 1; i <= k; i++) r = r * (n - k + i) / i; return r; }
+  EM.demos.register({
+    id: 'loi-binomiale',
+    titre: 'Loi binomiale : le diagramme en bâtons',
+    chapitres: ['ts-probabilites'],
+    resume: 'Règle le nombre d\'épreuves n et la probabilité de succès p : le diagramme de la loi binomiale se déforme autour de l\'espérance np.',
+    render: function (el) {
+      var W = 340, H = 220, st = { n: 10, p: 0.3, k: 3, mode: 0 };
+      el.innerHTML = layout({
+        stage: svgTag('fig', new Frame(0, 1, 0, 1, W, H), 'Diagramme en bâtons de la loi binomiale'),
+        controls: slider('n', 'Nombre d\'épreuves $n$', 1, 40, 1, st.n) + slider('p', 'Probabilité de succès $p$', 0, 1, 0.01, st.p) +
+          slider('k', 'Nombre de succès $k$', 0, st.n, 1, st.k) + selectBox('mode', 'Probabilité calculée', ['P(X = k)', 'P(X ≤ k)', 'P(X ≥ k)'], 0),
+        readout: '<div data-o="prob"></div><div style="' + ROW + ';margin-top:4px"><span>' + md('$E(X) = np$') + ' = <b data-o="e" style="color:' + C.green + '"></b></span>' +
+          '<span>' + md('$V(X) = np(1-p)$') + ' = <b data-o="v"></b></span><span>' + md('$\\sigma(X)$') + ' \u2248 <b data-o="s"></b></span></div>',
+        note: md('Observe : chaque bâton donne la probabilité d\'obtenir exactement $k$ succès en $n$ épreuves indépendantes. Le diagramme se regroupe autour de l\'espérance $np$ (trait vert) ; ' +
+          'il est symétrique quand $p = 0{,}5$. Touche un bâton pour choisir $k$.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), new Frame(0, 1, 0, 1, W, H)), out = outs(el);
+      var GRID = 'stroke:var(--fig-grid);stroke-width:1';
+      var rK = bindRange(el, 'k', function (v) { return String(v); }, function (v) { st.k = v; update(); });
+      bindRange(el, 'n', function (v) { return String(v); }, function (v) { st.n = v; rK.setMax(v); if (st.k > v) { st.k = v; } rK.set(st.k); update(); });
+      bindRange(el, 'p', function (v) { return nt(v); }, function (v) { st.p = v; update(); });
+      bindSelect(el, 'mode', function (i) { st.mode = i; update(); });
+      S.onTap = function (m) { st.k = clamp(Math.round(m[0]), 0, st.n); rK.set(st.k); update(); };
+      function update() {
+        var n = st.n, p = st.p, k = Math.min(st.k, n), P = [], i;
+        for (i = 0; i <= n; i++) P.push(binom(n, i) * Math.pow(p, i) * Math.pow(1 - p, n - i));
+        var mx = Math.max.apply(null, P), stp = niceStep(mx / 4), ymax = Math.max(stp, Math.ceil(mx / stp - 1e-9) * stp);
+        var F = new Frame(-0.6, n + 0.6, 0, ymax * 1.06, W, H, { l: 44, r: 10, t: 12, b: 26 }), s = '';
+        S.F = F;
+        for (var y = 0; y <= ymax + 1e-9; y += stp) s += line([F.l, F.Y(y)], [W - F.r, F.Y(y)], GRID) + text([F.l - 6, F.Y(y) + 4], nt(y, 3), { size: 11, color: C.muted, anchor: 'end' });
+        var lstep = n <= 12 ? 1 : n <= 24 ? 2 : 5, hw = Math.min(0.36, 0.42);
+        for (i = 0; i <= n; i++) {
+          var sel = st.mode === 0 ? i === k : st.mode === 1 ? i <= k : i >= k;
+          var x0 = F.X(i - hw), x1 = F.X(i + hw), yt = F.Y(P[i]), yb = F.Y(0);
+          s += polygon([[x0, yb], [x1, yb], [x1, yt], [x0, yt]], sel ? shape(C.acc, 0.8, C.acc, 1) : shape(C.blue, 0.35, C.blue, 1));
+          if (i % lstep === 0) s += text([F.X(i), H - 9], String(i), { size: 11, color: i === k ? C.acc : C.muted, bold: i === k });
+        }
+        s += line([F.l, F.Y(0)], [W - F.r, F.Y(0)], stroke(C.muted, 1.2));
+        var E = n * p, xe = F.X(E);
+        s += line([xe, F.Y(0)], [xe, F.t], stroke(C.green, 1.6, DASH));
+        s += text([clamp(xe, F.l + 18, W - 22), F.t + 10], 'E(X)', { size: 12, bold: true, color: C.green });
+        S.draw('main', s);
+        var pr, tex, q1 = rnd(1 - p, 2);
+        if (st.mode === 0) { pr = P[k]; tex = 'P(X = ' + k + ') = \\dbinom{' + n + '}{' + k + '} \\times ' + tn(p) + '^{' + k + '} \\times ' + tn(q1) + '^{' + (n - k) + '}'; }
+        else if (st.mode === 1) { pr = sum(P.slice(0, k + 1)); tex = 'P(X \\leqslant ' + k + ') = \\sum_{i=0}^{' + k + '} P(X = i)'; }
+        else { pr = sum(P.slice(k)); tex = 'P(X \\geqslant ' + k + ') = \\sum_{i=' + k + '}^{' + n + '} P(X = i)'; }
+        pr = Math.min(1, pr);
+        out.prob.innerHTML = md('$' + tex + '$') + ' <b style="color:' + C.acc + '">' + eqv(pr, 4) + '</b>';
+        out.e.textContent = nt(rnd(E, 4), 2);
+        out.v.textContent = nt(rnd(E * (1 - p), 6), 4);
+        out.s.textContent = nf(Math.sqrt(E * (1 - p)), 3);
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 14. Nombres complexes : multiplier par z                            */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'complexes-multiplication',
+    titre: 'Multiplier par z : tourner et agrandir',
+    chapitres: ['ts-complexes', 'ts-similitudes'],
+    resume: 'Déplace les points d\'affixes z et w : le point d\'affixe zw s\'obtient en tournant w d\'un angle arg z et en multipliant sa distance à O par |z|.',
+    render: function (el) {
+      var F = new Frame(-3.3, 3.3, -3.3, 3.3, 330);
+      var st = { r: 1.2, t: 50, w: [2, -0.5] };
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Plan complexe : points d\'affixes 1, z, w et zw', { max: 470 }),
+        controls: slider('r', 'Module $|z|$', 0.2, 2, 0.05, st.r) + slider('t', 'Argument $\\arg z$ (en degrés)', -180, 180, 1, st.t),
+        readout: '<div class="table-wrap"><table class="t" style="font-size:.86rem"><thead><tr><th></th><th>Forme algébrique</th><th>Module</th><th>Argument</th></tr></thead><tbody>' +
+          ['z', 'w', 'p'].map(function (k) {
+            var nm = k === 'p' ? sw(C.acc, it('zw')) : k === 'z' ? sw(C.blue, it('z')) : it('w');
+            return '<tr><th>' + nm + '</th><td data-o="' + k + 'a"></td><td data-o="' + k + 'm"></td><td data-o="' + k + 'g"></td></tr>';
+          }).join('') + '</tbody></table></div>' +
+          '<div style="margin-top:6px">' + md('$|zw| = |z| \\times |w|$') + ' : <span data-o="mods"></span></div>' +
+          '<div>' + md('$\\arg(zw) = \\arg z + \\arg w$') + ' : <span data-o="args"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
+        note: md('Observe : multiplier par $z$, c\'est tourner autour de $O$ d\'un angle $\\arg z$ et multiplier les distances à $O$ par $|z|$ (une similitude directe de centre $O$). ' +
+          'Les triangles formés par $O$, $1$, $z$ (en bleu) et par $O$, $w$, $zw$ (en rouge) sont semblables.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el), o = F.P([0, 0]), u = F.P([1, 0]);
+      S.draw('bg', axes(F, { gx: 1, xname: 'Re', yname: 'Im' }) + circle(o, q(F.X(1) - F.X(0)), stroke(C.muted, 1, DASH)));
+      var rR = bindRange(el, 'r', function (v) { return nt(v); }, function (v) { st.r = v; update(); });
+      var rT = bindRange(el, 't', function (v) { return nt(v, 0) + '°'; }, function (v) { st.t = v; update(); });
+      S.handle({
+        label: 'Point d\'affixe w', color: C.line, step: 0.1,
+        get: function () { return st.w; },
+        set: function (x, y) {
+          var p = [clamp(rnd(x, 1), -3.1, 3.1), clamp(rnd(y, 1), -3.1, 3.1)];
+          if (p[0] * p[0] + p[1] * p[1] >= 0.04) st.w = p;
+        }
+      });
+      S.handle({
+        label: 'Point d\'affixe z', color: C.blue,
+        get: function () { return [st.r * Math.cos(rad(st.t)), st.r * Math.sin(rad(st.t))]; },
+        set: function (x, y) {
+          st.r = clamp(rnd(snap(Math.sqrt(x * x + y * y), 0.05), 2), 0.2, 2);
+          var t = Math.round(deg(Math.atan2(y, x)));
+          st.t = t === -180 ? 180 : t;
+        },
+        key: function (dx, dy) {
+          if (dy) st.r = clamp(rnd(st.r + 0.05 * dy, 2), 0.2, 2);
+          if (dx) { st.t -= dx; if (st.t > 180) st.t -= 360; if (st.t <= -180) st.t += 360; }
+        }
+      });
+      S.onchange = function () { rR.set(st.r); rT.set(st.t); update(); };
+      function arcArrow(c, r, a1, d, col) {
+        var e = a1 + d, tip = [c[0] + r * Math.cos(e), c[1] + r * Math.sin(e)], sg = d > 0 ? 1 : -1;
+        var tg = [-Math.sin(e) * sg, Math.cos(e) * sg], nn = [-tg[1], tg[0]];
+        return path(arcD(c, r, a1, d), stroke(col, 1.6)) +
+          polygon([tip, [tip[0] - tg[0] * 8 + nn[0] * 4, tip[1] - tg[1] * 8 + nn[1] * 4], [tip[0] - tg[0] * 8 - nn[0] * 4, tip[1] - tg[1] * 8 - nn[1] * 4]], fill(col));
+      }
+      function argN(a) { a = mod(a, 360); return a > 180 ? a - 360 : a; }
+      function update() {
+        var z = [st.r * Math.cos(rad(st.t)), st.r * Math.sin(rad(st.t))], w = st.w;
+        var P = [z[0] * w[0] - z[1] * w[1], z[0] * w[1] + z[1] * w[0]];
+        var zp = F.P(z), wp = F.P(w), pp = F.P(P), s = '';
+        s += polygon([o, u, zp], fill(C.blue, 0.14)) + polygon([o, wp, pp], fill(C.acc, 0.14));
+        s += line(u, zp, stroke(C.blue, 1.2, DASH)) + line(wp, pp, stroke(C.acc, 1.2, DASH));
+        s += line(o, zp, stroke(C.blue, 2.2)) + line(o, wp, stroke(C.line, 2)) + line(o, pp, stroke(C.acc, 2.4));
+        if (Math.abs(st.t) >= 4) {
+          var aw = Math.atan2(-w[1], w[0]), rw = Math.min(46, 0.55 * dist(o, wp));
+          s += arcArrow(o, 22, 0, -rad(st.t), C.blue);
+          if (rw > 14) s += arcArrow(o, q(rw), aw, -rad(st.t), C.acc);
+        }
+        s += dot(o) + dot(u) + text([u[0], u[1] + 17], '1', { size: 13 });
+        s += dot(pp, C.acc, 5);
+        s += lab(zp, 'z', [z[0], -z[1]], { color: C.blue, k: 19, F: F }) + lab(wp, 'w', [w[0], -w[1]], { k: 19, F: F }) +
+          lab(pp, 'zw', [P[0], -P[1]], { color: C.acc, k: 14, F: F, bold: true });
+        S.draw('main', s);
+        S.sync();
+        var mz = st.r, mw = Math.sqrt(w[0] * w[0] + w[1] * w[1]), mp = mz * mw;
+        var az = st.t, awd = deg(Math.atan2(w[1], w[0])), ap = deg(Math.atan2(P[1], P[0]));
+        function ang(a) { return (Math.abs(a - rnd(a, 1)) < 1e-6 ? '' : '\u2248 ') + fdeg(a); }
+        out.za.innerHTML = fmtC(z[0], z[1]); out.zm.textContent = nt(mz); out.zg.textContent = fdeg(az);
+        out.wa.innerHTML = fmtC(w[0], w[1]); out.wm.textContent = eqv(mw, 2).replace('= ', ''); out.wg.textContent = ang(awd);
+        out.pa.innerHTML = fmtC(P[0], P[1]); out.pm.textContent = eqv(mp, 2).replace('= ', ''); out.pg.textContent = ang(ap);
+        out.mods.innerHTML = nt(mz) + ' × ' + nf(mw, 2) + ' \u2248 <b>' + nf(mp, 2) + '</b>';
+        var aw1 = rnd(awd, 1), sm = rnd(az + aw1, 1), nm = argN(sm);
+        out.args.innerHTML = fdeg(az) + ' + ' + (aw1 < 0 ? '(' + fdeg(aw1) + ')' : fdeg(aw1)) + ' = <b>' + fdeg(sm) + '</b>' + (Math.abs(nm - sm) > 1e-9 ? ', soit <b>' + fdeg(nm) + '</b> à 360° près' : '');
+        out.msg.textContent = Math.abs(P[0]) > 3.3 || Math.abs(P[1]) > 3.3 ? 'Le point d\'affixe zw sort du cadre : rapproche z ou w de O.' : '';
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 15. Moyenne et médiane                                              */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'moyenne-mediane',
+    titre: 'Moyenne et médiane en direct',
+    chapitres: ['4e-statistiques', '3e-statistiques', '2s-statistiques', '2l-statistiques', '1l-statistiques'],
+    resume: 'Ajoute, déplace ou retire des notes : la moyenne et la médiane bougent sous tes yeux. Une valeur extrême tire la moyenne, pas la médiane.',
+    render: function (el) {
+      var W = 340, H = 176, AXY = 94, NMAX = 40;
+      var F = new Frame(0, 20, 0, 1, W, H, { l: 18, r: 18 });
+      var INIT = [8, 9, 10, 11, 12, 12, 13, 14, 15], vals = INIT.slice(), dragI = -1;
+      var idNew = nid('note');
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Série de notes sur 20 représentée par des points au-dessus d\'un axe gradué'),
+        controls: '<div class="demo-control"><label for="' + idNew + '">Ajouter une note (sur 20)</label><div style="display:flex;gap:8px">' +
+          '<input class="inp" type="number" inputmode="decimal" min="0" max="20" step="0.5" value="16" id="' + idNew + '" style="width:6.5em">' + button('add', 'Ajouter', ' ') + '</div></div>' +
+          buttons(button('pop', 'Retirer la dernière') + button('zero', 'Ajouter un 0') + button('reset', 'Réinitialiser')),
+        readout: '<div style="' + ROW + '"><span>Effectif : <b data-o="n"></b></span><span>Moyenne : <b data-o="m" style="color:' + C.acc + '"></b></span>' +
+          '<span>Médiane : <b data-o="me" style="color:' + C.green + '"></b></span></div>' +
+          '<div style="' + ROW + '"><span>Étendue : <b data-o="e"></b></span><span>Écart type : <b data-o="s"></b></span></div>' +
+          '<div class="small" style="margin-top:4px">Série rangée : <span data-o="sorted"></span></div><p data-o="msg" class="small" style="margin:4px 0 0"></p>',
+        note: md('Touche l\'axe pour ajouter une note, touche un point pour le retirer, fais-le glisser pour le changer. Observe : une valeur extrême (un $0$ par exemple) fait beaucoup bouger la moyenne, ' +
+          'mais presque pas la médiane, qui partage la série rangée en deux moitiés de même effectif.')
+      });
+      var svg = el.querySelector('[data-s="fig"]'), S = new Stage(svg, F), out = outs(el), inp = el.querySelector('#' + idNew);
+      function valueAt(px) { return clamp(snap(F.inv(px, 0)[0], 0.5), 0, 20); }
+      function stats() {
+        var s = vals.slice().sort(function (a, b) { return a - b; }), n = s.length, m = sum(s) / n;
+        var me = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+        var v = sum(s.map(function (x) { return (x - m) * (x - m); })) / n;
+        return { s: s, n: n, m: m, me: me, e: s[n - 1] - s[0], sd: Math.sqrt(v) };
+      }
+      function positions() {
+        var seen = {}, mx = 1;
+        vals.forEach(function (v) { seen[v] = (seen[v] || 0) + 1; mx = Math.max(mx, seen[v]); });
+        var gap = Math.min(13, (AXY - 16) / mx);
+        seen = {};
+        return vals.map(function (v) { seen[v] = (seen[v] || 0) + 1; return [F.X(v), AXY - 9 - (seen[v] - 1) * gap]; });
+      }
+      function edgeText(x, y, s, o) {
+        var wd = s.length * (o.size || 12) * 0.6;
+        o.anchor = x - wd / 2 < 2 ? 'start' : x + wd / 2 > W - 2 ? 'end' : 'middle';
+        return text([o.anchor === 'start' ? 2 : o.anchor === 'end' ? W - 2 : x, y], s, o);
+      }
+      function update() {
+        var t = stats(), pos = positions(), s = '', x;
+        s += line([F.X(0) - 8, AXY], [F.X(20) + 8, AXY], stroke(C.line, 1.5));
+        for (x = 0; x <= 20; x++) {
+          s += line([F.X(x), AXY - (x % 5 ? 3 : 5)], [F.X(x), AXY + (x % 5 ? 3 : 5)], stroke(C.muted, 1));
+          if (x % 2 === 0) s += text([F.X(x), AXY + 18], String(x), { size: 11, color: C.muted });
+        }
+        var xm = F.X(t.m), xe = F.X(t.me);
+        s += line([xm, 6], [xm, AXY], stroke(C.acc, 1.5, DASH)) + line([xe, 6], [xe, AXY], stroke(C.green, 1.5, 'stroke-dasharray:2 3;'));
+        pos.forEach(function (p, i) { s += circle(p, i === dragI ? 7 : 5.5, shape(C.blue, i === dragI ? 0.9 : 0.75, 'var(--demo-bg,var(--surface-2))', 1.5)); });
+        s += polygon([[xm, AXY + 25], [xm - 6, AXY + 35], [xm + 6, AXY + 35]], fill(C.acc)) + edgeText(xm, AXY + 50, 'moyenne ' + nt(t.m, 2), { size: 12, bold: true, color: C.acc });
+        s += polygon([[xe, AXY + 55], [xe - 6, AXY + 65], [xe + 6, AXY + 65]], fill(C.green)) + edgeText(xe, AXY + 80, 'médiane ' + nt(t.me, 2), { size: 12, bold: true, color: C.green });
+        S.draw('main', s);
+        out.n.textContent = t.n;
+        out.m.textContent = eqv(t.m, 2).replace('= ', '');
+        out.me.textContent = nt(t.me, 2);
+        out.e.textContent = nt(t.e, 2);
+        out.s.textContent = '\u2248 ' + nf(t.sd, 2);
+        var lo = t.n % 2 ? (t.n - 1) / 2 : t.n / 2 - 1, hi = t.n % 2 ? lo : lo + 1;
+        out.sorted.innerHTML = t.s.map(function (v, i) { return i >= lo && i <= hi ? '<b style="color:' + C.green + '">' + nt(v) + '</b>' : nt(v); }).join(' ; ');
+        out.msg.textContent = t.n % 2 ? 'Effectif impair : la médiane est la valeur du milieu de la série rangée.' :
+          'Effectif pair : la médiane est la moyenne des deux valeurs du milieu de la série rangée.';
+      }
+      function addVal(v) { if (vals.length < NMAX && isFinite(v)) { vals.push(clamp(snap(v, 0.5), 0, 20)); update(); } }
+      var press = null;
+      function down(e) {
+        if (e.button != null && e.button > 0) return;
+        var p = S.local(e), pos = positions(), R = S.grabR(), best = -1, bd = R;
+        pos.forEach(function (q0, i) { var d = dist(q0, p); if (d < bd) { bd = d; best = i; } });
+        press = { i: best, p0: p, moved: false };
+        try { svg.setPointerCapture(e.pointerId); } catch (err) { /* sans capture */ }
+        e.preventDefault();
+      }
+      function move(e) {
+        if (!press) return;
+        var p = S.local(e);
+        if (!press.moved && dist(p, press.p0) > 5) press.moved = true;
+        if (press.moved && press.i >= 0) { dragI = press.i; vals[press.i] = valueAt(p[0]); update(); }
+      }
+      function up(e) {
+        if (!press) return;
+        var p = S.local(e), pr = press;
+        press = null; dragI = -1;
+        if (!pr.moved) {
+          if (pr.i >= 0) { if (vals.length > 1) vals.splice(pr.i, 1); }
+          else if (p[1] > 4 && p[1] < AXY + 28) { addVal(valueAt(p[0])); return; }
+        }
+        update();
+      }
+      svg.addEventListener('pointerdown', down);
+      svg.addEventListener('pointermove', move);
+      svg.addEventListener('pointerup', up);
+      svg.addEventListener('pointercancel', function () { press = null; dragI = -1; update(); });
+      onAct(el, {
+        add: function () { addVal(parseFloat(String(inp.value).replace(',', '.'))); },
+        pop: function () { if (vals.length > 1) { vals.pop(); update(); } },
+        zero: function () { addVal(0); },
+        reset: function () { vals = INIT.slice(); update(); }
+      });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addVal(parseFloat(String(inp.value).replace(',', '.'))); } });
+      update();
+      return function () { S.destroy(); svg.removeEventListener('pointerdown', down); svg.removeEventListener('pointermove', move); svg.removeEventListener('pointerup', up); };
+    }
+  });
+
+  /* ================================================================== */
+  /* 16. Homothétie                                                      */
+  /* ================================================================== */
+  EM.demos.register({
+    id: 'homothetie',
+    titre: 'Homothétie : centre et rapport',
+    chapitres: ['2s-transformations', '2s-vecteurs-barycentre', '3e-vecteurs', '1s1-transformations'],
+    resume: 'Fais varier le rapport k et déplace le centre O : l\'image du triangle s\'agrandit, rétrécit ou passe de l\'autre côté de O, avec OA′ = k × OA en vecteurs.',
+    render: function (el) {
+      var F = new Frame(-6, 6, -4.4, 4.4, 340);
+      var st = { k: 2, O: [-5.5, -4], T: [[-4, -2], [-2.5, -2.5], [-3.5, -0.5]] };
+      var NAMES = ['A', 'B', 'C'];
+      el.innerHTML = layout({
+        stage: svgTag('fig', F, 'Triangle ABC et son image par l\'homothétie de centre O et de rapport k'),
+        controls: slider('k', 'Rapport $k$', -3, 3, 0.1, st.k),
+        readout: '<div data-o="kind" style="margin-bottom:4px"></div><div data-o="l1"></div><div data-o="l2"></div><div data-o="l3"></div>',
+        note: md('Observe : $O$, $A$ et $A\'$ sont toujours alignés, avec $\\overrightarrow{OA\'} = k\\,\\overrightarrow{OA}$. Les longueurs sont multipliées par $|k|$, les aires par $k^2$, et chaque côté de l\'image est parallèle au côté correspondant. ' +
+          'Avec $k = -1$, tu retrouves la symétrie centrale de centre $O$. Tu peux aussi faire glisser $A\'$.')
+      });
+      var S = new Stage(el.querySelector('[data-s="fig"]'), F), out = outs(el);
+      S.draw('bg', gridOnly(F, 1));
+      var MSG = {};
+      function M(s) { if (!MSG[s]) MSG[s] = md(s); return MSG[s]; }
+      var rK = bindRange(el, 'k', function (v) { return nt(v, 1); }, function (v) { st.k = rnd(v, 1); update(); });
+      function sp(x, y) { return [clamp(snap(x, 0.5), -5.5, 5.5), clamp(snap(y, 0.5), -4, 4)]; }
+      function img(p) { return [st.O[0] + st.k * (p[0] - st.O[0]), st.O[1] + st.k * (p[1] - st.O[1])]; }
+      S.handle({ label: 'Centre O', color: C.line, step: 0.5, get: function () { return st.O; }, set: function (x, y) { st.O = sp(x, y); } });
+      [0, 1, 2].forEach(function (i) {
+        S.handle({ label: 'Sommet ' + NAMES[i], color: C.blue, step: 0.5, get: function () { return st.T[i]; }, set: function (x, y) { st.T[i] = sp(x, y); } });
+      });
+      var hA2 = S.handle({
+        label: 'Image A′ (règle le rapport k)', color: C.acc,
+        get: function () { return img(st.T[0]); },
+        set: function (x, y) {
+          var v = [st.T[0][0] - st.O[0], st.T[0][1] - st.O[1]], n2 = v[0] * v[0] + v[1] * v[1];
+          if (n2 < 0.01) return;
+          var k = clamp(rnd(((x - st.O[0]) * v[0] + (y - st.O[1]) * v[1]) / n2, 1), -3, 3);
+          if (k !== 0) st.k = k;
+        },
+        key: function (dx, dy) { var k = clamp(rnd(st.k + 0.1 * (dx || dy), 1), -3, 3); if (k !== 0) st.k = k; }
+      });
+      S.onchange = function () { rK.set(st.k); update(); };
+      function cen(a) { return [(a[0][0] + a[1][0] + a[2][0]) / 3, (a[0][1] + a[1][1] + a[2][1]) / 3]; }
+      function update() {
+        var k = st.k, T = st.T, I = T.map(img), o = F.P(st.O), s = '', i;
+        var tp = T.map(function (p) { return F.P(p); }), ip = I.map(function (p) { return F.P(p); });
+        hA2.hidden = k === 0;
+        for (i = 0; i < 3; i++) {
+          var c3 = [o, tp[i], ip[i]], e1 = o, e2 = tp[i], best = -1;
+          for (var a = 0; a < 3; a++) for (var b = a + 1; b < 3; b++) { var d = dist(c3[a], c3[b]); if (d > best) { best = d; e1 = c3[a]; e2 = c3[b]; } }
+          s += line(e1, e2, stroke(C.muted, 1.1, DASH));
+        }
+        s += polygon(tp, shape(C.blue, 0.14, C.blue, 2));
+        if (k !== 0) s += polygon(ip, shape(C.acc, 0.14, C.acc, 2));
+        var gt = F.P(cen(T)), gi = F.P(cen(I));
+        for (i = 0; i < 3; i++) {
+          if (k !== 0) s += (i ? dot(ip[i], C.acc, 3.5) : '') + lab(ip[i], NAMES[i] + PRIME, [ip[i][0] - gi[0], ip[i][1] - gi[1]], { color: C.acc, k: i ? 15 : 20, F: F });
+          s += lab(tp[i], NAMES[i], [tp[i][0] - gt[0], tp[i][1] - gt[1]], { color: C.blue, k: 20, F: F });
+        }
+        s += lab(o, 'O', [-0.7, 0.75], { k: 19, F: F });
+        S.draw('main', s);
+        S.sync();
+        out.kind.innerHTML = '<b>' + (k === 0 ? M('$k = 0$ n\'est pas permis : tous les points iraient en $O$.') :
+          k === 1 ? M('$k = 1$ : chaque point est sa propre image.') : k === -1 ? M('$k = -1$ : c\'est la symétrie centrale de centre $O$.') :
+            k > 1 ? M('$k > 1$ : agrandissement, l\'image est du même côté de $O$.') : k > 0 ? M('$0 < k < 1$ : réduction, l\'image est du même côté de $O$.') :
+              k > -1 ? M('$-1 < k < 0$ : réduction, l\'image passe de l\'autre côté de $O$.') : M('$k < -1$ : agrandissement, l\'image passe de l\'autre côté de $O$.')) + '</b>';
+        if (k === 0) { out.l1.innerHTML = out.l2.innerHTML = out.l3.innerHTML = ''; return; }
+        var A1 = it('A' + PRIME), B1 = it('B' + PRIME), OA = dist(st.O, T[0]), AB = dist(T[0], T[1]), ar = aireTri(T[0], T[1], T[2]);
+        out.l1.innerHTML = it('OA') + ' = ' + nf(OA, 2) + ' ; ' + it('O') + A1 + ' = ' + nf(Math.abs(k) * OA, 2) +
+          (OA > 1e-9 ? ' ; ' + it('O') + A1 + ' ÷ ' + it('OA') + ' = <b>' + nt(Math.abs(k), 1) + '</b> = |' + it('k') + '|' : '');
+        out.l2.innerHTML = it('AB') + ' = ' + nf(AB, 2) + ' ; ' + A1 + B1 + ' = ' + nf(Math.abs(k) * AB, 2) +
+          (AB > 1e-9 ? ' ; ' + A1 + B1 + ' ÷ ' + it('AB') + ' = <b>' + nt(Math.abs(k), 1) + '</b>' : '');
+        out.l3.innerHTML = 'Aires : ' + nt(rnd(ar, 3), 3) + ' et ' + nt(rnd(k * k * ar, 3), 3) + (ar > 1e-9 ? ' ; rapport <b>' + nt(rnd(k * k, 2), 2) + '</b> = ' + it('k') + '²' : '') + ' carreaux.';
+      }
+      update();
+      return function () { S.destroy(); };
+    }
+  });
+
 })(typeof window !== 'undefined' ? window : globalThis);

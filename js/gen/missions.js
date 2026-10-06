@@ -39,6 +39,8 @@
   function rd(x, d) { return ar.round(x, d == null ? 2 : d); }
   /** Nombre en texte simple (pour les figures SVG) : 3,5 */
   function tx(x) { return T.txt(rd(x, 2)); }
+  /** « de Moussa », « d'Awa », « d'Ousmane » */
+  function de(nom) { return /^[AEIOUYÀÂÉÈÊÎÏÔ]/.test(nom) ? 'd\'' + nom : 'de ' + nom; }
   /** Début d'une étape de correction : « 1) » en gras */
   function Q(k) { return '<b>' + k + ')</b> '; }
   /** Degrés */
@@ -327,12 +329,12 @@
       trace('mission-jardin-maraicher', niveau, { L: L, l: l, g: g, pm: pm, R: R, fr: fr, rdt: rdt });
 
       var a = (L - g) / 2;
-      var f = EM.fig.fit([[0, 0], [L, 0], [L, l], [0, l]], { w: 300, h: 200, pad: 32, title: 'Plan du jardin maraîcher' });
+      var f = EM.fig.fit([[0, 0], [L, 0], [L, l], [0, l]], { w: 300, h: 200, pad: 46, title: 'Plan du jardin maraîcher' });
       f.polyline([[a + g, 0], [L, 0], [L, l], [0, l], [0, 0], [a, 0]]);
       f.dot([a, 0]).dot([a + g, 0]);
       f.text([L / 2, l * 0.1], 'portail (' + g + ' m)', { small: true });
       f.segLabel([0, l], [L, l], L + ' m', { inside: [L / 2, l / 2] });
-      f.segLabel([0, 0], [0, l], l + ' m', { inside: [L / 2, l / 2] });
+      f.segLabel([0, 0], [0, l], l + ' m', { inside: [L / 2, l / 2], k: 24 });
 
       var frTex = '\\dfrac{' + fr[0] + '}{' + fr[1] + '}';
       var enonce = 'À ' + lieu + ', le groupement des femmes maraîchères présidé par ' + presidente + ' cultive un jardin rectangulaire de ' + M(L) + ' m de long et ' + M(l) + ' m de large. ' +
@@ -407,7 +409,7 @@
       f.segLabel([-r, 0], [r, 0], D + ' m');
       if (niveau === 2) f.segLabel([-c / 2, c / 2], [c / 2, c / 2], c + ' m', { inside: [0, 0] });
 
-      var enonce = 'Dans le quartier de ' + quartier + ', l\'association sportive de ' + chef + ' prépare un tournoi de lutte. ' +
+      var enonce = 'À ' + quartier + ', l\'association sportive du quartier, animée par ' + chef + ', prépare un tournoi de lutte. ' +
         'L\'arène sera un disque de ' + M(D) + ' m de diamètre, de centre $O$.<br>' +
         '• Pour délimiter l\'arène, on pose une rangée de sacs de sable tout le long du cercle.<br>' +
         '• Le sol de l\'arène est recouvert de sable fin : il faut ' + M(1) + ' sac de sable fin pour ' + M(s) + ' m², vendu ' + cfa(ps) + ' le sac.' +
@@ -543,13 +545,13 @@
       // perspective cavalière
       var k = 0.5, ang = Math.PI / 6, ox = l * k * Math.cos(ang), oy = l * k * Math.sin(ang);
       var A = [0, 0], B = [L, 0], C = [L, h], D = [0, h], E = [ox, oy], Fp = [L + ox, oy], G = [L + ox, h + oy], H = [ox, h + oy];
-      var f = EM.fig.fit([A, B, G, H, E, Fp], { w: 280, h: 200, pad: 34, title: 'Poulailler en forme de pavé droit' });
+      var f = EM.fig.fit([A, B, G, H, E, Fp], { w: 280, h: 200, pad: 46, title: 'Poulailler en forme de pavé droit' });
       f.poly([A, B, C, D]);
       f.seg(B, Fp).seg(Fp, G).seg(G, H).seg(H, D).seg(C, G);
       f.seg(A, E, { dash: true }).seg(E, Fp, { dash: true }).seg(E, H, { dash: true });
       f.segLabel(A, B, tx(L) + ' m');
       f.segLabel(B, Fp, tx(l) + ' m', { inside: D });
-      f.segLabel(A, D, tx(h) + ' m', { inside: C });
+      f.segLabel(A, D, tx(h) + ' m', { inside: C, k: 26 });
 
       var enonce = 'À ' + lieu + ', ' + nom + ' se lance dans l\'élevage de poules pondeuses. Son poulailler a la forme d\'un pavé droit (prisme droit à base rectangulaire) : ' +
         'le sol est un rectangle de ' + M(L) + ' m sur ' + M(l) + ' m et la hauteur est de ' + M(h) + ' m.<br>' +
@@ -570,9 +572,9 @@
       qs.push({ label: '5) Coût du grillage :', type: 'number', reponse: cout, unite: 'F CFA' });
       sol.push(Q(5) + '$' + N(Al) + ' \\times ' + N(pg) + ' = ' + N(cout) + '$ F CFA.');
       if (niveau === 2) {
-        qs.push({ label: '6) Contenance de l\'abreuvoir (en litres) :', type: 'number', reponse: VcL, tol: 0.01, unite: 'L' });
+        qs.push({ label: '6) Contenance de l\'abreuvoir (en litres, au centième) :', type: 'number', reponse: VcL, tol: 0.01, reponseTex: ap(VcL, 2), unite: 'L' });
         sol.push(Q(6) + 'Volume d\'un cylindre : $\\pi \\times r^2 \\times h \\approx 3{,}14 \\times ' + rc + '^2 \\times ' + Hc + ' = ' + N(Vc) + '$ cm³. ' +
-          'Or $1$ L $= 1\\,000$ cm³ : la contenance est $' + N(VcL) + '$ L.');
+          'Or $1$ L $= 1\\,000$ cm³ : la contenance est $' + N(VcL) + '$ L, soit environ $' + N(rd(VcL, 2)) + '$ L.');
       }
       return {
         enonce: enonce,
@@ -620,7 +622,7 @@
       var voy = rng.pick(FILLES), oncle = rng.pick(GARCONS);
       trace('mission-voyage-saint-louis', niveau, { v1: v1, v2: v2, D: D, Dl: Dl, dep: dep });
 
-      var f = EM.fig.create({ w: 300, h: 96, xmin: -1.6, xmax: 11.6, ymin: -1.3, ymax: 2.2, title: 'La route Dakar – Saint-Louis' });
+      var f = EM.fig.create({ w: 300, h: 96, xmin: -2.2, xmax: 12.4, ymin: -1.3, ymax: 2.2, title: 'La route Dakar – Saint-Louis' });
       f.seg([0, 0], [10, 0]);
       f.point([0, 0], 'Dakar', 's').point([10, 0], 'Saint-Louis', 's');
       f.vector([0.2, 0.9], [3.2, 0.9], { accent: true });
@@ -630,7 +632,7 @@
       f.text([5, 0.25], D + ' km', { small: true });
 
       var enonce = voy + ' part de Dakar pour rendre visite à sa grand-mère à Saint-Louis. Dans cette mission, on prend ' + M(D) + ' km pour la distance entre les deux villes et on suppose que les véhicules roulent à vitesse constante.<br>' +
-        '• Le bus de ' + voy + ' quitte Dakar à ' + hm(dep) + ' et roule à ' + M(v1) + ' km/h.<br>' +
+        '• Le bus ' + de(voy) + ' quitte Dakar à ' + hm(dep) + ' et roule à ' + M(v1) + ' km/h.<br>' +
         '• Son oncle ' + oncle + ' quitte Saint-Louis en taxi, vers Dakar, ' + (Dl === 0 ? 'à la même heure' : 'à ' + hm(dep + 60 * Dl) + ' (soit ' + duree(Dl) + ' plus tard)') + ', et roule à ' + M(v2) + ' km/h.<br>' +
         'On note $t$ le temps (en heures) écoulé depuis le départ du bus, $d_1(t)$ la distance (en km) entre le bus et Dakar et $d_2(t)$ la distance entre le taxi et Dakar' +
         (Dl === 0 ? '.' : ' (pour $t \\geqslant ' + N(Dl) + '$).');
@@ -701,7 +703,7 @@
       f.rightAngle([0, a], [0, 0], [d, 0]);
       f.angle([0, 0], [d, 0], [0, a], 'α', { r: 26 });
       f.point([0, a], 'S', 'no').point([0, 0], 'P', 'so').point([d, 0], 'A', 'se');
-      f.segLabel([0, 0], [0, a], a + ' m', { inside: [d, 0] });
+      f.segLabel([0, 0], [0, a], a + ' m', { inside: [d, 0], k: 24 });
       f.segLabel([0, 0], [d, 0], d + ' m');
 
       var enonce = 'La radio communautaire de ' + lieu + ' installe un mât vertical $[SP]$ pour son antenne. Pour qu\'il résiste au vent, le technicien ' + tech + ' le maintient par ' + M(3) + ' haubans (câbles tendus) identiques, ' +
@@ -724,7 +726,7 @@
       qs.push({ label: '3) Coût du câble :', type: 'number', reponse: cout, unite: 'F CFA' });
       sol.push(Q(3) + 'Le coût est proportionnel à la longueur (application linéaire de coefficient $' + pc + '$) : $' + totA + ' \\times ' + pc + ' = ' + N(cout) + '$ F CFA.');
       if (niveau === 1) {
-        qs.push({ label: '4) $\\cos \\alpha =$', type: 'number', reponse: F(d, L) });
+        qs.push({ label: '4) $\\cos \\alpha =$ (valeur exacte, sous forme de fraction)', type: 'number', reponse: F(d, L) });
         sol.push(Q(4) + 'Dans le triangle $SPA$ rectangle en $P$ : $\\cos \\alpha = \\dfrac{\\text{côté adjacent}}{\\text{hypoténuse}} = \\dfrac{PA}{SA} = \\dfrac{' + d + '}{' + L + '}' + (F(d, L).d !== L ? ' = ' + F(d, L).tex() : '') + '$.');
       } else {
         qs.push({ label: '4) $\\cos \\alpha \\approx$ (au millième)', type: 'number', reponse: d / L, tol: 0.001, reponseTex: ap(d / L, 3) });
@@ -903,7 +905,7 @@
         var choix = ['Formule A', 'Formule B', 'Formule C'];
         qs.push({ label: n + ') Pour ' + x2 + ' minutes par mois, la formule la moins chère est :', type: 'choice', choix: choix, reponse: best });
         sol.push(Q(n++) + 'Pour $x = ' + x2 + '$ : $g_A(' + x2 + ') = ' + N(cA(x2)) + '$ F, $g_B(' + x2 + ') = ' + N(cB(x2)) + '$ F et formule C : $' + N(fC) + ' + ' + pC + ' \\times ' + x2 + ' = ' + N(cC(x2)) + '$ F. ' +
-          'La moins chère est la ' + choix[best].toLowerCase() + '.');
+          'La moins chère est la formule ' + 'ABC'[best] + '.');
       }
       return {
         enonce: enonce,
@@ -952,8 +954,8 @@
       trace('mission-hauteur-baobab', niveau, { b: b, sb: sb, S: S, beta: beta, c: c });
 
       var x0 = S + Math.max(2, S * 0.2);
-      var f = EM.fig.fit([[0, 0], [0, H], [x0 + sb, 0], [-1, 0]], { w: 300, h: 210, pad: 26, title: 'Le baobab, le bâton et leurs ombres' });
-      f.seg([-1, 0], [x0 + sb + 0.8, 0], { light: true });
+      var f = EM.fig.fit([[0, 0], [0, H], [x0 + sb, 0], [-0.3 * S, 0]], { w: 300, h: 210, pad: 26, title: 'Le baobab, le bâton et leurs ombres' });
+      f.seg([-0.3 * S, 0], [x0 + sb + 0.8, 0], { light: true });
       f.seg([0, 0], [0, H], { accent: true });
       f.seg([0, H], [S, 0], { dash: true });
       f.seg([x0, 0], [x0, b]);
@@ -961,7 +963,7 @@
       f.rightAngle([0, H], [0, 0], [S, 0]);
       f.point([0, H], 'T', 'ne').point([0, 0], 'P', 'so').point([S, 0], 'O', 's');
       f.segLabel([0, 0], [S, 0], tx(S) + ' m');
-      f.text([0.6, H * 0.55], 'baobab', { small: true, anchor: 'start' });
+      f.text([-0.04 * S, H * 0.55], 'baobab', { small: true, anchor: 'end' });
       f.text([x0, b + H * 0.08], 'bâton', { small: true });
 
       var enonce = 'Dans la cour d\'un collège de ' + lieu + ', un grand baobab est trop haut pour être mesuré directement. Un jour ensoleillé, ' + eleve + ' mesure au même instant :<br>' +
@@ -983,7 +985,7 @@
       sol.push(Q(4) + 'Avec la nouvelle ombre $PO\'$ : $\\tan ' + beta + '^\\circ = \\dfrac{PT}{PO\'}$, donc $PO\' = \\dfrac{' + N(H) + '}{\\tan ' + beta + '^\\circ}' + eq(S2, 2) + '$ m.');
       if (niveau === 2) {
         qs.push({ label: '5) Distance entre le pied du baobab et ' + amie + ' (au centimètre) :', type: 'number', reponse: dF, tol: 0.01, reponseTex: ap(dF, 2), unite: 'm' });
-        sol.push(Q(5) + 'L\'ombre de ' + amie + ' vérifie, comme pour le bâton : $\\dfrac{\\text{ombre}}{' + N(c) + '} = \\dfrac{' + N(sb) + '}{' + N(b) + '}$, donc elle mesure $' + N(c) + ' \\times \\dfrac{' + N(sb) + '}{' + N(b) + '}' + eq(c / r.value(), 2) + '$ m. ' +
+        sol.push(Q(5) + 'L\'ombre ' + de(amie) + ' vérifie, comme pour le bâton : $\\dfrac{\\text{ombre}}{' + N(c) + '} = \\dfrac{' + N(sb) + '}{' + N(b) + '}$, donc elle mesure $' + N(c) + ' \\times \\dfrac{' + N(sb) + '}{' + N(b) + '}' + eq(c / r.value(), 2) + '$ m. ' +
           'Elle doit se placer à $' + N(S) + ' - ' + N(rd(c / r.value(), 4)) + eq(dF, 2) + '$ m du pied du baobab.');
       }
       return {
@@ -1021,20 +1023,20 @@
       trace('mission-rampe-ecole', niveau, { h: h, d: d, pmax: pmax, w: w });
 
       var kv = 3; // exagération verticale du dessin
-      var f = EM.fig.fit([[0, 0], [d, 0], [d, kv * h], [d + 0.8, kv * h]], { w: 300, h: 130, pad: 26, title: 'Rampe (échelle verticale exagérée)' });
+      var f = EM.fig.fit([[0, 0], [d, 0], [d, kv * h], [d + 1.2, kv * h]], { w: 300, h: 130, pad: 30, title: 'Rampe (échelle verticale exagérée)' });
       f.poly([[0, 0], [d, 0], [d, kv * h]], { fill: true });
       f.seg([d, kv * h], [d + 0.8, kv * h]);
       f.rightAngle([0, 0], [d, 0], [d, kv * h]);
       f.angle([d, 0], [0, 0], [d, kv * h], 'α', { r: 40 });
       f.segLabel([0, 0], [d, 0], tx(d) + ' m');
-      f.segLabel([d, 0], [d, kv * h], tx(h) + ' m', { inside: [0, 0] });
+      f.segLabel([d, 0], [d, kv * h], tx(h) + ' m', { inside: [0, 0], k: 26 });
 
       var enonce = 'L\'école élémentaire de ' + lieu + ' accueille des élèves en fauteuil roulant. Le seuil de la porte d\'entrée est à ' + M(h * 100) + ' cm au-dessus de la cour. ' +
         'Le directeur, ' + dir + ', fait construire une rampe en béton dont la longueur au sol (horizontale) est de ' + M(d) + ' m.<br>' +
         '• La pente d\'une rampe est le rapport $\\dfrac{\\text{hauteur}}{\\text{longueur au sol}}$, exprimé en pourcentage.<br>' +
         '• Règle de la mission : la pente ne doit pas dépasser ' + M(pmax) + ' %.<br>' +
-        'On note $\\alpha$ l\'angle entre la rampe et le sol (figure ci-dessous, hauteur exagérée).' +
-        (niveau === 2 ? '<br>• La rampe définitive aura une largeur de ' + M(w) + ' m et une longueur au sol égale à la longueur minimale autorisée.' : '');
+        (niveau === 2 ? '• La rampe définitive aura une largeur de ' + M(w) + ' m et une longueur au sol égale à la longueur minimale autorisée.<br>' : '') +
+        'On note $\\alpha$ l\'angle entre la rampe et le sol (figure ci-dessous, hauteur exagérée).';
 
       var qs = [], sol = [];
       qs.push({ label: '1) Pente de la rampe prévue (en %, au centième) :', type: 'number', reponse: pente, tol: 0.01, reponseTex: ap(pente, 2), unite: '%' });
@@ -1096,7 +1098,7 @@
       trace('mission-boulangerie', niveau, { bc: bc, c: c, p: p, x0: x0 });
 
       var Cx = T.poly([1, bc, c]), Bx = T.poly([-1, s, -c]);
-      var enonce = 'La boulangerie de ' + patron + ', à ' + ville + ', produit chaque jour $x$ centaines de baguettes, avec $0 \\leqslant x \\leqslant 15$. Toute la production est vendue.' +
+      var enonce = 'La boulangerie ' + de(patron) + ', à ' + ville + ', produit chaque jour $x$ centaines de baguettes, avec $0 \\leqslant x \\leqslant 15$. Toute la production est vendue.' +
         table([
           ['Coût de production (en milliers de F CFA)', '$C(x) = ' + Cx + '$'],
           ['Prix de vente d\'une centaine de baguettes', M(p) + ' milliers de F CFA'],
@@ -1278,7 +1280,7 @@
     chapitres: ['1s-derivation', '1s-etude-fonctions', '5e-prisme-cylindre'],
     niveaux: 2,
     gen: function (rng, niveau) {
-      var ing = rng.pick(FILLES), prod = rng.pick(['tomate concentrée', 'sardines à la tomate', 'thon', 'petits pois', 'lait concentré']);
+      var ing = rng.pick(FILLES), prod = rng.pick(['de la tomate concentrée', 'des sardines à la tomate', 'du thon', 'des petits pois', 'du lait concentré']);
       var V = rng.pick([330, 425, 500, 750, 850, 1000]);
       var r0 = Math.cbrt(V / (2 * Math.PI)), h0 = V / (Math.PI * r0 * r0), Smin = 6 * Math.PI * r0 * r0;
       trace('mission-boite-conserve', niveau, { V: V });
@@ -1289,7 +1291,7 @@
       f.add('<path class="fig-line fig-nofill" d="M' + f.X(-1.5) + ',' + f.Y(0) + ' A' + rd(f.X(1.5) - f.X(0), 2) + ',' + rd(f.Y(-0.3) - f.Y(0), 2) + ' 0 0,0 ' + f.X(1.5) + ',' + f.Y(0) + '"/>');
       f.seg([-1.5, 0], [-1.5, 3]).seg([1.5, 0], [1.5, 3]);
       f.seg([0, 3], [1.5, 3], { accent: true });
-      f.text([0.75, 3.15], 'r', { small: true });
+      f.text([0.75, 3.42], 'r', { small: true });
       f.seg([2.1, 0], [2.1, 3], { dash: true });
       f.text([2.35, 1.5], 'h', { small: true });
 
@@ -1345,7 +1347,7 @@
     niveaux: 2,
     gen: function (rng, niveau) {
       var mere = rng.pick(FILLES), fille = rng.pick(FILLES.filter(function (x) { return x !== mere; }));
-      var quartier = rng.pick(['la Médina', 'Grand-Yoff', 'les Parcelles Assainies', 'Pikine', 'Guédiawaye', 'Sicap Liberté', 'Ouakam']);
+      var quartier = rng.pick(['de la Médina', 'de Grand-Yoff', 'des Parcelles Assainies', 'de Pikine', 'de Guédiawaye', 'de Sicap Liberté', 'd\'Ouakam']);
       var nM = rng.pick([8, 10, 12]), c = rng.pick([5000, 10000, 15000, 20000]), pot = nM * c;
       var a = rng.pick([2000, 2500, 3000, 5000]), r = rng.pick([250, 500, 1000]);
       var u12 = a + 11 * r, S12 = 6 * (a + u12);
@@ -1355,7 +1357,7 @@
       var ny = 0; while (pot * Math.pow(1 + t / 100, ny) <= X) ny++;
       trace('mission-tontine', niveau, { nM: nM, c: c, a: a, r: r, t: t, k: k, X: X });
 
-      var enonce = 'Dans le quartier de ' + quartier + ', ' + mere + ' fait partie d\'une tontine de ' + M(nM) + ' femmes : chaque mois, chaque membre verse ' + cfa(c) + ' et la cagnotte du mois est remise, à tour de rôle, à l\'une d\'elles.<br>' +
+      var enonce = 'Dans le quartier ' + quartier + ', ' + mere + ' fait partie d\'une tontine de ' + M(nM) + ' femmes : chaque mois, chaque membre verse ' + cfa(c) + ' et la cagnotte du mois est remise, à tour de rôle, à l\'une d\'elles.<br>' +
         '• Sa fille ' + fille + ' veut aussi épargner : ' + cfa(a) + ' en janvier, puis chaque mois ' + cfa(r) + ' de plus que le mois précédent. On note $u_n$ la somme épargnée le $n$-ième mois ($u_1 = ' + N(a) + '$).<br>' +
         '• Quand ' + mere + ' reçoit la cagnotte, elle la place à la banque au taux annuel de ' + M(t) + ' % à intérêts composés, pendant ' + M(k) + ' ans (taux de la mission).' +
         (niveau === 2 ? '<br>• Une autre banque propose le même taux, mais à intérêts simples. ' + mere + ' se demande aussi au bout de combien d\'années son capital placé à intérêts composés dépassera ' + cfa(X) + '.' : '');
@@ -1367,7 +1369,7 @@
       sol.push(Q(n++) + '$(u_n)$ est une suite arithmétique de premier terme $u_1 = ' + N(a) + '$ et de raison $' + N(r) + '$ : $u_n = ' + N(a) + ' + (n - 1) \\times ' + N(r) + '$, donc $u_{12} = ' + N(a) + ' + 11 \\times ' + N(r) + ' = ' + N(u12) + '$ F CFA.');
       qs.push({ label: n + ') Total épargné par ' + fille + ' sur l\'année :', type: 'number', reponse: S12, unite: 'F CFA' });
       sol.push(Q(n++) + '$u_1 + u_2 + \\dots + u_{12} = 12 \\times \\dfrac{u_1 + u_{12}}{2} = 12 \\times \\dfrac{' + N(a) + ' + ' + N(u12) + '}{2} = ' + N(S12) + '$ F CFA.');
-      qs.push({ label: n + ') Capital de ' + mere + ' au bout de ' + k + ' ans à intérêts composés (au franc près) :', type: 'number', reponse: Ck, tol: 0.5, reponseTex: '\\approx ' + N(Math.round(Ck)), unite: 'F CFA' });
+      qs.push({ label: n + ') Capital ' + de(mere) + ' au bout de ' + k + ' ans à intérêts composés (au franc près) :', type: 'number', reponse: Ck, tol: 0.5, reponseTex: '\\approx ' + N(Math.round(Ck)), unite: 'F CFA' });
       sol.push(Q(n++) + 'Chaque année, le capital est multiplié par $1 + \\dfrac{' + N(t) + '}{100} = ' + N(q) + '$ : les capitaux successifs forment une suite géométrique de raison $' + N(q) + '$. ' +
         '$C_{' + k + '} = ' + N(pot) + ' \\times ' + N(q) + '^{' + k + '} \\approx ' + N(Math.round(Ck)) + '$ F CFA.');
       if (niveau === 2) {
@@ -1382,11 +1384,390 @@
         enonce: enonce,
         questions: qs,
         indices: [
-          'L\'épargne de ' + fille + ' augmente de la même somme chaque mois : c\'est une suite arithmétique.',
+          'L\'épargne ' + de(fille) + ' augmente de la même somme chaque mois : c\'est une suite arithmétique.',
           'Somme de termes consécutifs d\'une suite arithmétique : nombre de termes $\\times \\dfrac{\\text{premier} + \\text{dernier}}{2}$.',
           'À intérêts composés, le capital est multiplié chaque année par $1 + \\dfrac{t}{100}$ : $C_n = C_0 \\times \\left(1 + \\dfrac{t}{100}\\right)^n$.'
         ],
         solution: sol
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* SECONDAIRE — Terminales S1, S2 et L                                 */
+  /* ================================================================== */
+
+  /** a + b√3 en TeX (a, b rationnels, b non nul) */
+  function r3(a, b) {
+    a = F(a); b = F(b);
+    var sb = b.abs(), rad3 = (sb.equals(1) ? '' : sb.tex()) + '\\sqrt{3}';
+    if (a.isZero()) return (b.n < 0 ? '-' : '') + rad3;
+    return a.tex() + (b.n < 0 ? ' - ' : ' + ') + rad3;
+  }
+  /** a + b√3 pour l'analyseur */
+  function r3s(a, b) { a = F(a); b = F(b); return '(' + a.n + '/' + a.d + ')+(' + b.n + '/' + b.d + ')*sqrt(3)'; }
+  /** Nombre complexe a + bi en TeX (a, b réels « simples ») */
+  function cx(a, b) {
+    if (b === 0) return N(a);
+    var bi = Math.abs(b) === 1 ? 'i' : N(Math.abs(b)) + 'i';
+    if (a === 0) return (b < 0 ? '-' : '') + bi;
+    return N(a) + (b < 0 ? ' - ' : ' + ') + bi;
+  }
+
+  /* ------------------------- La pirogue et la senne tournante ------------------------- */
+  mission({
+    id: 'mission-pirogue-senne',
+    titre: 'La pirogue et la senne tournante',
+    cycle: 'secondaire',
+    classe: 'tle-s1',
+    resume: 'Au large des côtes sénégalaises, une pirogue encercle un banc de sardinelles : nombres complexes et rotation pour piloter la manœuvre.',
+    chapitres: ['ts-complexes', 'ts-similitudes'],
+    niveaux: 2,
+    gen: function (rng, niveau) {
+      var port = rng.pick(['de Joal', 'de Kayar', 'de Mbour', 'de Saint-Louis', 'd\'Ouakam', 'de Yoff']);
+      var cap = rng.pick(GARCONS);
+      var W = rng.pick([[20, 15], [15, 20], [24, 10], [12, 16], [30, 10], [18, 24], [25, 20]]);
+      var VEC = [[3, 4], [4, 3], [6, 8], [8, 6], [5, 12], [12, 5]];
+      var u, v, x1, y1, guard = 0, s3 = Math.sqrt(3);
+      do {
+        var vv = rng.pick(VEC);
+        u = vv[0] * rng.sign(); v = vv[1] * rng.sign();
+        if (niveau === 1) { x1 = W[0] - v; y1 = W[1] + u; } else { x1 = W[0] + u / 2 - v * s3 / 2; y1 = W[1] + u * s3 / 2 + v / 2; }
+      } while ((W[1] + v <= 0 || y1 <= 0 || W[0] + u === 0) && ++guard < 200);
+      if (W[1] + v <= 0 || y1 <= 0 || W[0] + u === 0) { u = 3; v = 4; x1 = niveau === 1 ? W[0] - v : W[0] + u / 2 - v * s3 / 2; y1 = niveau === 1 ? W[1] + u : W[1] + u * s3 / 2 + v / 2; }
+      var x0 = W[0] + u, y0 = W[1] + v;
+      var R = Math.sqrt(u * u + v * v), Rm = 10 * R;
+      var filet = 2 * Math.PI * Rm, distM1 = 10 * Math.sqrt(x1 * x1 + y1 * y1), aire = Math.PI * Rm * Rm;
+      trace('mission-pirogue-senne', niveau, { w: W, u: u, v: v });
+
+      var th = niveau === 1 ? '\\dfrac{\\pi}{2}' : '\\dfrac{\\pi}{3}', thE = niveau === 1 ? '\\frac{\\pi}{2}' : '\\frac{\\pi}{3}';
+      var z1T, z1rep;
+      if (niveau === 1) {
+        z1T = cx(x1, y1);
+        z1rep = { label: '3) Affixe $z_1$ de $M_1$ : (partie réelle ; partie imaginaire) =', type: 'tuple', reponse: [x1, y1] };
+      } else {
+        var ax = F(2 * W[0] + u, 2), bx = F(-v, 2), ay = F(2 * W[1] + v, 2), by = F(u, 2);
+        z1T = r3(ax, bx) + ' + \\left(' + r3(ay, by) + '\\right)i';
+        z1rep = { label: '3) Affixe $z_1$ de $M_1$ : (partie réelle ; partie imaginaire) =', type: 'tuple', reponse: [r3s(ax, bx), r3s(ay, by)], tol: 0.01,
+          reponseTex: '\\left(' + r3(ax, bx) + ' \\,;\\, ' + r3(ay, by) + '\\right)' };
+      }
+
+      // figure : plan complexe
+      var xmin = Math.min(0, W[0] - R) - 4, xmax = W[0] + R + 4, ymin = -4, ymax = W[1] + R + 4;
+      var sc = 270 / Math.max(xmax - xmin, ymax - ymin);
+      var f = EM.fig.create({ w: Math.round((xmax - xmin) * sc), h: Math.round((ymax - ymin) * sc), xmin: xmin, xmax: xmax, ymin: ymin, ymax: ymax, title: 'Repérage de la pirogue' });
+      f.axes({ step: 5, labelStep: 10 });
+      f.circle(W, R, { dash: true });
+      f.seg(W, [x0, y0], { light: true });
+      f.point(W, 'Ω', 'ne').point([x0, y0], 'M₀', 'ne');
+
+      var enonce = 'Au large ' + port + ', l\'équipage ' + de(cap) + ' pêche la sardinelle à la senne tournante : la pirogue tourne autour d\'un banc de poissons en déployant un long filet, puis referme le cercle.<br>' +
+        'Le plan est rapporté à un repère orthonormé direct $(O \\,;\\, \\vect{u}, \\vect{v})$ : $O$ est le quai du port, l\'axe des abscisses suit la côte et la mer est du côté des ordonnées positives. <b>L\'unité de longueur est $10$ m.</b><br>' +
+        '• Le banc de poissons est centré au point $\\Omega$ d\'affixe $\\omega = ' + cx(W[0], W[1]) + '$.<br>' +
+        '• La pirogue est au point $M_0$ d\'affixe $z_0 = ' + cx(x0, y0) + '$.<br>' +
+        '• Elle tourne autour de $\\Omega$ en restant à distance constante, dans le sens direct. Après ' + (niveau === 1 ? 'un quart de tour' : 'un sixième de tour') + ', elle est au point $M_1$ d\'affixe $z_1$, image de $M_0$ par la rotation $\\rho$ de centre $\\Omega$ et d\'angle $' + th + '$.';
+
+      var qs = [], sol = [];
+      qs.push({ label: '1) Distance $\\Omega M_0$ (en mètres) :', type: 'number', reponse: Rm, unite: 'm' });
+      sol.push(Q(1) + '$z_0 - \\omega = ' + cx(u, v) + '$, donc $\\Omega M_0 = |z_0 - \\omega| = \\sqrt{' + T.par(u) + '^2 + ' + T.par(v) + '^2} = ' + R + '$ unités, soit $' + Rm + '$ m.');
+      qs.push({ label: '2) Longueur de filet pour un tour complet (au mètre près) :', type: 'number', reponse: filet, tol: 0.5, reponseTex: '\\approx ' + N(Math.round(filet)), unite: 'm' });
+      sol.push(Q(2) + 'La pirogue décrit le cercle de centre $\\Omega$ et de rayon $' + Rm + '$ m : $2\\pi \\times ' + Rm + ' = ' + (2 * Rm) + '\\pi \\approx ' + N(Math.round(filet)) + '$ m.');
+      qs.push(z1rep);
+      if (niveau === 1) {
+        sol.push(Q(3) + 'L\'écriture complexe de $\\rho$ est $z\' - \\omega = e^{i\\frac{\\pi}{2}}(z - \\omega) = i(z - \\omega)$. ' +
+          'Donc $z_1 = \\omega + i(' + cx(u, v) + ') = ' + cx(W[0], W[1]) + ' + (' + cx(-v, u) + ') = ' + z1T + '$.');
+      } else {
+        sol.push(Q(3) + 'L\'écriture complexe de $\\rho$ est $z\' - \\omega = e^{i\\frac{\\pi}{3}}(z - \\omega)$ avec $e^{i\\frac{\\pi}{3}} = \\dfrac{1}{2} + \\dfrac{\\sqrt{3}}{2}i$. ' +
+          '$\\left(\\dfrac{1}{2} + \\dfrac{\\sqrt{3}}{2}i\\right)(' + cx(u, v) + ') = ' + r3(F(u, 2), F(-v, 2)) + ' + \\left(' + r3(F(v, 2), F(u, 2)) + '\\right)i$. ' +
+          'Donc $z_1 = ' + z1T + '$, soit environ $' + cx(rd(x1, 2), rd(y1, 2)) + '$.');
+      }
+      var bonne = niveau === 1 ? 'rectangle isocèle en $\\Omega$' : 'équilatéral';
+      var autres = niveau === 1 ? ['équilatéral', 'rectangle en $M_0$', 'quelconque'] : ['rectangle isocèle en $\\Omega$', 'rectangle en $M_0$', 'quelconque'];
+      var ch = rng.shuffle([bonne].concat(autres));
+      qs.push({ label: '4) Le triangle $\\Omega M_0 M_1$ est :', type: 'choice', choix: ch, reponse: ch.indexOf(bonne) });
+      sol.push(Q(4) + '$\\dfrac{z_1 - \\omega}{z_0 - \\omega} = e^{i' + thE + '}$ : son module vaut $1$, donc $\\Omega M_1 = \\Omega M_0$, et son argument vaut $' + th + '$, donc $(\\vect{\\Omega M_0}, \\vect{\\Omega M_1}) = ' + th + '$. ' +
+        (niveau === 1 ? 'Le triangle $\\Omega M_0 M_1$ est rectangle isocèle en $\\Omega$.' : 'Le triangle est isocèle en $\\Omega$ avec un angle de $60^\\circ$ au sommet : il est équilatéral.'));
+      qs.push({ label: '5) Distance entre $M_1$ et le quai $O$ (au mètre près) :', type: 'number', reponse: distM1, tol: 0.5, reponseTex: '\\approx ' + N(Math.round(distM1)), unite: 'm' });
+      sol.push(Q(5) + '$OM_1 = |z_1| = \\sqrt{' + (niveau === 1 ? T.par(x1) + '^2 + ' + T.par(y1) + '^2' : N(rd(x1, 3)) + '^2 + ' + N(rd(y1, 3)) + '^2') + '} \\approx ' + N(rd(distM1 / 10, 3)) + '$ unités, soit environ $' + N(Math.round(distM1)) + '$ m.');
+      if (niveau === 2) {
+        qs.push({ label: '6) Aire de la zone de pêche encerclée (au m² près) :', type: 'number', reponse: aire, tol: 0.5, reponseTex: '\\approx ' + N(Math.round(aire)), unite: 'm²' });
+        sol.push(Q(6) + 'Aire du disque de rayon $' + Rm + '$ m : $\\pi \\times ' + Rm + '^2 = ' + N(Rm * Rm) + '\\pi \\approx ' + N(Math.round(aire)) + '$ m².');
+      }
+      return {
+        enonce: enonce,
+        figure: f.svg(),
+        questions: qs,
+        indices: [
+          'La distance entre deux points d\'affixes $a$ et $b$ est $|b - a|$. N\'oublie pas que l\'unité vaut $10$ m.',
+          'La rotation de centre $\\Omega$ (affixe $\\omega$) et d\'angle $\\theta$ a pour écriture complexe $z\' - \\omega = e^{i\\theta}(z - \\omega)$.',
+          'Calcule $\\dfrac{z_1 - \\omega}{z_0 - \\omega}$ : son module et son argument donnent la nature du triangle.'
+        ],
+        solution: sol,
+        aide: niveau === 1 ? 'Un couple s\'écrit (12 ; 19).' : 'Un couple s\'écrit (a ; b), par exemple (21,5 - 2√3 ; 17 + 1,5√3) ou des valeurs arrondies au centième.'
+      };
+    }
+  });
+
+  /* ------------------------- L'élevage de tilapias ------------------------- */
+  mission({
+    id: 'mission-elevage-tilapias',
+    titre: "L'élevage de tilapias",
+    cycle: 'secondaire',
+    classe: 'tle-s2',
+    resume: 'Dans une ferme piscicole, la masse d\'un tilapia suit une équation différentielle : prévois quand le poisson sera bon à vendre.',
+    chapitres: ['ts-equations-differentielles', 'ts-exponentielle', 'ts-logarithme', 'ts-integrales'],
+    niveaux: 2,
+    gen: function (rng, niveau) {
+      var lieu = rng.pick(['Richard-Toll', 'Dagana', 'Podor', 'Matam', 'Kolda', 'Ziguinchor', 'Bakel']);
+      var resp = rng.pick(FILLES.concat(GARCONS));
+      var Mx = rng.pick([400, 450, 500, 600]), m0 = rng.pick([5, 10, 20]), k = rng.pick([0.05, 0.08, 0.1, 0.12]);
+      var t1 = rng.pick([8, 10, 12, 15]), ms = rng.pick([250, 300, 350]), Tm = rng.pick([10, 20, 30]);
+      var mf = function (t) { return Mx - (Mx - m0) * Math.exp(-k * t); };
+      var mt1 = mf(t1), ts = Math.log((Mx - m0) / (Mx - ms)) / k, sem = Math.ceil(ts - 1e-9);
+      var moy = Mx - (Mx - m0) * (1 - Math.exp(-k * Tm)) / (k * Tm);
+      var kM = rd(k * Mx, 6);
+      trace('mission-elevage-tilapias', niveau, { M: Mx, m0: m0, k: k, t1: t1, ms: ms, Tm: Tm });
+
+      var mT = N(Mx) + ' - ' + N(Mx - m0) + 'e^{-' + N(k) + 't}';
+      var tmax = Math.max(40, Math.ceil((ts + 5) / 10) * 10);
+      var g = cadre({ x0: 0, x1: tmax, dx: 10, y0: 0, y1: Math.ceil((Mx + 50) / 100) * 100, dy: 100, xlab: 't (semaines)', ylab: 'm(t) en grammes', title: 'Masse du tilapia', h: 200 });
+      g.seg([0, Mx], [tmax, Mx], { dash: true });
+      g.curve(mf, { from: 0, to: tmax, accent: true });
+
+      var enonce = 'À ' + lieu + ', ' + resp + ' gère une ferme piscicole qui élève des tilapias en bassin. Le technicien modélise la masse $m(t)$ (en grammes) d\'un tilapia en fonction du temps $t$ (en semaines) écoulé depuis sa mise en bassin.<br>' +
+        'Dans le modèle de la mission, $m$ est la solution sur $[0 \\,;\\, +\\infty[$ de l\'équation différentielle $$(E) : \\; y\' = -' + N(k) + 'y + ' + N(kM) + '$$ qui vérifie $m(0) = ' + m0 + '$.<br>' +
+        'Un poisson est vendu dès que sa masse atteint ' + M(ms) + ' g.' +
+        (niveau === 2 ? '<br>Pour calculer la ration de nourriture, on a besoin de la masse moyenne $\\mu = \\dfrac{1}{' + Tm + '}\\displaystyle\\int_0^{' + Tm + '} m(t)\\,\\mathrm{d}t$ pendant les ' + M(Tm) + ' premières semaines.' : '');
+
+      var qs = [], sol = [], n = 1;
+      qs.push({ label: n + ') Solution constante de $(E)$ : $y =$', type: 'number', reponse: Mx });
+      sol.push(Q(n++) + 'Une fonction constante $y = c$ est solution si $0 = -' + N(k) + 'c + ' + N(kM) + '$, soit $c = \\dfrac{' + N(kM) + '}{' + N(k) + '} = ' + Mx + '$. ' +
+        'C\'est la masse limite du poisson dans ce modèle.');
+      qs.push({ label: n + ') $m(t) =$', type: 'expr', variable: 't', reponse: Mx + '-' + (Mx - m0) + '*exp(-' + k + '*t)', reponseTex: mT, domaine: [0, 30] });
+      sol.push(Q(n++) + 'Les solutions de $y\' = -' + N(k) + 'y$ sont les fonctions $t \\mapsto Ce^{-' + N(k) + 't}$ ; celles de $(E)$ sont donc $y(t) = ' + Mx + ' + Ce^{-' + N(k) + 't}$, $C \\in \\R$. ' +
+        '$m(0) = ' + Mx + ' + C = ' + m0 + '$ donne $C = -' + (Mx - m0) + '$ : $m(t) = ' + mT + '$.');
+      qs.push({ label: n + ') Masse au bout de ' + t1 + ' semaines (au dixième de gramme) :', type: 'number', reponse: mt1, tol: 0.1, reponseTex: ap(mt1, 1), unite: 'g' });
+      sol.push(Q(n++) + '$m(' + t1 + ') = ' + N(Mx) + ' - ' + N(Mx - m0) + 'e^{-' + N(rd(k * t1, 6)) + '}' + eq(mt1, 1) + '$ g.');
+      qs.push({ label: n + ') Instant $t_v$ où la masse atteint ' + ms + ' g (au centième de semaine) :', type: 'number', reponse: ts, tol: 0.01, reponseTex: ap(ts, 2), unite: 'semaines' });
+      sol.push(Q(n++) + '$m(t) = ' + ms + ' \\iff ' + N(Mx - m0) + 'e^{-' + N(k) + 't} = ' + (Mx - ms) + ' \\iff e^{-' + N(k) + 't} = \\dfrac{' + (Mx - ms) + '}{' + N(Mx - m0) + '} \\iff t = \\dfrac{1}{' + N(k) + '}\\ln\\left(\\dfrac{' + N(Mx - m0) + '}{' + (Mx - ms) + '}\\right)' + eq(ts, 2) + '$ semaines.');
+      qs.push({ label: n + ') Nombre entier de semaines à attendre avant de vendre le poisson :', type: 'number', reponse: sem, unite: 'semaines' });
+      sol.push(Q(n++) + '$m\'(t) = ' + N(rd(k * (Mx - m0), 6)) + 'e^{-' + N(k) + 't} > 0$ : $m$ est strictement croissante, donc $m(t) \\geqslant ' + ms + ' \\iff t \\geqslant t_v \\approx ' + N(rd(ts, 2)) + '$. ' +
+        'Le poisson pourra être vendu au bout de $' + sem + '$ semaines.');
+      if (niveau === 2) {
+        qs.push({ label: n + ') Masse moyenne $\\mu$ (au dixième de gramme) :', type: 'number', reponse: moy, tol: 0.1, reponseTex: ap(moy, 1), unite: 'g' });
+        sol.push(Q(n++) + 'Une primitive de $m$ est $P(t) = ' + Mx + 't + \\dfrac{' + N(Mx - m0) + '}{' + N(k) + '}e^{-' + N(k) + 't}$. ' +
+          '$\\displaystyle\\int_0^{' + Tm + '} m(t)\\,\\mathrm{d}t = ' + N(Mx * Tm) + ' - \\dfrac{' + N(Mx - m0) + '}{' + N(k) + '}\\left(1 - e^{-' + N(rd(k * Tm, 6)) + '}\\right)$, ' +
+          'donc $\\mu = ' + Mx + ' - \\dfrac{' + N(Mx - m0) + '\\left(1 - e^{-' + N(rd(k * Tm, 6)) + '}\\right)}{' + N(rd(k * Tm, 6)) + '}' + eq(moy, 1) + '$ g.');
+      }
+      return {
+        enonce: enonce,
+        figure: g.svg(),
+        questions: qs,
+        indices: [
+          'Les solutions de $y\' = ay + b$ ($a \\neq 0$) sont $y(t) = Ce^{at} - \\dfrac{b}{a}$, où $-\\dfrac{b}{a}$ est la solution constante.',
+          'Pour résoudre $e^{X} = c$ avec $c > 0$, utilise le logarithme népérien : $X = \\ln c$.',
+          'Si $m$ est croissante, la masse dépasse le seuil à partir de l\'instant où elle l\'atteint.'
+        ],
+        solution: sol,
+        aide: 'Pour m(t), écris par exemple 500 - 490e^(-0,1t) ou 500-490*exp(-0.1*t).'
+      };
+    }
+  });
+
+  /* ------------------------- Contrôle qualité des mangues ------------------------- */
+  mission({
+    id: 'mission-mangues-ziguinchor',
+    titre: 'Contrôle qualité des mangues',
+    cycle: 'secondaire',
+    classe: 'tle-s2',
+    resume: 'Avant l\'export, un contrôleur de Ziguinchor inspecte les cagettes de mangues : loi binomiale et logarithme pour décider.',
+    chapitres: ['ts-probabilites', 'ts-logarithme'],
+    niveaux: 2,
+    gen: function (rng, niveau) {
+      var ctrl = rng.pick(GARCONS), variete = rng.pick(['Kent', 'Keitt']);
+      var p = rng.pick([0.04, 0.05, 0.06, 0.08, 0.1, 0.12]), nM = rng.pick([10, 12, 15, 20]);
+      var q = 1 - p, P0 = Math.pow(q, nM), P1 = nM * p * Math.pow(q, nM - 1), Pa = P0 + P1, Pr = 1 - Pa;
+      var E = rd(nM * p, 9);
+      var s = rng.pick([0.9, 0.95, 0.99]);
+      var Nmin = 1; while (1 - Math.pow(q, Nmin) < s) Nmin++;
+      var V = rng.pick([6000, 7500, 9000]), Wl = rng.pick([3000, 3500, 4000]);
+      var gain = V * Pa + Wl * Pr;
+      trace('mission-mangues-ziguinchor', niveau, { p: p, n: nM, s: s, V: V, W: Wl });
+
+      var enonce = 'À Ziguinchor, un groupement de producteurs exporte des mangues de variété ' + variete + '. Le contrôleur ' + ctrl + ' inspecte les cagettes avant l\'expédition.<br>' +
+        '• Une mangue prise au hasard est abîmée avec la probabilité $p = ' + N(p) + '$ (donnée de la mission).<br>' +
+        '• Une cagette contient ' + M(nM) + ' mangues ; on assimile leur choix à ' + M(nM) + ' tirages indépendants. On note $X$ le nombre de mangues abîmées dans une cagette.<br>' +
+        '• Une cagette est acceptée pour l\'export si elle contient au plus une mangue abîmée ; sinon, elle est refusée.' +
+        (niveau === 2 ? '<br>• Une cagette acceptée est vendue ' + cfa(V) + ' à l\'exportateur ; une cagette refusée est vendue ' + cfa(Wl) + ' sur le marché local.' : '') +
+        '<br>• Pour un contrôle de lot, le contrôleur veut prélever assez de mangues pour que la probabilité d\'en trouver au moins une abîmée soit supérieure ou égale à $' + N(s) + '$.';
+
+      var qs = [], sol = [], n = 1;
+      sol.push('$X$ compte les succès (« mangue abîmée ») dans $' + nM + '$ épreuves de Bernoulli indépendantes de paramètre $' + N(p) + '$ : $X$ suit la loi binomiale $\\mathcal{B}(' + nM + ' \\,;\\, ' + N(p) + ')$, et $P(X = k) = C_{' + nM + '}^{k} \\times ' + N(p) + '^k \\times ' + N(q) + '^{' + nM + ' - k}$.');
+      qs.push({ label: n + ') Espérance $E(X)$ :', type: 'number', reponse: E });
+      sol.push(Q(n++) + '$E(X) = np = ' + nM + ' \\times ' + N(p) + ' = ' + N(E) + '$ : en moyenne, $' + N(E) + '$ mangue abîmée par cagette.');
+      qs.push({ label: n + ') $P(X = 0)$ (au millième) :', type: 'number', reponse: P0, tol: 0.001, reponseTex: ap(P0, 3) });
+      sol.push(Q(n++) + '$P(X = 0) = ' + N(q) + '^{' + nM + '}' + eq(P0, 3) + '$.');
+      qs.push({ label: n + ') Probabilité qu\'une cagette soit acceptée (au millième) :', type: 'number', reponse: Pa, tol: 0.001, reponseTex: ap(Pa, 3) });
+      sol.push(Q(n++) + '$P(X \\leqslant 1) = P(X = 0) + P(X = 1) = ' + N(q) + '^{' + nM + '} + ' + nM + ' \\times ' + N(p) + ' \\times ' + N(q) + '^{' + (nM - 1) + '}' + eq(Pa, 3) + '$.');
+      qs.push({ label: n + ') Probabilité qu\'une cagette soit refusée (au millième) :', type: 'number', reponse: Pr, tol: 0.001, reponseTex: ap(Pr, 3) });
+      sol.push(Q(n++) + 'Événement contraire : $P(X \\geqslant 2) = 1 - P(X \\leqslant 1)' + eq(Pr, 3) + '$.');
+      if (niveau === 2) {
+        qs.push({ label: n + ') Recette moyenne par cagette (au franc près) :', type: 'number', reponse: gain, tol: rd(0.001 * (V - Wl) + 1, 2), reponseTex: '\\approx ' + N(Math.round(gain)), unite: 'F CFA' });
+        sol.push(Q(n++) + 'La recette $G$ d\'une cagette vaut $' + N(V) + '$ avec la probabilité $P(X \\leqslant 1)$ et $' + N(Wl) + '$ sinon : ' +
+          '$E(G) = ' + N(V) + ' \\times ' + N(rd(Pa, 4)) + ' + ' + N(Wl) + ' \\times ' + N(rd(Pr, 4)) + ' \\approx ' + N(Math.round(gain)) + '$ F CFA.');
+      }
+      qs.push({ label: n + ') Nombre minimal de mangues à prélever pour le contrôle de lot :', type: 'number', reponse: Nmin });
+      sol.push(Q(n++) + 'Avec $N$ mangues, $P(\\text{au moins une abîmée}) = 1 - ' + N(q) + '^N$. On veut $1 - ' + N(q) + '^N \\geqslant ' + N(s) + ' \\iff ' + N(q) + '^N \\leqslant ' + N(rd(1 - s, 6)) + ' \\iff N\\ln(' + N(q) + ') \\leqslant \\ln(' + N(rd(1 - s, 6)) + ')$. ' +
+        'Comme $\\ln(' + N(q) + ') < 0$, on change le sens : $N \\geqslant \\dfrac{\\ln(' + N(rd(1 - s, 6)) + ')}{\\ln(' + N(q) + ')} \\approx ' + N(rd(Math.log(1 - s) / Math.log(q), 2)) + '$. Il faut prélever au moins $' + Nmin + '$ mangues.');
+      return {
+        enonce: enonce,
+        questions: qs,
+        indices: [
+          'Répétition d\'épreuves identiques et indépendantes à deux issues : pense à la loi binomiale.',
+          '« Au plus une » signifie $X = 0$ ou $X = 1$ ; « au moins une » est l\'événement contraire de « aucune ».',
+          'Pour résoudre $q^N \\leqslant c$, applique $\\ln$ ; attention, $\\ln q < 0$ quand $0 < q < 1$.'
+        ],
+        solution: sol
+      };
+    }
+  });
+
+  /* ------------------------- Le troupeau pour la Tabaski ------------------------- */
+  mission({
+    id: 'mission-cheptel-tabaski',
+    titre: 'Le troupeau de moutons pour la Tabaski',
+    cycle: 'secondaire',
+    classe: 'tle-l',
+    resume: 'Un éleveur du Djolof prévoit l\'évolution de son troupeau avant la Tabaski : suites géométriques et logarithme.',
+    chapitres: ['tl-suites', 'tl-logarithme-exponentielle'],
+    niveaux: 2,
+    gen: function (rng, niveau) {
+      var el = rng.pick(GARCONS), lieu = rng.pick(['Dahra', 'Linguère', 'Ranérou', 'Barkédji', 'Yang-Yang', 'Mbeuleukhé']);
+      var u0 = rng.pick([40, 50, 60, 80, 100]), g = rng.pick([10, 15, 20, 25]), q = rd(1 + g / 100, 6);
+      var s = 0, l = 0;
+      if (niveau === 2) {
+        var cs = [];
+        for (var c = 2; c <= 12; c++) { var lc = 100 * c / g; if (ar.isInt(lc) && lc >= 10 && lc <= u0 - 10) cs.push(c); }
+        s = cs.length ? rng.pick(cs) : 0;
+        if (!s) { g = 20; q = 1.2; s = 4; }
+        l = 100 * s / g;
+      }
+      var fct = rng.pick([2, 2.5, 3, 4]), S = u0 * fct;
+      var un = function (k) { return l + (u0 - l) * Math.pow(q, k); };
+      var ny = 0; while (un(ny) <= S) ny++;
+      var u1 = rd(q * u0 - s, 6), u5 = un(5);
+      trace('mission-cheptel-tabaski', niveau, { u0: u0, g: g, s: s, S: S });
+
+      var enonce = 'Dans le Djolof, à ' + lieu + ', ' + el + ' élève des moutons. Au 1<sup>er</sup> janvier 2026, son troupeau compte ' + M(u0) + ' bêtes. ' +
+        'On note $u_n$ le nombre de moutons au 1<sup>er</sup> janvier de l\'année $2026 + n$ (donc $u_0 = ' + u0 + '$). Dans le modèle de la mission :<br>' +
+        '• chaque année, les naissances augmentent le troupeau de ' + M(g) + ' %' + (niveau === 2 ? ' ;<br>• puis, à la Tabaski, ' + el + ' vend ' + M(s) + ' moutons.' : '.') + '<br>' +
+        'Son pâturage et ses points d\'eau ne permettent pas de nourrir plus de ' + M(S) + ' moutons. Les résultats non entiers sont des valeurs du modèle.' +
+        (niveau === 2 ? '<br>On pose $v_n = u_n - \\ell$, où $\\ell$ est un nombre réel.' : '');
+
+      var qs = [], sol = [], n = 1;
+      if (niveau === 1) {
+        qs.push({ label: n + ') $u_1 =$', type: 'number', reponse: u1 });
+        sol.push(Q(n++) + 'Augmenter de $' + g + '$ % revient à multiplier par $1 + \\dfrac{' + g + '}{100} = ' + N(q) + '$ : $u_1 = ' + u0 + ' \\times ' + N(q) + ' = ' + N(u1) + '$.');
+        qs.push({ label: n + ') Raison de la suite géométrique $(u_n)$ :', type: 'number', reponse: q });
+        sol.push(Q(n++) + 'Pour tout $n$, $u_{n+1} = ' + N(q) + 'u_n$ : $(u_n)$ est géométrique de raison $' + N(q) + '$ et de premier terme $u_0 = ' + u0 + '$.');
+        qs.push({ label: n + ') $u_n =$', type: 'expr', variable: 'n', reponse: u0 + '*' + q + '^n', reponseTex: u0 + ' \\times ' + N(q) + '^{n}', domaine: [0, 10] });
+        sol.push(Q(n++) + '$u_n = u_0 \\times q^n = ' + u0 + ' \\times ' + N(q) + '^{n}$.');
+      } else {
+        qs.push({ label: n + ') $u_1 =$', type: 'number', reponse: u1 });
+        sol.push(Q(n++) + '$u_{n+1} = ' + N(q) + 'u_n - ' + s + '$, donc $u_1 = ' + N(q) + ' \\times ' + u0 + ' - ' + s + ' = ' + N(u1) + '$.');
+        qs.push({ label: n + ') Valeur de $\\ell$ pour laquelle $(v_n)$ est géométrique :', type: 'number', reponse: l });
+        sol.push(Q(n++) + '$v_{n+1} = u_{n+1} - \\ell = ' + N(q) + 'u_n - ' + s + ' - \\ell = ' + N(q) + '(v_n + \\ell) - ' + s + ' - \\ell = ' + N(q) + 'v_n + ' + N(rd(q - 1, 6)) + '\\ell - ' + s + '$. ' +
+          '$(v_n)$ est géométrique (de raison $' + N(q) + '$) si $' + N(rd(q - 1, 6)) + '\\ell - ' + s + ' = 0$, soit $\\ell = \\dfrac{' + s + '}{' + N(rd(q - 1, 6)) + '} = ' + l + '$.');
+        qs.push({ label: n + ') $u_n =$', type: 'expr', variable: 'n', reponse: l + '+' + (u0 - l) + '*' + q + '^n', reponseTex: l + ' + ' + (u0 - l) + ' \\times ' + N(q) + '^{n}', domaine: [0, 10] });
+        sol.push(Q(n++) + '$v_0 = ' + u0 + ' - ' + l + ' = ' + (u0 - l) + '$ et $v_n = ' + (u0 - l) + ' \\times ' + N(q) + '^{n}$, donc $u_n = v_n + ' + l + ' = ' + l + ' + ' + (u0 - l) + ' \\times ' + N(q) + '^{n}$.');
+      }
+      qs.push({ label: n + ') Effectif prévu au 1er janvier 2031 (arrondi à l\'unité) :', type: 'number', reponse: u5, tol: 0.5, reponseTex: ap(u5, 0) });
+      sol.push(Q(n++) + '2031 correspond à $n = 5$ : $u_5 = ' + (niveau === 2 ? l + ' + ' + (u0 - l) + ' \\times ' : u0 + ' \\times ') + N(q) + '^{5}' + eq(u5, 2) + '$, soit environ $' + Math.round(u5) + '$ moutons.');
+      var A = niveau === 1 ? u0 : u0 - l, Bv = niveau === 1 ? S : S - l;
+      qs.push({ label: n + ') Année au cours de laquelle le troupeau dépasse ' + S + ' moutons pour la première fois (au 1er janvier) :', type: 'number', reponse: 2026 + ny, reponseTex: String(2026 + ny) });
+      sol.push(Q(n++) + 'On résout $' + (niveau === 2 ? l + ' + ' : '') + A + ' \\times ' + N(q) + '^{n} > ' + S + ' \\iff ' + N(q) + '^{n} > \\dfrac{' + Bv + '}{' + A + '} \\iff n\\ln(' + N(q) + ') > \\ln\\left(\\dfrac{' + Bv + '}{' + A + '}\\right) \\iff n > \\dfrac{\\ln(' + N(rd(Bv / A, 6)) + ')}{\\ln(' + N(q) + ')} \\approx ' + N(rd(Math.log(Bv / A) / Math.log(q), 2)) + '$ ' +
+        '(car $\\ln(' + N(q) + ') > 0$). Le plus petit entier est $n = ' + ny + '$ : le troupeau dépassera ' + S + ' moutons en ' + (2026 + ny) + '. ' + el + ' devra vendre davantage ou agrandir son pâturage avant.');
+      return {
+        enonce: enonce,
+        questions: qs,
+        indices: [
+          'Augmenter de $t$ % revient à multiplier par $1 + \\dfrac{t}{100}$.',
+          niveau === 1 ? 'Suite géométrique : $u_n = u_0 \\times q^n$.' : 'Exprime $v_{n+1}$ en fonction de $v_n$ en remplaçant $u_n$ par $v_n + \\ell$.',
+          'Pour résoudre $q^n > c$ avec $q > 1$, applique la fonction $\\ln$, qui est croissante.'
+        ],
+        solution: sol,
+        aide: 'Pour u_n, écris par exemple 50*1,2^n ou 50 × 1,2^n.'
+      };
+    }
+  });
+
+  /* ------------------------- Pluie et rendement du mil ------------------------- */
+  mission({
+    id: 'mission-pluviometrie-mil',
+    titre: 'Pluie et rendement du mil',
+    cycle: 'secondaire',
+    classe: 'tle-l',
+    resume: 'À partir des relevés d\'une station agricole, ajuste le rendement du mil à la pluviométrie et fais une prévision.',
+    chapitres: ['tl-statistiques', '1l-statistiques'],
+    niveaux: 2,
+    gen: function (rng, niveau) {
+      var lieu = rng.pick(['Kaffrine', 'Kolda', 'Tambacounda', 'Kaolack', 'Fatick', 'Sédhiou', 'Nioro du Rip', 'Bambey']);
+      var agro = rng.pick(FILLES.concat(GARCONS));
+      var xs, ys, sx, sy, sxx, syy, sxy, xb, yb, Vx, Vy, cov, rr, guard = 0;
+      do {
+        xs = rng.sample([350, 400, 450, 500, 550, 600, 650, 700, 750, 800], 5);
+        var al = rng.pick([1, 1.2, 1.4, 1.5]), be = rng.pick([-50, 0, 50, 100, 150]);
+        ys = xs.map(function (x) { return Math.round((al * x + be + rng.int(-40, 40)) / 10) * 10; });
+        sx = 0; sy = 0; sxx = 0; syy = 0; sxy = 0;
+        for (var i = 0; i < 5; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i] * xs[i]; syy += ys[i] * ys[i]; sxy += xs[i] * ys[i]; }
+        xb = sx / 5; yb = sy / 5; Vx = sxx / 5 - xb * xb; Vy = syy / 5 - yb * yb; cov = sxy / 5 - xb * yb;
+        rr = cov / Math.sqrt(Vx * Vy);
+      } while ((rr < 0.9 || rr > 0.997 || Math.abs(Math.abs((cov / Vx * 100) % 1) - 0.5) < 0.02) && ++guard < 200);
+      var a = cov / Vx, ar2 = rd(a, 2), b = rd(yb - ar2 * xb, 6);
+      var x0 = rng.pick([425, 475, 525, 575, 625, 675, 725, 775]), yp = rd(ar2 * x0 + b, 6);
+      var an = rng.int(2015, 2020);
+      trace('mission-pluviometrie-mil', niveau, { xs: xs, ys: ys, x0: x0 });
+
+      var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      var y0 = Math.max(0, Math.floor((minY - 60) / 100) * 100), y1 = Math.ceil((maxY + 60) / 100) * 100;
+      var g = cadre({ x0: 300, x1: 850, dx: 100, y0: y0, y1: y1, dy: y1 - y0 > 600 ? 200 : 100, y0Label: true, xlab: 'x (mm)', ylab: 'y (kg/ha)', title: 'Nuage de points', h: 210 });
+      xs.forEach(function (x, j) { g.dot([x, ys[j]], { accent: true }); });
+
+      var enonce = 'La station agricole de ' + lieu + ' a relevé, pendant cinq hivernages, la pluviométrie annuelle $x$ (en mm) et le rendement moyen du mil $y$ (en kg par hectare). Les relevés de la mission sont les suivants :' +
+        table([['Année'].concat(xs.map(function (x, j) { return String(an + j); })), ['$x_i$ (mm)'].concat(xs.map(function (x) { return M(x); })), ['$y_i$ (kg/ha)'].concat(ys.map(function (y) { return M(y); }))]) +
+        'L\'agronome ' + agro + ' veut ajuster ces données par une droite pour prévoir le rendement.';
+
+      var qs = [], sol = [], n = 1;
+      qs.push({ label: n + ') Point moyen $G(\\bar{x} \\,;\\, \\bar{y})$ :', type: 'tuple', reponse: [xb, yb] });
+      sol.push(Q(n++) + '$\\bar{x} = \\dfrac{' + xs.join(' + ') + '}{5} = \\dfrac{' + N(sx) + '}{5} = ' + N(xb) + '$ et $\\bar{y} = \\dfrac{' + N(sy) + '}{5} = ' + N(yb) + '$ : $G(' + N(xb) + ' \\,;\\, ' + N(yb) + ')$.');
+      if (niveau === 1) {
+        qs.push({ label: n + ') Variance $V(x)$ :', type: 'number', reponse: Vx });
+        sol.push(Q(n++) + '$V(x) = \\dfrac{1}{5}\\sum x_i^2 - \\bar{x}^2 = \\dfrac{' + N(sxx) + '}{5} - ' + N(xb) + '^2 = ' + N(sxx / 5) + ' - ' + N(xb * xb) + ' = ' + N(Vx) + '$.');
+      }
+      qs.push({ label: n + ') Covariance $\\mathrm{cov}(x, y)$ :', type: 'number', reponse: cov });
+      sol.push(Q(n++) + '$\\mathrm{cov}(x, y) = \\dfrac{1}{5}\\sum x_i y_i - \\bar{x}\\,\\bar{y} = \\dfrac{' + N(sxy) + '}{5} - ' + N(xb) + ' \\times ' + N(yb) + ' = ' + N(sxy / 5) + ' - ' + N(xb * yb) + ' = ' + N(cov) + '$.');
+      if (niveau === 2) {
+        qs.push({ label: n + ') Coefficient de corrélation linéaire $r$ (au centième) :', type: 'number', reponse: rr, tol: 0.01, reponseTex: ap(rr, 2) });
+        sol.push(Q(n++) + '$V(x) = \\dfrac{' + N(sxx) + '}{5} - ' + N(xb) + '^2 = ' + N(Vx) + '$ et $V(y) = \\dfrac{' + N(syy) + '}{5} - ' + N(yb) + '^2 = ' + N(Vy) + '$. ' +
+          '$r = \\dfrac{\\mathrm{cov}(x, y)}{\\sqrt{V(x)\\,V(y)}} = \\dfrac{' + N(cov) + '}{\\sqrt{' + N(Vx) + ' \\times ' + N(Vy) + '}}' + eq(rr, 2) + '$ : $r$ est proche de $1$, la corrélation est forte et un ajustement affine est justifié.');
+      }
+      qs.push({ label: n + ') Coefficient directeur $a$ de la droite de régression de $y$ en $x$ (au centième) :', type: 'number', reponse: a, tol: 0.0051, reponseTex: ap(a, 2) });
+      sol.push(Q(n++) + '$a = \\dfrac{\\mathrm{cov}(x, y)}{V(x)} = \\dfrac{' + N(cov) + '}{' + N(Vx) + '}' + eq(a, 2) + '$.');
+      qs.push({ label: n + ') Ordonnée à l\'origine $b$, calculée avec $a$ arrondi au centième (arrondie à l\'unité) :', type: 'number', reponse: b, tol: 0.5, reponseTex: ap(b, 0) });
+      sol.push(Q(n++) + 'La droite passe par $G$ : $b = \\bar{y} - a\\bar{x} = ' + N(yb) + ' - ' + N(ar2) + ' \\times ' + N(xb) + eq(b, 2) + '$. Droite d\'ajustement : $y = ' + (ar2 === 1 ? '' : N(ar2)) + 'x ' + (b < 0 ? '- ' + N(Math.abs(b)) : '+ ' + N(b)) + '$.');
+      qs.push({ label: n + ') Rendement prévu pour une pluviométrie de ' + x0 + ' mm (au kg/ha près) :', type: 'number', reponse: yp, tol: 1, reponseTex: ap(yp, 0), unite: 'kg/ha' });
+      sol.push(Q(n++) + '$y = ' + N(ar2) + ' \\times ' + x0 + (b < 0 ? ' - ' + N(Math.abs(b)) : ' + ' + N(b)) + eq(yp, 2) + '$ : on peut prévoir environ $' + N(Math.round(yp)) + '$ kg de mil par hectare.');
+      return {
+        enonce: enonce,
+        figure: g.svg(),
+        questions: qs,
+        indices: [
+          'Commence par le point moyen : $\\bar{x}$ et $\\bar{y}$ sont les moyennes des deux lignes du tableau.',
+          '$V(x) = \\dfrac{1}{n}\\sum x_i^2 - \\bar{x}^2$ et $\\mathrm{cov}(x, y) = \\dfrac{1}{n}\\sum x_i y_i - \\bar{x}\\,\\bar{y}$.',
+          'La droite de régression de $y$ en $x$ a pour coefficient directeur $a = \\dfrac{\\mathrm{cov}(x, y)}{V(x)}$ et passe par $G$.'
+        ],
+        solution: sol,
+        aide: 'Un point s\'écrit (550 ; 780). Les nombres décimaux s\'écrivent avec une virgule.'
       };
     }
   });

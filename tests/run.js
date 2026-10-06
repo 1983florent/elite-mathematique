@@ -227,6 +227,36 @@ if (missing.length) (STRICT ? errors : warnings).push(missing.length + ' chapitr
   }
 })();
 
+/* ---------- guides d'examen, histoire, démonstrations, missions ---------- */
+(function () {
+  if (FILES && !/guides|histoire|demos|missions/.test(FILES)) return;
+  ['js/data/guides.js', 'js/data/histoire.js', 'js/demos.js'].forEach(function (f) {
+    try { load(f); } catch (e) { errors.push('[chargement] ' + f + ' : ' + e.message); }
+  });
+  (EM.guides || []).forEach(function (g, i) {
+    var w = 'guide ' + (g.id || i);
+    if (!g.id || !g.titre || !Array.isArray(g.sections) || !g.sections.length) errors.push(w + ' : id, titre et sections requis');
+    walk(g, w);
+  });
+  (EM.histoire || []).forEach(function (h, i) {
+    var w = 'histoire ' + (h.nom || i);
+    if (!h.nom || !h.texte) errors.push(w + ' : nom et texte requis');
+    (h.chapitres || []).forEach(function (c) { if (!EM.programme.chapitres[c]) errors.push(w + ' : chapitre inconnu ' + c); });
+    walk(h, w);
+  });
+  var demos = EM.demos ? EM.demos.list() : [];
+  demos.forEach(function (d) {
+    var w = 'démo ' + d.id;
+    if (!d.titre || typeof d.render !== 'function') errors.push(w + ' : titre et render() requis');
+    (d.chapitres || []).forEach(function (c) { if (!EM.programme.chapitres[c]) errors.push(w + ' : chapitre inconnu ' + c); });
+    checkTeX(d.titre, w); checkTeX(d.resume, w);
+  });
+  EM.gen.list().filter(function (g) { return g.mission; }).forEach(function (g) {
+    var ex = EM.gen.make(g.id, 1, 1);
+    if (ex.questions.length < 3) errors.push('mission ' + g.id + ' : au moins 3 questions attendues');
+  });
+})();
+
 /* ---------- couverture ---------- */
 var cover = {};
 EM.programme.listeClasses().forEach(function (k) {

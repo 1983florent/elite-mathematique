@@ -5,7 +5,7 @@
  * La liste ASSETS est vérifiée par tests/run.js : tout fichier chargé par index.html doit y figurer.
  */
 'use strict';
-var CACHE = 'elite-maths-v1';
+var CACHE = 'elite-maths-v2';
 var ASSETS = [
     './',
     'index.html',
@@ -49,6 +49,8 @@ var ASSETS = [
     'js/data/contenu-1s.js',
     'js/data/contenu-tle.js',
     'js/data/afrique.js',
+    'js/data/guides.js',
+    'js/data/histoire.js',
     'js/gen/00-reference.js',
     'js/gen/cm2-6e.js',
     'js/gen/5e-4e.js',
@@ -56,6 +58,10 @@ var ASSETS = [
     'js/gen/2s-1l.js',
     'js/gen/1s.js',
     'js/gen/tle.js',
+    'js/gen/plus-college.js',
+    'js/gen/plus-lycee.js',
+    'js/gen/missions.js',
+    'js/demos.js',
     'js/store.js',
     'js/ui.js',
     'js/views/accueil.js',

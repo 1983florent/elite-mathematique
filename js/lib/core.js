@@ -335,6 +335,31 @@
   };
 
   /* ------------------------------------------------------------------ */
+  /* Registre des démonstrations interactives                           */
+  /* ------------------------------------------------------------------ */
+  /*
+   * EM.demos.register({
+   *   id: 'thales-curseur', titre: 'Thalès en mouvement', chapitres: ['3e-thales'],
+   *   resume: 'Fais glisser M : les rapports restent égaux.',
+   *   render: function (el) { …; return function nettoyage() {…}; }   // el : div vide
+   * });
+   */
+  var demos = {};
+  EM.demos = {
+    all: demos,
+    register: function (d) {
+      if (!d || !d.id || typeof d.render !== 'function') throw new Error('Démonstration invalide');
+      if (demos[d.id]) throw new Error('Démonstration en double : ' + d.id);
+      d.chapitres = d.chapitres || [];
+      demos[d.id] = d;
+      return d;
+    },
+    get: function (id) { return demos[id]; },
+    list: function () { return Object.keys(demos).map(function (k) { return demos[k]; }); },
+    forChapter: function (chId) { return EM.demos.list().filter(function (d) { return d.chapitres.indexOf(chId) >= 0; }); }
+  };
+
+  /* ------------------------------------------------------------------ */
   /* Petits utilitaires                                                  */
   /* ------------------------------------------------------------------ */
   EM.util = {

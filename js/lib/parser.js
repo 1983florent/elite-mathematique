@@ -305,7 +305,20 @@
     if (!s) return [];
     return s.split(/;|,(?!\d)/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length; });
   }
-  var EMPTY_WORDS = ['∅', 'ø', 'vide', 'aucune', 'aucun', 'pas de solution', 'ensemble vide', '{}', 'aucune solution'];
+  /** Retire une unité écrite après un nombre : « 25 m² », « 60 km/h », « 1 500 F CFA », « 75 min », « 12 % ». */
+  var UNIT_RE = /(f\s*cfa|francs?(\s*cfa)?|f|km\/h|m\/s|[kh]?m²|da?m²|[cm]m²|ha|[cdm]?m³|cm³|mm³|km|hm|dam|dm|cm|mm|m|kg|hg|dag|dg|cg|mg|g|t|q|kl|hl|dal|dl|cl|ml|l|h|min|s|°|%|ans?|jours?|mois|heures?|minutes?|secondes?|personnes?|élèves?)$/i;
+  function stripUnit(raw) {
+    var s = String(raw).trim();
+    for (var i = 0; i < 2; i++) {
+      var m = UNIT_RE.exec(s);
+      // on ne retire l'unité que si elle suit un chiffre, une parenthèse ou une espace
+      if (m && m.index > 0 && /[\d)\s.,]/.test(s.charAt(m.index - 1))) s = s.slice(0, m.index).trim();
+    }
+    return s.replace(/\s/g, '');
+  }
+  EM.parser && (EM.parser.stripUnit = stripUnit);
+
+  var EMPTY_WORDS =['∅', 'ø', 'vide', 'aucune', 'aucun', 'pas de solution', 'ensemble vide', '{}', 'aucune solution'];
 
   /**
    * Vérifie la saisie d'un élève pour une question.
@@ -367,7 +380,7 @@
           return checkInterval(q, raw);
         default: // number
           if (!raw) return { ok: false, msg: 'Saisis une valeur.' };
-          var val = evalNum(raw.replace(/\s/g, '').replace(/(fcfa|f|cm|m|km|g|kg|l|°|%)$/i, ''));
+          var val = evalNum(stripUnit(raw));
           return { ok: close(val, toNumber(q.reponse), q.tol) };
       }
     } catch (e) {

@@ -81,7 +81,7 @@
     if (!raw) return '';
     try {
       if (q.type === 'number') {
-        var p = EM.parser.parse(raw.replace(/\s/g, '').replace(/(fcfa|cm|km|kg|m|g|l|°|%)$/i, ''), []);
+        var p = EM.parser.parse(EM.parser.stripUnit(raw), []);
         var v = p.eval({});
         var tex = p.tex();
         var plain = /^-?[\d.,\s]+$/.test(raw);

@@ -151,11 +151,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- mise en page ---------- */
 main { max-width: 1100px; margin: 0 auto; padding: 18px 16px 40px; outline: none; }
+main:focus, main:focus-visible { outline: none; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
 .card.flat { box-shadow: none; }
 .card > :last-child { margin-bottom: 0; }
 .grid { display: grid; gap: 14px; }
-.grid.g2 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.grid.g2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
 .grid.g3 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
 .grid.g4 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }

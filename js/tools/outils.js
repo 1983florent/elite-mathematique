@@ -531,17 +531,26 @@
         '<div class="row">' + md('$z_1 =$') + '<input class="inp" id="a1" value="1" size="4" aria-label="partie réelle de z1"> + i ×<input class="inp" id="b1" value="√3" size="4" aria-label="partie imaginaire de z1"></div>' +
         '<div class="row">' + md('$z_2 =$') + '<input class="inp" id="a2" value="1" size="4" aria-label="partie réelle de z2"> + i ×<input class="inp" id="b2" value="-1" size="4" aria-label="partie imaginaire de z2"></div>' +
         '</div><div class="row" style="margin-top:8px">' + md('Puissance $n$ pour $z_1^n$ :') + '<input class="inp" id="pn" value="6" size="3" inputmode="numeric"></div></div><div id="out"></div>';
+      /** Écriture algébrique a + bi ; cTex.approx indique si une partie a été arrondie. */
       function cTex(re, im) {
+        cTex.approx = false;
+        if (Math.abs(re) < 1e-12) re = 0;
+        if (Math.abs(im) < 1e-12) im = 0;
         var fr = rationnel(re, 1000), fi = rationnel(im, 1000);
-        var R = fr ? fr.tex() : fmt(re, 4), I = fi ? fi : null;
-        if (Math.abs(im) < 1e-12) return R;
+        var sr = !fr ? rationnel(re * re, 1000) : null;
+        var R = fr ? fr.tex() : (sr && sqrtExact(sr) ? (re < 0 ? '-' : '') + sqrtExact(sr) : fmt(re, 4));
+        if (!fr && !(sr && sqrtExact(sr))) cTex.approx = true;
+        var I = fi ? fi : null;
+        if (im === 0) return R;
         var it = I ? (I.abs().equals(1) ? '' : I.abs().tex()) : fmt(Math.abs(im), 4);
         var sq = !I ? rationnel(im * im, 1000) : null;
         if (!I && sq) { var s = sqrtExact(sq); if (s) it = s; }
+        if (!I && !(sq && sqrtExact(sq))) cTex.approx = true;
         var sgn = im < 0 ? '-' : '+';
-        if (Math.abs(re) < 1e-12) return (im < 0 ? '-' : '') + it + 'i';
+        if (re === 0) return (im < 0 ? '-' : '') + it + 'i';
         return R + ' ' + sgn + ' ' + it + 'i';
       }
+      function eg(re, im) { var t = cTex(re, im); return (cTex.approx ? ' \\approx ' : ' = ') + t; }
       function modTex(re, im) {
         var m2 = rationnel(re * re + im * im, 1000);
         var s = m2 ? sqrtExact(m2) : null;
@@ -559,19 +568,19 @@
           var a2 = lire(main.querySelector('#a2').value).v, b2 = lire(main.querySelector('#b2').value).v;
           var n = parseInt(main.querySelector('#pn').value, 10) || 1;
           var m1 = Math.hypot(a1, b1), t1 = Math.atan2(b1, a1);
-          var h = '<div class="grid g2"><div class="card"><h2>' + md('$z_1 = ' + cTex(a1, b1) + '$') + '</h2>' +
+          var h = '<div class="grid g2"><div class="card"><h2>' + md('$z_1' + eg(a1, b1) + '$') + '</h2>' +
             '<p>' + md('Module : $|z_1| = \\sqrt{a^2 + b^2} = ' + modTex(a1, b1) + '$') + '</p>' +
             '<p>' + md('Argument principal : $\\arg z_1 = ' + argTex(a1, b1) + '$' + (m1 ? ' $\\approx ' + fmt(t1 * 180 / Math.PI, 2) + '^\\circ$' : '')) + '</p>' +
             (m1 ? '<p>' + md('Forme trigonométrique : $z_1 = ' + modTex(a1, b1) + '\\left(\\cos ' + argTex(a1, b1) + ' + i \\sin ' + argTex(a1, b1) + '\\right)$') + '</p>' +
-              '<p>' + md('Forme exponentielle : $z_1 = ' + modTex(a1, b1) + '\\, e^{i' + argTex(a1, b1) + '}$') + '</p>' : '') +
-            '<p>' + md('Conjugué : $\\overline{z_1} = ' + cTex(a1, -b1) + '$') + '</p></div>';
+              '<p>' + md('Forme exponentielle : $z_1 = ' + modTex(a1, b1) + '\\, e^{i' + argTex(a1, b1).replace(/\\dfrac/g, '\\frac') + '}$') + '</p>' : '') +
+            '<p>' + md('Conjugué : $\\overline{z_1}' + eg(a1, -b1) + '$') + '</p></div>';
           var pr = [a1 * a2 - b1 * b2, a1 * b2 + b1 * a2], d = a2 * a2 + b2 * b2;
           var qu = d ? [(a1 * a2 + b1 * b2) / d, (b1 * a2 - a1 * b2) / d] : null;
           var pw = [Math.pow(m1, n) * Math.cos(n * t1), Math.pow(m1, n) * Math.sin(n * t1)];
-          h += '<div class="card"><h2>Opérations</h2><p>' + md('$z_1 + z_2 = ' + cTex(a1 + a2, b1 + b2) + '$') + '</p><p>' + md('$z_1 - z_2 = ' + cTex(a1 - a2, b1 - b2) + '$') + '</p>' +
-            '<p>' + md('$z_1 \\times z_2 = ' + cTex(pr[0], pr[1]) + '$') + '</p>' +
-            (qu ? '<p>' + md('$\\dfrac{z_1}{z_2} = \\dfrac{z_1 \\overline{z_2}}{|z_2|^2} = ' + cTex(qu[0], qu[1]) + '$') + '</p>' : '') +
-            '<p>' + md('Formule de Moivre : $z_1^{' + n + '} = ' + modTex(a1, b1) + '^{' + n + '} e^{i \\cdot ' + n + ' \\arg z_1} = ' + cTex(EM.ar.round(pw[0], 9), EM.ar.round(pw[1], 9)) + '$') + '</p></div></div>';
+          h += '<div class="card"><h2>Opérations</h2><p>' + md('$z_1 + z_2' + eg(a1 + a2, b1 + b2) + '$') + '</p><p>' + md('$z_1 - z_2' + eg(a1 - a2, b1 - b2) + '$') + '</p>' +
+            '<p>' + md('$z_1 \\times z_2' + eg(pr[0], pr[1]) + '$') + '</p>' +
+            (qu ? '<p>' + md('$\\dfrac{z_1}{z_2} = \\dfrac{z_1 \\overline{z_2}}{|z_2|^2}' + eg(qu[0], qu[1]) + '$') + '</p>' : '') +
+            '<p>' + md('Formule de Moivre : $z_1^{' + n + '} = ' + modTex(a1, b1) + '^{' + n + '} e^{i \\cdot ' + n + ' \\arg z_1}' + eg(EM.ar.round(pw[0], 9), EM.ar.round(pw[1], 9)) + '$') + '</p></div></div>';
           var pts = [[0, 0], [a1, b1], [a2, b2]];
           var f = EM.fig.fit(pts.concat([[-1, -1], [1, 1]]), { w: 300, h: 260, pad: 30 });
           f.axes({ grid: false, labels: false });

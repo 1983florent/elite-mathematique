@@ -1179,7 +1179,7 @@
         enonce: 'Soit $f(x) = ' + fT + '$ et $C_f$ sa courbe. Calculer $f\'(' + x0 + ')$ puis déterminer une équation de la tangente $T$ à $C_f$ au point d’abscisse $' + x0 + '$.',
         questions: [
           { label: '$f\'(' + x0 + ') =$', type: 'number', reponse: m },
-          { label: '$T : y =$', type: 'expr', reponse: pstr([m, p]), reponseTex: tT }
+          { label: '$T : y =$', type: 'expr', reponse: pstr([m, p]), reponseTex: tT, forme: 'somme' }
         ],
         indices: [
           'Calcule $f(' + x0 + ')$, puis $f\'(x)$ et $f\'(' + x0 + ')$.',
@@ -1290,7 +1290,7 @@
         questions = [];
         if (niveau === 2) {
           questions.push({ label: 'Asymptote verticale : $x =$', type: 'number', reponse: -dd });
-          questions.push({ label: 'Asymptote oblique : $y =$', type: 'expr', reponse: pstr([al, e]), reponseTex: oa });
+          questions.push({ label: 'Asymptote oblique : $y =$', type: 'expr', reponse: pstr([al, e]), reponseTex: oa, forme: 'somme' });
         } else {
           questions.push({ label: '$(\\alpha ; \\beta ; \\gamma) =$', type: 'tuple', reponse: [al, e, R] });
           var above = R > 0;
@@ -2616,7 +2616,15 @@
       } else if (niveau === 2) {
         var aligned = rng.bool(), t = rng.pick([2, -1, 3, -2]);
         var C = [A[0] + t * AB[0], A[1] + t * AB[1], A[2] + t * AB[2]];
-        if (!aligned) { var j = rng.int(0, 2); C[j] += rng.pick([1, -1, 2]); }
+        if (!aligned) {
+          var j = rng.int(0, 2), dlt = rng.pick([1, -1, 2]);
+          for (var tries = 0; tries < 3; tries++) {
+            var Ct = C.slice(); Ct[(j + tries) % 3] += dlt;
+            var w = [Ct[0] - A[0], Ct[1] - A[1], Ct[2] - A[2]];
+            var cr = [AB[1] * w[2] - AB[2] * w[1], AB[2] * w[0] - AB[0] * w[2], AB[0] * w[1] - AB[1] * w[0]];
+            if (cr[0] || cr[1] || cr[2]) { C = Ct; break; }
+          }
+        }
         var AC = [C[0] - A[0], C[1] - A[1], C[2] - A[2]];
         enonce = 'Dans un repère de l’espace, on donne $A' + t3(A) + '$, $B' + t3(B) + '$ et $C' + t3(C) + '$. Les points $A$, $B$, $C$ sont-ils alignés ? ' + (aligned ? 'Si oui, déterminer le réel $k$ tel que $\\vect{AC} = k\\vect{AB}$.' : 'Sinon, déterminer les coordonnées du point $D$ tel que $ABCD$ soit un parallélogramme.');
         steps.push('$\\vect{AB}' + t3(AB) + '$ et $\\vect{AC}' + t3(AC) + '$.');

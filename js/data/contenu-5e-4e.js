@@ -367,15 +367,15 @@
     objectifs: [
       'Reconnaître des angles adjacents, complémentaires, supplémentaires',
       'Utiliser l\'égalité des angles opposés par le sommet',
-      'Reconnaître des angles alternes-internes et correspondants',
+      'Reconnaître des angles alternes-internes, alternes-externes et correspondants',
       'Utiliser le parallélisme pour calculer des angles',
       'Démontrer que deux droites sont parallèles à l\'aide des angles'
     ],
     cours: [
       { type: 'definition', titre: 'Angles particuliers', texte: 'Deux angles sont <b>adjacents</b> s\'ils ont le même sommet, un côté commun, et sont situés de part et d\'autre de ce côté. Deux angles sont <b>complémentaires</b> si la somme de leurs mesures est $90°$, <b>supplémentaires</b> si elle vaut $180°$.' },
       { type: 'propriete', titre: 'Angles opposés par le sommet', texte: 'Deux droites sécantes forment des angles opposés par le sommet deux à deux : ces angles ont la même mesure.' },
-      { type: 'definition', titre: 'Deux droites et une sécante', texte: 'Deux droites $(d_1)$ et $(d_2)$ coupées par une sécante $(\\Delta)$ forment huit angles. Deux angles situés de part et d\'autre de la sécante, entre les deux droites, sont <b>alternes-internes</b>. Deux angles situés du même côté de la sécante, l\'un entre les droites et l\'autre à l\'extérieur, « à la même place » à chaque intersection, sont <b>correspondants</b>.' },
-      { type: 'theoreme', titre: 'Parallélisme et angles', texte: 'Si deux droites parallèles sont coupées par une sécante, alors les angles alternes-internes ont la même mesure et les angles correspondants ont la même mesure.<br><b>Réciproque :</b> si deux droites coupées par une sécante forment deux angles alternes-internes (ou correspondants) de même mesure, alors ces droites sont parallèles.' }
+      { type: 'definition', titre: 'Deux droites et une sécante', texte: 'Deux droites $(d_1)$ et $(d_2)$ coupées par une sécante $(\\Delta)$ forment huit angles. Deux angles situés de part et d\'autre de la sécante, entre les deux droites, sont <b>alternes-internes</b>. Deux angles situés de part et d\'autre de la sécante, à l\'extérieur des deux droites, sont <b>alternes-externes</b>. Deux angles situés du même côté de la sécante, l\'un entre les droites et l\'autre à l\'extérieur, « à la même place » à chaque intersection, sont <b>correspondants</b>.' },
+      { type: 'theoreme', titre: 'Parallélisme et angles', texte: 'Si deux droites parallèles sont coupées par une sécante, alors les angles alternes-internes ont la même mesure, les angles alternes-externes ont la même mesure et les angles correspondants ont la même mesure.<br><b>Réciproque :</b> si deux droites coupées par une sécante forment deux angles alternes-internes (ou correspondants) de même mesure, alors ces droites sont parallèles.' }
     ],
     methodes: [
       { titre: 'Calculer un angle avec des parallèles', etapes: ['Repérer les deux droites parallèles et la sécante.', 'Identifier la position des angles : alternes-internes, correspondants, opposés par le sommet ou supplémentaires.', 'Citer la propriété utilisée puis conclure.'] }

@@ -47,8 +47,15 @@
   /** Convertit une chaîne « HTML + $TeX$ » en HTML prêt à insérer. */
   function md(str, opts) {
     opts = opts || {};
+    var prevMath = false;
     return split(str).map(function (seg) {
-      if (seg.t === 'text') return seg.v.replace(/\\\$/g, '$');
+      if (seg.t === 'text') {
+        var t = seg.v.replace(/\\\$/g, '$');
+        if (prevMath) t = t.replace(/^ (?=(?:cm|mm|dm|km|hm|dam|m|g|kg|mg|t|L|cL|mL|dL|hL|ha|F CFA|FCFA|F|°|%|min|h|s|ans?|jours?|u\.a\.|cm²|m²|km²|dm²|mm²|cm³|m³|dm³|km\/h|m\/s)(?![A-Za-zÀ-ÿ]))/, '\u00a0');
+        prevMath = false;
+        return t;
+      }
+      prevMath = true;
       return texToHtml(seg.v, seg.t === 'display', opts.throwOnError);
     }).join('');
   }

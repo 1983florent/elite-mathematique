@@ -3,6 +3,10 @@
 **Le programme sénégalais de mathématiques, du CM2 à la Terminale, transformé en logiciel interactif.**
 Gratuit, utilisable sur téléphone, et fonctionnant **sans connexion internet** une fois ouvert.
 
+![Application Android](docs/captures/presentation-android.png)
+
+![Version web](docs/captures/presentation-web.png)
+
 ## Ce que contient le logiciel
 
 | Rubrique | Contenu |

@@ -207,6 +207,14 @@ a.chip:hover { border-color: var(--primary); }
 .hero .btn.ghost { color: #fff; border-color: rgba(255, 255, 255, .45); }
 .hero .btn.ghost:hover { background: rgba(255, 255, 255, .12); }
 .hero-deco { position: absolute; right: -10px; bottom: -20px; font-size: 140px; opacity: .08; font-weight: 800; pointer-events: none; user-select: none; }
+.hero-compact { padding: 20px 20px 18px; }
+.hero-compact h1 { font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.8rem); margin-bottom: 10px; }
+.hero-kicker { margin: 0 0 4px; color: var(--gold) !important; font-weight: 700; }
+.hero-chips { margin-bottom: 12px; }
+.hero-chips .chip { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .2); color: #fff; }
+.hero-chips .chip.gold { background: rgba(251, 192, 45, .2); color: #ffe08a; }
+.stats-card { background: linear-gradient(135deg, #1e2a78, #2a3a9e); border-radius: var(--radius); padding: 4px 18px 16px; margin-bottom: 14px; }
+.stats-card .stats-strip div { color: #dfe3ff; }
 .stats-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 12px 18px; margin-top: 16px; max-width: 640px; }
 .stats-strip div { font-size: .9rem; color: #dfe3ff; }
 .stats-strip strong { display: block; font-size: 1.4rem; color: var(--gold); }

@@ -75,14 +75,25 @@
     var nbChap = P.ordre.length;
     var nbCartes = P.ordre.reduce(function (s, id) { return s + ((EM.contenu[id] || {}).flashcards || []).length; }, 0);
 
-    var html = '<section class="hero"><div class="hero-deco" aria-hidden="true">∑π√</div>' +
-      '<h1>Les mathématiques du programme sénégalais, du CM2 à la Terminale</h1>' +
-      '<p>Cours clairs, exercices corrigés à l\'infini, examens blancs du CFEE, du BFEM et du BAC, outils de calcul : tout fonctionne sur téléphone, même sans connexion.</p>' +
-      '<div class="row">' + (cl
-        ? '<a class="btn gold" href="#/classe/' + k + '">Continuer en ' + esc(cl.nom) + ' →</a><button class="btn ghost" data-act="classe">Changer de classe</button>'
-        : '<button class="btn gold" data-act="classe">Choisir ma classe</button><a class="btn ghost" href="#/programme">Voir le programme</a>') + '</div>' +
-      '<div class="stats-strip"><div><strong>' + nbChap + '</strong>chapitres</div><div><strong>' + nbGen + '</strong>types d\'exercices</div>' +
-      '<div><strong>∞</strong>exercices corrigés</div><div><strong>' + nbCartes + '</strong>cartes de révision</div><div><strong>100 %</strong>hors ligne</div></div></section>';
+    var statsHtml = '<div class="stats-strip"><div><strong>' + nbChap + '</strong>chapitres</div><div><strong>' + nbGen + '</strong>types d\'exercices</div>' +
+      '<div><strong>∞</strong>exercices corrigés</div><div><strong>' + nbCartes + '</strong>cartes de révision</div><div><strong>100 %</strong>hors ligne</div></div>';
+    var html;
+    if (cl) {
+      // élève qui revient : accueil compact, son tableau de bord reste visible sur le premier écran
+      var nom = S.nom();
+      html = '<section class="hero hero-compact"><div class="hero-deco" aria-hidden="true">∑π√</div>' +
+        '<p class="hero-kicker">Bonjour' + (nom ? ' ' + esc(nom) : '') + ' 👋</p>' +
+        '<h1>' + esc(cl.long) + (cl.examen ? ' <span class="badge">' + esc(cl.examen) + '</span>' : '') + '</h1>' +
+        '<div class="row small hero-chips"><span class="chip gold">🔥 ' + d.serie.n + ' jour' + (d.serie.n > 1 ? 's' : '') + ' de suite</span>' +
+        '<span class="chip">⭐ ' + d.xp + ' pts · ' + esc(S.rang().nom) + '</span></div>' +
+        '<div class="row"><a class="btn gold" href="#/classe/' + k + '">Continuer en ' + esc(cl.nom) + ' →</a><button class="btn ghost" data-act="classe">Changer de classe</button></div></section>';
+    } else {
+      html = '<section class="hero"><div class="hero-deco" aria-hidden="true">∑π√</div>' +
+        '<h1>Les mathématiques du programme sénégalais, du CM2 à la Terminale</h1>' +
+        '<p>Cours clairs, exercices corrigés à l\'infini, examens blancs du CFEE, du BFEM et du BAC, outils de calcul : tout fonctionne sur téléphone, même sans connexion.</p>' +
+        '<div class="row"><button class="btn gold" data-act="classe">Choisir ma classe</button><a class="btn ghost" href="#/programme">Voir le programme</a></div>' +
+        statsHtml + '</section>';
+    }
 
     if (cl) {
       var prog = Math.round(S.progresClasse(k) * 100);
@@ -93,9 +104,8 @@
       var dues = S.cartesDues(cartes, 10).length;
       html += '<div class="grid g2">' +
         '<div class="card"><div class="row" style="gap:16px"><div class="ring" style="--p:' + prog + '"><span>' + prog + ' %</span></div>' +
-        '<div><h2 style="margin:0">' + esc(cl.long) + '</h2><div class="muted small">Maîtrise moyenne des chapitres</div>' +
-        '<div class="row small" style="margin-top:6px"><span class="chip gold">🔥 ' + d.serie.n + ' jour' + (d.serie.n > 1 ? 's' : '') + '</span>' +
-        '<span class="chip">⭐ ' + d.xp + ' pts · ' + esc(rang.nom) + '</span></div></div></div>' +
+        '<div><h2 style="margin:0">Ma progression</h2><div class="muted small">Maîtrise moyenne des chapitres de ' + esc(cl.nom) + '</div>' +
+        (rang.suivant ? '<div class="small" style="margin-top:6px">Prochain rang : <strong>' + esc(rang.suivant) + '</strong> à ' + rang.seuil + ' pts</div>' : '') + '</div></div>' +
         (conseil ? '<p style="margin-top:14px" class="small muted">Chapitre conseillé :</p><a class="tile" href="#/chapitre/' + conseil + '"><span class="ico">🎯</span><span><h3>' + esc(P.chapitres[conseil].titre) + '</h3><p>Maîtrise : ' + Math.round(S.maitrise(conseil) * 100) + ' %</p></span></a>' : '') +
         '<div class="row" style="margin-top:12px"><a class="btn sm" href="#/serie/' + k + '">Série de 10 exercices</a>' +
         '<a class="btn sm ghost" href="#/revision">Réviser (' + dues + ' carte' + (dues > 1 ? 's' : '') + ')</a>' +
@@ -114,7 +124,7 @@
       html += '<div class="card"><h2>Pour commencer, choisis ta classe</h2>' + classesPicker() + '</div>';
     }
 
-    html += '<h2 class="section-title">Tout ce qu\'il faut pour réussir</h2>' + featureTiles(k);
+    html += '<h2 class="section-title">Tout ce qu\'il faut pour réussir</h2>' + (cl ? '<div class="stats-card">' + statsHtml + '</div>' : '') + featureTiles(k);
 
     var faits = EM.afrique || [];
     if (faits.length) {

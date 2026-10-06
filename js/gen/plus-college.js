@@ -2173,7 +2173,7 @@
     gen: function (rng, niveau) {
       if (niveau === 1) {
         var x0 = rng.int(1, 4), y0, g = 0;
-        do { y0 = rng.nz(-6, 6); g++; } while (g < 50 && Math.abs(y0) === x0);
+        do { y0 = rng.nz(-5, 5); g++; } while (g < 50 && Math.abs(y0) === x0);
         var A = F(y0, x0), k1 = rng.nz(-5, 5) * (A.d), img = A.mul(k1);
         var t = rng.nz(-4, 4) * A.d, yt = A.mul(t);
         while (Math.abs(img.value()) > 99 || k1 === x0) { k1 = rng.nz(-5, 5); img = A.mul(k1); }
@@ -2338,9 +2338,9 @@
         var t = rng.pick([[30, 40, 50], [60, 80, 100], [45, 60, 75], [50, 120, 130], [80, 150, 170], [90, 120, 150], [36, 48, 60], [70, 240, 250]]);
         var droit = rng.bool(), bc = droit ? t[2] : t[2] + rng.pick([-3, -2, -1, 1, 2, 3]);
         var ab = t[0], ac = t[1], s = ab * ab + ac * ac, nom = personne(rng, 'm').nom;
-        f = EM.fig.fit([[0, 0], [ab, 0], [0, ac]], { w: 220, h: 210, pad: 40 });
+        f = EM.fig.fit([[0, 0], [ab, 0], [0, ac]], { w: 240, h: 210, pad: 52 });
         f.seg([0, 0], [ab * 1.3, 0]).seg([0, 0], [0, ac * 1.15]).seg([ab, 0], [0, ac], { dash: true, accent: true });
-        f.point([0, 0], 'A', 'so').point([ab, 0], 'B', 's').point([0, ac], 'C', 'o');
+        f.point([0, 0], 'A', 'so').point([ab, 0], 'B', 'ne').point([0, ac], 'C', 'o');
         f.segLabel([0, 0], [ab, 0], ab + ' cm', { flip: false, inside: [0, ac] }).segLabel([0, 0], [0, ac], ac + ' cm', { inside: [ab, 0], k: 26 }).segLabel([ab, 0], [0, ac], bc + ' cm', { inside: [0, 0], k: 20 });
         return {
           enonce: nom + ', maçon à ' + rng.pick(VILLES) + ', veut vérifier que le mur qu\'il construit est bien perpendiculaire au sol. Il marque au pied du mur un point $A$, sur le sol un point $B$ tel que $AB = ' + ab + '$ cm, et sur le mur un point $C$ tel que $AC = ' + ac + '$ cm. Il mesure alors $BC = ' + bc + '$ cm.<br>a) Calculer $AB^2 + AC^2$ et $BC^2$.<br>b) Le mur est-il perpendiculaire au sol ?',
@@ -2369,7 +2369,7 @@
         var cote = function (P) { return (D[0] - B[0]) * (P[1] - B[1]) - (D[1] - B[1]) * (P[0] - B[0]); };
         var C = cote(C1) * cote(A) < 0 ? C1 : C2;
         var aire = AB * AD / 2 + BC * CD / 2;
-        f = EM.fig.fit([A, B, C, D], { w: 280, h: 230, pad: 34 });
+        f = EM.fig.fit([A, B, C, D], { w: 290, h: 230, pad: 46 });
         f.poly([A, B, C, D], { fill: true }).seg(B, D, { dash: true }).rightAngle(B, A, D);
         var ct = centre([A, B, C, D]);
         f.segLabel(A, B, AB + ' m', { inside: ct }).segLabel(A, D, AD + ' m', { inside: ct, k: 22 }).segLabel(B, C, BC + ' m', { inside: ct, k: 22 }).segLabel(C, D, CD + ' m', { inside: ct, k: 22 });
@@ -2437,7 +2437,7 @@
       if (niveau === 2) {
         var P = rng.pick(PIGNONS), hb = P[0], hh = P[1], c = P[2], b = R(2 * hb, 2), aire = R(b * hh / 2, 4);
         var A = [-hb, 0], B = [hb, 0], S = [0, hh], H = [0, 0];
-        f = EM.fig.fit([A, B, S], { w: 280, h: 170, pad: 34 });
+        f = EM.fig.fit([A, B, S], { w: 280, h: 180, pad: 46 });
         f.poly([A, B, S], { fill: true }).seg(S, H, { dash: true, accent: true }).rightAngle(B, H, S).ticks(A, S, 1).ticks(S, B, 1).ticks(A, H, 2).ticks(H, B, 2);
         f.point(A, 'A', 'so').point(B, 'B', 'se').point(S, 'S', 'n').point(H, 'H', 's');
         f.segLabel(S, B, tx(c) + ' m', { inside: A, k: 18 }).segLabel(A, B, tx(b) + ' m', { inside: S, k: 30 });
@@ -2578,6 +2578,690 @@
           'Dans le triangle $ABC$, la droite $(KJ)$ passe par le milieu $K$ de $[AC]$ et est parallèle à $(AB)$ : $J$ est le milieu de $[BC]$, et $KJ = \\dfrac{AB}{2} = ' + n(ab / 2) + '$ cm.',
           '$I$, $K$, $J$ sont alignés dans cet ordre : $IJ = IK + KJ = ' + n(cd / 2) + ' + ' + n(ab / 2) + ' = ' + n((ab + cd) / 2) + '$ cm. C\'est la moyenne des deux bases : $\\dfrac{AB + CD}{2}$.'
         ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Cosinus en situation : échelle, cerf-volant, sécurité            */
+  /* ================================================================== */
+  function figEchelle(d, h, labHyp, angTxt, labBase) {
+    var H = [0, 0], P = [d, 0], S = [0, h];
+    var f = EM.fig.fit([H, P, S, [-0.12 * h, 0], [d * 1.25, 0]], { w: 230, h: 220, pad: 40 });
+    f.seg([-0.12 * h, 0], [d * 1.3, 0], { light: true }).seg(H, [0, h * 1.12], { light: true });
+    f.seg(P, S, { accent: true }).rightAngle(P, H, S).angle(S, P, H, angTxt, { r: 26 });
+    f.point(H, 'H', 'so').point(P, 'P', 's').point(S, 'S', 'o');
+    if (labHyp) f.segLabel(P, S, labHyp, { inside: H, k: 18 });
+    if (labBase) f.segLabel(H, P, labBase, { inside: S, k: 30 });
+    return f.svg();
+  }
+
+  EM.gen.register({
+    id: '4e-plus-cosinus-situations',
+    titre: 'Cosinus en situation : échelle contre un mur, cerf-volant, angle de sécurité',
+    chapitres: ['4e-cosinus'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var metier = rng.pick(['Un électricien', 'Un peintre', 'Un maçon', 'Un cueilleur de mangues']);
+      var support = { 'Un électricien': 'un poteau', 'Un peintre': 'le mur d\'une école', 'Un maçon': 'le mur d\'une case', 'Un cueilleur de mangues': 'le tronc d\'un manguier' }[metier];
+      var base = 'On modélise la situation par le triangle $PHS$ rectangle en $H$ : $P$ est le pied de l\'échelle, $H$ le pied du ' + (support.indexOf('tronc') >= 0 ? 'tronc' : support.indexOf('poteau') >= 0 ? 'poteau' : 'mur') + ' et $S$ le haut de l\'échelle.';
+      if (niveau === 1) {
+        if (rng.bool()) {
+          var L = rng.pick([3, 3.5, 4, 4.5, 5, 6]), al = rng.int(62, 80), d = L * Math.cos(rad(al));
+          return {
+            enonce: metier + ' appuie une échelle de ' + u(L, 'm') + ' contre ' + support + ' vertical. L\'échelle fait avec le sol horizontal un angle de $' + dg(al) + '$. ' + base + '<br>Calculer la distance $HP$ entre le pied de l\'échelle et le pied du support, arrondie au centimètre.',
+            figure: figEchelle(d, Math.sqrt(L * L - d * d), tx(L) + ' m', al + '°', '?'),
+            questions: [qnum('$HP \\approx$', R(d, 2), 'm', 0.006)],
+            indices: ['Dans le triangle $PHS$ rectangle en $H$, l\'hypoténuse est l\'échelle $[PS]$ et le côté adjacent à l\'angle $' + w('HPS') + '$ est $[PH]$.', '$\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$, donc $PH = PS \\times \\cos ' + w('HPS') + '$.'],
+            solution: [
+              'Dans le triangle $PHS$ rectangle en $H$ : $\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$.',
+              'Donc $PH = PS \\times \\cos ' + w('HPS') + ' = ' + n(L) + ' \\times \\cos ' + dg(al) + ' \\approx ' + n(R(d, 2)) + '$ m.'
+            ]
+          };
+        }
+        var fil = rng.int(4, 12) * 5, a2 = rng.int(30, 60), dd = fil * Math.cos(rad(a2)), nom = personne(rng).nom;
+        var E = [0, 0], K = [dd, fil * Math.sin(rad(a2))], Hk = [dd, 0];
+        var f = EM.fig.fit([E, K, Hk], { w: 260, h: 200, pad: 36 });
+        f.seg(E, K, { accent: true }).seg(E, Hk, { dash: true }).seg(Hk, K, { dash: true }).rightAngle(E, Hk, K).angle(Hk, E, K, a2 + '°', { r: 28 });
+        f.point(E, 'E', 'so').point(K, 'K', 'ne').point(Hk, 'H', 'se').segLabel(E, K, fil + ' m', { inside: Hk, k: 16 });
+        return {
+          enonce: 'Sur la plage de Yoff, ' + nom + ' fait voler un cerf-volant. Le fil, bien tendu, mesure ' + u(fil, 'm') + ' et fait un angle de $' + dg(a2) + '$ avec l\'horizontale. On note $E$ la main ' + de(nom) + ' (supposée au niveau du sol), $K$ le cerf-volant et $H$ le point du sol situé juste sous le cerf-volant.<br>Calculer la distance $EH$, arrondie au dixième de mètre.',
+          figure: f.svg(),
+          questions: [qnum('$EH \\approx$', R(dd, 1), 'm', 0.06)],
+          indices: ['Le triangle $EHK$ est rectangle en $H$ ; l\'hypoténuse est le fil $[EK]$.', '$\\cos ' + w('HEK') + ' = \\dfrac{EH}{EK}$.'],
+          solution: [
+            'Le triangle $EHK$ est rectangle en $H$ : $\\cos ' + w('HEK') + ' = \\dfrac{EH}{EK}$.',
+            '$EH = EK \\times \\cos ' + w('HEK') + ' = ' + fil + ' \\times \\cos ' + dg(a2) + ' \\approx ' + n(R(dd, 1)) + '$ m.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var d2 = rng.dec(0.8, 1.8, 1), a3 = rng.int(62, 78), L2 = d2 / Math.cos(rad(a3)), h2 = Math.sqrt(L2 * L2 - d2 * d2);
+        return {
+          enonce: metier + ' pose une échelle contre ' + support + ' vertical. Le pied de l\'échelle est à ' + u(d2, 'm') + ' du pied du support, et l\'échelle fait avec le sol un angle de $' + dg(a3) + '$. ' + base + '<br>a) Calculer la longueur $PS$ de l\'échelle, arrondie au centimètre.<br>b) À quelle hauteur $HS$ l\'échelle touche-t-elle le support ? (Arrondir au centimètre ; utilise la valeur de $PS$ gardée en mémoire dans la calculatrice.)',
+          figure: figEchelle(d2, h2, '?', a3 + '°', tx(d2) + ' m'),
+          questions: [qnum('a) $PS \\approx$', R(L2, 2), 'm', 0.006), qnum('b) $HS \\approx$', R(h2, 2), 'm', 0.02)],
+          indices: ['$\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$, donc $PS = \\dfrac{PH}{\\cos ' + w('HPS') + '}$.', 'Pour la hauteur, applique le théorème de Pythagore dans le triangle $PHS$ rectangle en $H$.'],
+          solution: [
+            'Dans le triangle $PHS$ rectangle en $H$ : $\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$, donc $PS = \\dfrac{PH}{\\cos ' + w('HPS') + '} = \\dfrac{' + n(d2) + '}{\\cos ' + dg(a3) + '} \\approx ' + n(R(L2, 2)) + '$ m.',
+            'D\'après le théorème de Pythagore : $HS^2 = PS^2 - PH^2 \\approx ' + n(R(L2 * L2, 3)) + ' - ' + n(R(d2 * d2, 4)) + ' \\approx ' + n(R(h2 * h2, 3)) + '$.',
+            '$HS \\approx ' + n(R(h2, 2)) + '$ m.'
+          ]
+        };
+      }
+      // niveau 3 : angle de sécurité
+      var L3 = rng.pick([3, 4, 5, 6]), d3, ang, g = 0;
+      do { d3 = rng.dec(0.6, 2.2, 1); ang = Math.acos(d3 / L3) * 180 / Math.PI; g++; } while (g < 200 && (Math.abs(ang - 65) < 0.8 || Math.abs(ang - 75) < 0.8 || ang < 55 || ang > 85 || Math.abs(ang - Math.round(ang)) > 0.4));
+      var ok = ang >= 65 && ang <= 75, ar0 = Math.round(ang);
+      return {
+        enonce: 'Pour qu\'une échelle soit utilisée sans danger, l\'angle qu\'elle fait avec le sol doit être compris entre $65^\\circ$ et $75^\\circ$. ' + metier + ' appuie une échelle de ' + u(L3, 'm') + ' contre ' + support + ', le pied de l\'échelle étant à ' + u(d3, 'm') + ' du pied du support. ' + base + '<br>a) Calculer l\'angle $' + w('HPS') + '$, arrondi au degré.<br>b) L\'échelle est-elle placée sans danger ?',
+        figure: figEchelle(d3, Math.sqrt(L3 * L3 - d3 * d3), tx(L3) + ' m', '?', tx(d3) + ' m'),
+        questions: [qnum('a) $' + w('HPS') + ' \\approx$', ar0, '°', 0.5), qcm(rng, 'b) Réponse :', ok ? 'Oui, l\'angle est entre $65^\\circ$ et $75^\\circ$' : (ang < 65 ? 'Non, l\'angle est trop petit : le pied risque de glisser' : 'Non, l\'angle est trop grand : l\'échelle risque de basculer'), ['Oui, l\'angle est entre $65^\\circ$ et $75^\\circ$', 'Non, l\'angle est trop petit : le pied risque de glisser', 'Non, l\'angle est trop grand : l\'échelle risque de basculer'])],
+        indices: ['$\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS}$.', 'Utilise la touche $\\cos^{-1}$ de la calculatrice (réglée en degrés), puis compare à $65^\\circ$ et $75^\\circ$.'],
+        solution: [
+          'Dans le triangle $PHS$ rectangle en $H$ : $\\cos ' + w('HPS') + ' = \\dfrac{PH}{PS} = \\dfrac{' + n(d3) + '}{' + L3 + '} \\approx ' + n(R(d3 / L3, 4)) + '$.',
+          'Avec la touche $\\cos^{-1}$ : $' + w('HPS') + ' \\approx ' + dg(ar0) + '$.',
+          ok ? 'L\'angle est compris entre $65^\\circ$ et $75^\\circ$ : l\'échelle est placée sans danger.' : ang < 65 ? 'L\'angle est inférieur à $65^\\circ$ : le pied de l\'échelle est trop loin, il faut le rapprocher du support.' : 'L\'angle dépasse $75^\\circ$ : l\'échelle est presque verticale, il faut éloigner son pied du support.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Cosinus : lire une figure, propriétés, hauteur                   */
+  /* ================================================================== */
+  var VF_COS = [
+    ['Le cosinus d\'un angle aigu peut être égal à $1{,}2$.', false, 'Dans un triangle rectangle, l\'hypoténuse est le plus grand côté : le quotient « côté adjacent sur hypoténuse » est toujours strictement inférieur à 1.'],
+    ['$\\cos 60^\\circ = 0{,}5$.', true, 'C\'est une valeur à retenir : $\\cos 60^\\circ = \\dfrac{1}{2} = 0{,}5$.'],
+    ['Plus un angle aigu est grand, plus son cosinus est grand.', false, 'C\'est le contraire : quand l\'angle aigu augmente, son cosinus diminue (de presque 1 vers presque 0).'],
+    ['Le cosinus d\'un angle aigu est toujours compris entre 0 et 1.', true, 'Le côté adjacent est strictement plus court que l\'hypoténuse, et les longueurs sont positives : $0 < \\cos x < 1$.'],
+    ['$\\cos 30^\\circ = 2 \\times \\cos 60^\\circ$.', false, '$2 \\times \\cos 60^\\circ = 1$ alors que $\\cos 30^\\circ \\approx 0{,}866$ : le cosinus n\'est pas proportionnel à l\'angle.'],
+    ['$\\cos 20^\\circ + \\cos 20^\\circ = \\cos 40^\\circ$.', false, '$\\cos 20^\\circ \\approx 0{,}94$, donc la somme vaut environ $1{,}88$, qui est supérieur à 1 : ce ne peut pas être un cosinus.'],
+    ['Si deux angles aigus ont le même cosinus, alors ils ont la même mesure.', true, 'À chaque valeur du cosinus entre 0 et 1 correspond un seul angle aigu (c\'est ce que donne la touche $\\cos^{-1}$).']
+  ];
+
+  EM.gen.register({
+    id: '4e-plus-cosinus-figure-proprietes',
+    titre: 'Cosinus : lire une figure, connaître les propriétés, calculer une projection',
+    chapitres: ['4e-cosinus'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var L3 = rng.pick([['E', 'F', 'G'], ['R', 'S', 'T'], ['K', 'L', 'M'], ['U', 'V', 'W'], ['A', 'B', 'C']]), ord = rng.shuffle([0, 1, 2]);
+        var Rv = L3[ord[0]], Vv = L3[ord[1]], Ov = L3[ord[2]];
+        var l1 = rng.dec(2.5, 5, 1), l2 = rng.dec(2.5, 5, 1), phi = rng.int(0, 359);
+        var pR = [0, 0], pV = pt(pR, phi, l1), pO = pt(pR, phi + 90, l2);
+        f = EM.fig.fit([pR, pV, pO], { w: 240, h: 210, pad: 30 });
+        f.poly([pR, pV, pO]).rightAngle(pV, pR, pO).angle(pR, pV, pO, '', { r: 24, accent: true });
+        var ct = centre([pR, pV, pO]);
+        f.point(pR, Rv, posLoin(pR, ct)).point(pV, Vv, posLoin(pV, ct)).point(pO, Ov, posLoin(pO, ct));
+        var ang = w(Rv + Vv + Ov), hyp = Vv + Ov, adj = Vv + Rv, opp = Rv + Ov;
+        return {
+          enonce: 'Le triangle $' + L3.join('') + '$ est rectangle en $' + Rv + '$ (voir la figure). On s\'intéresse à l\'angle aigu $' + ang + '$, marqué en couleur.<br>a) Quelle est l\'hypoténuse du triangle ?<br>b) Quelle égalité donne $\\cos ' + ang + '$ ?',
+          figure: f.svg(),
+          questions: [qcm(rng, 'a) Hypoténuse :', '$[' + hyp + ']$', ['$[' + adj + ']$', '$[' + opp + ']$']), qcm(rng, 'b) $\\cos ' + ang + ' =$', '$\\dfrac{' + adj + '}{' + hyp + '}$', ['$\\dfrac{' + opp + '}{' + hyp + '}$', '$\\dfrac{' + adj + '}{' + opp + '}$', '$\\dfrac{' + hyp + '}{' + adj + '}$'])],
+          indices: ['L\'hypoténuse est le côté opposé à l\'angle droit.', 'Le côté adjacent à l\'angle $' + ang + '$ est le côté de l\'angle droit qui passe par $' + Vv + '$.'],
+          solution: [
+            'L\'angle droit est en $' + Rv + '$ : l\'hypoténuse est le côté opposé, $[' + hyp + ']$.',
+            'Les côtés de l\'angle $' + ang + '$ sont $[' + Vv + Rv + ']$ et $[' + Vv + Ov + ']$ ; celui qui n\'est pas l\'hypoténuse est le côté adjacent : $[' + adj + ']$.',
+            '$\\cos ' + ang + ' = \\dfrac{\\text{côté adjacent}}{\\text{hypoténuse}} = \\dfrac{' + adj + '}{' + hyp + '}$.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var a = rng.int(10, 80), b;
+        do { b = rng.int(10, 80); } while (Math.abs(a - b) < 5);
+        var signe = a < b ? '>' : '<', V = rng.pick(VF_COS);
+        return {
+          enonce: 'Sans calculatrice :<br>a) Comparer $\\cos ' + dg(a) + '$ et $\\cos ' + dg(b) + '$.<br>b) L\'affirmation suivante est-elle vraie ou fausse ? « ' + V[0] + ' »',
+          questions: [qcm(rng, 'a) $\\cos ' + dg(a) + ' \\;\\ldots\\; \\cos ' + dg(b) + '$', '$' + signe + '$', ['$<$', '$>$', '$=$']), qcm(rng, 'b) L\'affirmation est :', V[1] ? 'vraie' : 'fausse', ['vraie', 'fausse'])],
+          indices: ['Pense à un triangle rectangle d\'hypoténuse fixe : quand l\'angle aigu grandit, le côté adjacent raccourcit.', 'Le cosinus d\'un angle aigu est toujours strictement compris entre 0 et 1.'],
+          solution: [
+            'Quand un angle aigu augmente, son cosinus diminue. Comme $' + Math.min(a, b) + '^\\circ < ' + Math.max(a, b) + '^\\circ$, on a $\\cos ' + dg(Math.min(a, b)) + ' > \\cos ' + dg(Math.max(a, b)) + '$, donc $\\cos ' + dg(a) + ' ' + signe + ' \\cos ' + dg(b) + '$.',
+            'L\'affirmation est ' + (V[1] ? 'vraie' : 'fausse') + ' : ' + V[2]
+          ]
+        };
+      }
+      // niveau 3 : la hauteur issue de l'angle droit
+      var t = rng.pick([[3, 4, 5], [6, 8, 10], [9, 12, 15], [12, 16, 20], [4, 3, 5], [8, 6, 10], [15, 20, 25], [20, 15, 25], [7, 24, 25], [24, 7, 25]]);
+      var AB = t[0], AC = t[1], BC = t[2], cB = F(AB, BC), BH = R(AB * AB / BC, 4), HC = R(BC - BH, 4);
+      var pA = [0, 0], pB = [AB, 0], pC = [0, AC], k = AB * AB / (BC * BC), pH = [AB + (0 - AB) * k, AC * k];
+      f = EM.fig.fit([pA, pB, pC], { w: 260, h: 220, pad: 34 });
+      f.poly([pA, pB, pC]).seg(pA, pH, { dash: true }).rightAngle(pB, pA, pC).rightAngle(pA, pH, pB).angle(pA, pB, pC, '', { r: 26, accent: true });
+      f.point(pA, 'A', 'so').point(pB, 'B', 'se').point(pC, 'C', 'n').point(pH, 'H', 'ne');
+      return {
+        enonce: 'Le triangle $ABC$ est rectangle en $A$, avec $AB = ' + AB + '$ cm et $BC = ' + BC + '$ cm. Le point $H$ est le pied de la hauteur issue de $A$.<br>a) Calculer la valeur exacte de $\\cos ' + w('ABC') + '$ dans le triangle $ABC$.<br>b) En écrivant $\\cos ' + w('ABC') + '$ dans le triangle $ABH$, calculer $BH$.<br>c) En déduire $HC$.',
+        figure: f.svg(),
+        questions: [qnum('a) $\\cos ' + w('ABC') + ' =$', cB), qnum('b) $BH =$', BH, 'cm'), qnum('c) $HC =$', HC, 'cm')],
+        indices: ['Dans $ABC$ rectangle en $A$ : $\\cos ' + w('ABC') + ' = \\dfrac{AB}{BC}$. Dans $ABH$ rectangle en $H$, l\'hypoténuse est $[AB]$ : $\\cos ' + w('ABH') + ' = \\dfrac{BH}{AB}$.', 'C\'est le même angle : égalise les deux quotients.'],
+        solution: [
+          'Dans le triangle $ABC$ rectangle en $A$ : $\\cos ' + w('ABC') + ' = \\dfrac{AB}{BC} = \\dfrac{' + AB + '}{' + BC + '}' + (cB.d !== BC ? ' = ' + cB.tex() : '') + '$.',
+          'Dans le triangle $ABH$ rectangle en $H$ (hypoténuse $[AB]$) : $\\cos ' + w('ABH') + ' = \\dfrac{BH}{AB}$. Or $' + w('ABH') + ' = ' + w('ABC') + '$, donc $\\dfrac{BH}{' + AB + '} = \\dfrac{' + AB + '}{' + BC + '}$.',
+          '$BH = \\dfrac{' + AB + ' \\times ' + AB + '}{' + BC + '} = ' + n(BH) + '$ cm.',
+          '$H$ est sur $[BC]$ : $HC = BC - BH = ' + BC + ' - ' + n(BH) + ' = ' + n(HC) + '$ cm.'
+        ],
+        aide: 'Tu peux écrire une fraction, par exemple 3/5.'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Vecteurs sur quadrillage : égalité, Chasles, translation         */
+  /* ================================================================== */
+  function distSegs(P1, P2, Q1, Q2) {
+    function dps(M, A, B) {
+      var dx = B[0] - A[0], dy = B[1] - A[1], L2 = dx * dx + dy * dy, t = L2 ? ((M[0] - A[0]) * dx + (M[1] - A[1]) * dy) / L2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      return dist(M, [A[0] + t * dx, A[1] + t * dy]);
+    }
+    function orient(a, b, c) { return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); }
+    var o1 = orient(P1, P2, Q1), o2 = orient(P1, P2, Q2), o3 = orient(Q1, Q2, P1), o4 = orient(Q1, Q2, P2);
+    if (o1 * o2 < 0 && o3 * o4 < 0) return 0;
+    return Math.min(dps(P1, Q1, Q2), dps(P2, Q1, Q2), dps(Q1, P1, P2), dps(Q2, P1, P2));
+  }
+  function vt(a, b) { return '\\vect{' + a + b + '}'; }
+
+  EM.gen.register({
+    id: '4e-plus-vecteurs-quadrillage',
+    titre: 'Vecteurs sur quadrillage : vecteurs égaux et opposés, Chasles, image par translation',
+    chapitres: ['4e-vecteurs'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f, i;
+      if (niveau === 1) {
+        var W = 14, H = 10, p, q, z, vecs;
+        do { p = rng.int(-3, 3); q = rng.int(-3, 3); } while (Math.abs(p) + Math.abs(q) < 2 || p === 0 && Math.abs(q) < 2);
+        var cz = [[p + 1, q], [p, q + 1], [p - 1, q], [-q, p], [q, -p]].filter(function (c) { return (c[0] || c[1]) && Math.abs(c[0]) <= 3 && Math.abs(c[1]) <= 3 && !(c[0] === p && c[1] === q) && !(c[0] === -p && c[1] === -q); });
+        z = rng.pick(cz);
+        var roles = [['ref', [p, q]], ['egal', [p, q]], ['oppose', [-p, -q]], ['autre', z]];
+        var cases = rng.shuffle([[1, 6, 1, 4], [8, 13, 1, 4], [1, 6, 6, 9], [8, 13, 6, 9]]);
+        vecs = roles.map(function (r, j) {
+          var c = cases[j], dx = r[1][0], dy = r[1][1];
+          var x0 = rng.int(c[0] + Math.max(0, -dx), c[1] - Math.max(0, dx)), y0 = rng.int(c[2] + Math.max(0, -dy), c[3] - Math.max(0, dy));
+          return { role: r[0], A: [x0, y0], B: [x0 + dx, y0 + dy] };
+        });
+        var noms = rng.shuffle([['C', 'D'], ['E', 'F'], ['G', 'K']]);
+        vecs[0].n = ['A', 'B'];
+        vecs.slice(1).forEach(function (v, j) { v.n = noms[j]; });
+        f = quadrillage(W, H);
+        vecs.forEach(function (v) {
+          var dir = Math.atan2(v.B[1] - v.A[1], v.B[0] - v.A[0]) * 180 / Math.PI;
+          f.vector(v.A, v.B, { accent: v.role === 'ref' });
+          f.point(v.A, v.n[0], posAngle(dir + 180), { accent: v.role === 'ref' }).label(v.B, v.n[1], posAngle(dir + 90), { accent: v.role === 'ref' });
+        });
+        var by = {};
+        vecs.forEach(function (v) { by[v.role] = v; });
+        var choix = vecs.slice(1).map(function (v) { return '$' + vt(v.n[0], v.n[1]) + '$'; });
+        var desc = function (v) { return '$' + vt(v.n[0], v.n[1]) + '$ : ' + trajet(v.B[0] - v.A[0], v.B[1] - v.A[1]); };
+        return {
+          enonce: 'Sur le quadrillage, on a représenté le vecteur $\\vect{AB}$ (en couleur) et trois autres vecteurs.<br>a) Quel vecteur est égal à $\\vect{AB}$ ?<br>b) Quel vecteur est l\'opposé de $\\vect{AB}$ ?',
+          figure: f.svg(),
+          questions: [qcm(rng, 'a) Vecteur égal à $\\vect{AB}$ :', '$' + vt(by.egal.n[0], by.egal.n[1]) + '$', choix), qcm(rng, 'b) Opposé de $\\vect{AB}$ :', '$' + vt(by.oppose.n[0], by.oppose.n[1]) + '$', choix)],
+          indices: ['Deux vecteurs égaux ont la même direction, le même sens et la même longueur : sur le quadrillage, ils correspondent au même déplacement.', 'L\'opposé de $\\vect{AB}$ est $\\vect{BA}$ : même direction, même longueur, sens contraire.'],
+          solution: [
+            'On décrit chaque vecteur par le déplacement de son origine à son extrémité. ' + desc(by.ref) + '.',
+            desc(by.egal) + ' : même déplacement, donc $' + vt(by.egal.n[0], by.egal.n[1]) + ' = \\vect{AB}$.',
+            desc(by.oppose) + ' : déplacement inverse (même direction, même longueur, sens contraire), donc $' + vt(by.oppose.n[0], by.oppose.n[1]) + ' = \\vect{BA} = -\\vect{AB}$.',
+            desc(by.autre) + ' : ce n\'est ni le même déplacement ni le déplacement inverse.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var L = rng.sample(['A', 'B', 'C', 'D', 'E', 'M', 'N', 'P', 'R', 'S'], 4), X = L[0], Y = L[1], Z = L[2], Wn = L[3];
+        var MOD = [
+          { e: vt(X, Y) + ' + ' + vt(Y, Z), r: vt(X, Z), f: [vt(Z, X), vt(Y, X), vt(X, Wn)], s: 'Relation de Chasles : $' + vt(X, Y) + ' + ' + vt(Y, Z) + ' = ' + vt(X, Z) + '$.' },
+          { e: vt(X, Y) + ' + ' + vt(Z, X), r: vt(Z, Y), f: [vt(Y, Z), vt(X, Z), vt(Z, X)], s: 'On change l\'ordre : $' + vt(Z, X) + ' + ' + vt(X, Y) + ' = ' + vt(Z, Y) + '$ (Chasles).' },
+          { e: vt(X, Y) + ' - ' + vt(Z, Y), r: vt(X, Z), f: [vt(Z, X), vt(Y, Z), vt(X, Wn)], s: '$-' + vt(Z, Y) + ' = ' + vt(Y, Z) + '$, donc l\'expression vaut $' + vt(X, Y) + ' + ' + vt(Y, Z) + ' = ' + vt(X, Z) + '$.' },
+          { e: vt(X, Y) + ' + ' + vt(Y, Z) + ' + ' + vt(Z, Wn), r: vt(X, Wn), f: [vt(Wn, X), vt(X, Z), vt(Y, Wn)], s: 'Chasles deux fois : $' + vt(X, Y) + ' + ' + vt(Y, Z) + ' = ' + vt(X, Z) + '$, puis $' + vt(X, Z) + ' + ' + vt(Z, Wn) + ' = ' + vt(X, Wn) + '$.' },
+          { e: vt(X, Y) + ' - ' + vt(X, Z), r: vt(Z, Y), f: [vt(Y, Z), vt(X, Y), vt(Z, X)], s: '$-' + vt(X, Z) + ' = ' + vt(Z, X) + '$, donc l\'expression vaut $' + vt(Z, X) + ' + ' + vt(X, Y) + ' = ' + vt(Z, Y) + '$.' },
+          { e: vt(X, Y) + ' + ' + vt(Y, X), r: '\\vec{0}', f: ['2' + vt(X, Y), vt(Y, X), vt(X, Y)], s: '$' + vt(X, Y) + ' + ' + vt(Y, X) + ' = ' + vt(X, X) + ' = \\vec{0}$ : un vecteur et son opposé ont pour somme le vecteur nul.' }
+        ];
+        var two = rng.sample(MOD, 2);
+        return {
+          enonce: 'Simplifier chacune des sommes de vecteurs suivantes :<br>a) $' + two[0].e + '$<br>b) $' + two[1].e + '$',
+          questions: two.map(function (M0, j) { return qcm(rng, (j ? 'b) ' : 'a) ') + '$' + M0.e + ' =$', '$' + M0.r + '$', M0.f.map(function (x) { return '$' + x + '$'; })); }),
+          indices: ['Relation de Chasles : $\\vect{AB} + \\vect{BC} = \\vect{AC}$ (l\'extrémité du premier est l\'origine du second).', 'Soustraire un vecteur, c\'est ajouter son opposé : $-\\vect{AB} = \\vect{BA}$. Tu peux aussi changer l\'ordre des termes d\'une somme.'],
+          solution: ['a) ' + two[0].s, 'b) ' + two[1].s]
+        };
+      }
+      // niveau 3 : image par une translation
+      var W3 = 16, H3 = 10, P = {}, g3 = 0, cands, uu, dans3 = function (Q) { return Q[0] >= 1 && Q[0] <= W3 - 1 && Q[1] >= 1 && Q[1] <= H3 - 1; };
+      var trouve = false;
+      while (!trouve && g3 < 200) {
+        g3++;
+        uu = [rng.nz(-4, 4), rng.int(-3, 3)];
+        if (Math.abs(uu[0]) + Math.abs(uu[1]) < 3) continue;
+        var oB = [rng.int(1, 3), rng.int(-3, -1)], oC = [rng.int(2, 4), rng.int(0, 2)];
+        var candA = [];
+        for (var x = 1; x < W3; x++) for (var y = 1; y < H3; y++) {
+          var A0 = [x, y], B0 = [x + oB[0], y + oB[1]], C0 = [x + oC[0], y + oC[1]];
+          var cc = [[x + uu[0], y + uu[1]], [C0[0] + uu[0], C0[1] + uu[1]], [x - uu[0], y - uu[1]], [C0[0] - uu[0], C0[1] - uu[1]], [B0[0] + uu[0], B0[1] + uu[1]]];
+          var tt = [A0, B0, C0].concat(cc), okA = tt.every(dans3);
+          for (i = 0; i < tt.length && okA; i++) for (var j = i + 1; j < tt.length && okA; j++) if (dist(tt[i], tt[j]) < 1.9) okA = false;
+          if (okA) cc.forEach(function (Q) { if (distSegs(A0, B0, Q, Q) < 0.8 || distSegs(B0, C0, Q, Q) < 0.8 || distSegs(A0, C0, Q, Q) < 0.8) okA = false; });
+          if (okA) candA.push([A0, B0, C0, cc]);
+        }
+        if (!candA.length) continue;
+        var ch0 = rng.pick(candA);
+        P.A = ch0[0]; P.B = ch0[1]; P.C = ch0[2]; cands = ch0[3];
+        var candM = [];
+        for (var mx = 1; mx < W3; mx++) for (var my = 1; my < H3; my++) {
+          var M0 = [mx, my], N0 = [mx + uu[0], my + uu[1]];
+          if (!dans3(N0)) continue;
+          var okM = [P.A, P.B, P.C].concat(cands).every(function (Q) { return dist(Q, M0) >= 2.3 && dist(Q, N0) >= 2.3 && distSegs(M0, N0, Q, Q) >= 0.9; });
+          if (okM && [[P.A, P.B], [P.B, P.C], [P.A, P.C]].some(function (sg) { return distSegs(sg[0], sg[1], M0, N0) < 1; })) okM = false;
+          if (okM) candM.push([M0, N0]);
+        }
+        if (!candM.length) continue;
+        var chM = rng.pick(candM);
+        P.M = chM[0]; P.N = chM[1];
+        trouve = true;
+      }
+      var lettres = rng.shuffle(['E', 'F', 'G', 'K', 'L']);
+      f = quadrillage(W3, H3, { w: 320 });
+      f.poly([P.A, P.B, P.C], { fill: true }).vector(P.M, P.N, { accent: true });
+      var ctT = centre([P.A, P.B, P.C]), dirU = Math.atan2(uu[1], uu[0]) * 180 / Math.PI;
+      f.point(P.A, 'A', posLoin(P.A, ctT)).point(P.B, 'B', posLoin(P.B, ctT)).point(P.C, 'C', posLoin(P.C, ctT));
+      f.point(P.M, 'M', posAngle(dirU + 180), { accent: true }).label(P.N, 'N', posAngle(dirU + 90), { accent: true });
+      var autresPts = [P.A, P.B, P.C, P.M, P.N].concat(cands);
+      cands.forEach(function (Q, k) {
+        var proche = autresPts.filter(function (Z2) { return Z2 !== Q; }).sort(function (a2, b2) { return dist(a2, Q) - dist(b2, Q); })[0];
+        f.point(Q, lettres[k], posLoin(Q, proche));
+      });
+      var ch = lettres.map(function (l) { return '$' + l + '$'; });
+      return {
+        enonce: 'Sur le quadrillage, on considère le triangle $ABC$ et le vecteur $\\vect{MN}$ (en couleur). On note $A\'$, $B\'$, $C\'$ les images de $A$, $B$, $C$ par la translation de vecteur $\\vect{MN}$.<br>a) Lequel des points marqués est $A\'$ ?<br>b) Lequel est $C\'$ ?<br>c) Que peut-on dire des triangles $ABC$ et $A\'B\'C\'$ ?',
+        figure: f.svg(),
+        questions: [qcm(rng, 'a) $A\'$ est le point :', ch[0], ch), qcm(rng, 'b) $C\'$ est le point :', ch[1], ch), qcm(rng, 'c) Les triangles $ABC$ et $A\'B\'C\'$ :', 'sont superposables (mêmes longueurs, mêmes angles, même aire)', ['sont superposables (mêmes longueurs, mêmes angles, même aire)', 'ont la même forme mais pas la même taille', 'n\'ont rien de commun'])],
+        indices: ['$A\'$ est l\'image de $A$ par la translation de vecteur $\\vect{MN}$ lorsque $\\vect{AA\'} = \\vect{MN}$ : fais le même déplacement que de $M$ à $N$, en partant de $A$.', 'Attention au sens : de $M$ vers $N$, et non de $N$ vers $M$.'],
+        solution: [
+          'Pour aller de $M$ à $N$, on se déplace de ' + trajet(uu[0], uu[1]) + '.',
+          'En partant de $A$ et en faisant le même déplacement, on arrive en $' + lettres[0] + '$ : $A\' = ' + lettres[0] + '$. Le point $' + lettres[2] + '$ correspond au déplacement inverse (vecteur $\\vect{NM}$).',
+          'En partant de $C$, on arrive en $' + lettres[1] + '$ : $C\' = ' + lettres[1] + '$.',
+          'Une translation conserve les longueurs, les angles et les aires : $A\'B\'C\'$ est superposable à $ABC$ (il a « glissé » sans tourner).'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Vecteurs et coordonnées : milieu, parallélogramme, somme         */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-plus-vecteurs-coordonnees',
+    titre: 'Vecteurs et coordonnées : milieu, tester un parallélogramme, somme de vecteurs',
+    chapitres: ['4e-vecteurs'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var P = {}, g = 0, f;
+      function pts(noms, lim) { noms.forEach(function (k) { P[k] = [rng.nz(-lim, lim), rng.nz(-lim, lim)]; }); }
+      function fig(noms) {
+        f = repere(-6, 6, -6, 6, 260);
+        noms.forEach(function (k) { f.point(P[k], k, posQuadrant(P[k])); });
+        return f.svg();
+      }
+      function cv(a, b) { return [P[b][0] - P[a][0], P[b][1] - P[a][1]]; }
+      function etape(a, b) { var v = cv(a, b); return '$' + vt(a, b) + '\\,(' + n(P[b][0]) + ' - ' + T.par(P[a][0]) + ' \\,;\\, ' + n(P[b][1]) + ' - ' + T.par(P[a][1]) + ')$, soit $' + vt(a, b) + '\\,' + cpl(v[0], v[1]) + '$'; }
+      if (niveau === 1) {
+        do { pts(['A', 'B'], 4); P.C = [2 * P.B[0] - P.A[0], 2 * P.B[1] - P.A[1]]; g++; } while (g < 300 && (Math.abs(P.C[0]) > 6 || Math.abs(P.C[1]) > 6 || dist(P.A, P.B) < 2.5));
+        var v = cv('A', 'B');
+        return {
+          enonce: 'Dans un repère, on donne $A' + cpl(P.A[0], P.A[1]) + '$ et $B' + cpl(P.B[0], P.B[1]) + '$.<br>a) Calculer les coordonnées du vecteur $\\vect{AB}$.<br>b) Calculer les coordonnées du point $C$ tel que $\\vect{BC} = \\vect{AB}$. Que représente $B$ pour le segment $[AC]$ ?',
+          figure: fig(['A', 'B']),
+          questions: [qtuple('a) $\\vect{AB}$ :', v), qtuple('b) Coordonnées de $C$ :', P.C), qcm(rng, 'b) Le point $B$ est :', 'le milieu de $[AC]$', ['le milieu de $[AC]$', 'le symétrique de $C$ par rapport à $A$', 'un point quelconque de $(AC)$'])],
+          indices: ['$\\vect{AB}\\,(x_B - x_A \\,;\\, y_B - y_A)$.', '$\\vect{BC} = \\vect{AB}$ : $C$ est l\'image de $B$ par la translation de vecteur $\\vect{AB}$, donc $C(x_B + x_{\\vect{AB}} \\,;\\, y_B + y_{\\vect{AB}})$.'],
+          solution: [
+            etape('A', 'B') + '.',
+            '$\\vect{BC} = \\vect{AB}$ donne $x_C - ' + T.par(P.B[0]) + ' = ' + n(v[0]) + '$ et $y_C - ' + T.par(P.B[1]) + ' = ' + n(v[1]) + '$, donc $C' + cpl(P.C[0], P.C[1]) + '$.',
+            '$\\vect{AB} = \\vect{BC}$ signifie que $B$ est le milieu de $[AC]$.'
+          ],
+          aide: 'Écris des coordonnées sous la forme (2 ; -3).'
+        };
+      }
+      if (niveau === 2) {
+        var para = rng.bool();
+        do {
+          pts(['A', 'B', 'C'], 4);
+          P.D = [P.A[0] + P.C[0] - P.B[0], P.A[1] + P.C[1] - P.B[1]];
+          if (!para) { var e = rng.pick([[1, 0], [0, 1], [-1, 0], [0, -1]]); P.D = [P.D[0] + e[0], P.D[1] + e[1]]; }
+          g++;
+        } while (g < 300 && (Math.abs(P.D[0]) > 5 || Math.abs(P.D[1]) > 5 || P.D[0] === 0 || P.D[1] === 0 || dist(P.D, P.C) < 2 || dist(P.D, P.A) < 2 || dist(P.A, P.B) < 2 || dist(P.B, P.C) < 2 || Math.abs((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0])) < 6));
+        var vAB = cv('A', 'B'), vDC = cv('D', 'C'), egal = vAB[0] === vDC[0] && vAB[1] === vDC[1];
+        return {
+          enonce: 'Dans un repère, on donne $A' + cpl(P.A[0], P.A[1]) + '$, $B' + cpl(P.B[0], P.B[1]) + '$, $C' + cpl(P.C[0], P.C[1]) + '$ et $D' + cpl(P.D[0], P.D[1]) + '$.<br>a) Calculer les coordonnées des vecteurs $\\vect{AB}$ et $\\vect{DC}$.<br>b) Le quadrilatère $ABCD$ est-il un parallélogramme ?',
+          figure: fig(['A', 'B', 'C', 'D']),
+          questions: [qtuple('a) $\\vect{AB}$ :', vAB), qtuple('a) $\\vect{DC}$ :', vDC), qcm(rng, 'b) $ABCD$ est-il un parallélogramme ?', egal ? 'Oui, car $\\vect{AB} = \\vect{DC}$' : 'Non, car $\\vect{AB} \\neq \\vect{DC}$', ['Oui, car $\\vect{AB} = \\vect{DC}$', 'Non, car $\\vect{AB} \\neq \\vect{DC}$'])],
+          indices: ['$ABCD$ est un parallélogramme si et seulement si $\\vect{AB} = \\vect{DC}$ (attention à l\'ordre des lettres).', 'Deux vecteurs sont égaux s\'ils ont les mêmes coordonnées.'],
+          solution: [
+            etape('A', 'B') + ' ; ' + etape('D', 'C') + '.',
+            egal ? 'Les deux vecteurs ont les mêmes coordonnées : $\\vect{AB} = \\vect{DC}$, donc $ABCD$ est un parallélogramme.' : 'Les coordonnées sont différentes : $\\vect{AB} \\neq \\vect{DC}$, donc $ABCD$ n\'est pas un parallélogramme.'
+          ],
+          aide: 'Écris des coordonnées sous la forme (2 ; -3).'
+        };
+      }
+      do {
+        pts(['A', 'B', 'C'], 4);
+        P.E = [P.B[0] + P.C[0] - P.A[0], P.B[1] + P.C[1] - P.A[1]];
+        g++;
+      } while (g < 300 && (Math.abs(P.E[0]) > 6 || Math.abs(P.E[1]) > 6 || Math.abs((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0])) < 6));
+      var u1 = cv('A', 'B'), u2 = cv('A', 'C'), sm = [u1[0] + u2[0], u1[1] + u2[1]];
+      return {
+        enonce: 'Dans un repère, on donne $A' + cpl(P.A[0], P.A[1]) + '$, $B' + cpl(P.B[0], P.B[1]) + '$ et $C' + cpl(P.C[0], P.C[1]) + '$.<br>a) Calculer les coordonnées du vecteur $\\vect{AB} + \\vect{AC}$.<br>b) En déduire les coordonnées du point $E$ tel que $\\vect{AE} = \\vect{AB} + \\vect{AC}$.<br>c) Quelle est la nature du quadrilatère $ABEC$ ?',
+        figure: fig(['A', 'B', 'C']),
+        questions: [qtuple('a) $\\vect{AB} + \\vect{AC}$ :', sm), qtuple('b) Coordonnées de $E$ :', P.E), qcm(rng, 'c) $ABEC$ est :', 'un parallélogramme', ['un parallélogramme', 'un trapèze qui n\'est pas un parallélogramme', 'un quadrilatère quelconque'])],
+        indices: ['Les coordonnées d\'une somme de vecteurs s\'obtiennent en additionnant les coordonnées.', '$\\vect{AE}\\,(x_E - x_A \\,;\\, y_E - y_A)$. Pour la nature de $ABEC$, compare $\\vect{BE}$ et $\\vect{AC}$.'],
+        solution: [
+          etape('A', 'B') + ' et ' + etape('A', 'C') + '.',
+          '$\\vect{AB} + \\vect{AC}\\,(' + n(u1[0]) + ' + ' + T.par(u2[0]) + ' \\,;\\, ' + n(u1[1]) + ' + ' + T.par(u2[1]) + ')$, soit $' + cpl(sm[0], sm[1]) + '$.',
+          '$x_E - ' + T.par(P.A[0]) + ' = ' + n(sm[0]) + '$ et $y_E - ' + T.par(P.A[1]) + ' = ' + n(sm[1]) + '$, donc $E' + cpl(P.E[0], P.E[1]) + '$.',
+          'Avec Chasles, $\\vect{AE} = \\vect{AB} + \\vect{BE}$ ; comme $\\vect{AE} = \\vect{AB} + \\vect{AC}$, on a $\\vect{BE} = \\vect{AC}$ : $ABEC$ est un parallélogramme (règle du parallélogramme pour additionner deux vecteurs de même origine).'
+        ],
+        aide: 'Écris des coordonnées sous la forme (2 ; -3).'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Cercle et tangente : repère, deux tangentes, horizon             */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-plus-tangentes-horizon',
+    titre: 'Tangentes : position dans un repère, tangentes issues d\'un point, distance de l\'horizon',
+    chapitres: ['4e-cercle-tangente'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var f;
+      if (niveau === 1) {
+        var a, b, r, horiz, pos, d, k, g = 0;
+        do {
+          a = rng.nz(-3, 3); b = rng.nz(-3, 3); r = rng.int(1, 3); horiz = rng.bool(); pos = rng.pick(['ext', 'tan', 'sec']);
+          d = pos === 'tan' ? r : pos === 'ext' ? r + rng.int(1, 2) : rng.int(0, r - 1);
+          var c0 = horiz ? b : a;
+          k = rng.bool() ? c0 + d : c0 - d;
+          g++;
+        } while (g < 300 && (Math.abs(k) > 5 || k === 0 || (pos === 'sec' && r < 2) || Math.abs(a) + r > 6 || Math.abs(b) + r > 6));
+        var NOMS = { ext: 'extérieure au cercle', tan: 'tangente au cercle', sec: 'sécante au cercle' }, NB0 = { ext: 0, tan: 1, sec: 2 };
+        f = repere(-6, 6, -6, 6, 270);
+        f.circle([a, b], r, { accent: true }).point([a, b], 'Ω', posQuadrant([a, b]));
+        var xLab = a > 0 ? -4.8 : 4.8, yLab = b > 0 ? -5 : 5;
+        if (horiz) f.seg([-6.3, k], [6.3, k]).text([xLab, k > 0 ? k + 0.3 : k - 0.75], '(Δ)', { small: true });
+        else f.seg([k, -6.3], [k, 6.3]).text([k > 0 ? k + 0.2 : k - 0.2, yLab], '(Δ)', { small: true, anchor: k > 0 ? 'start' : 'end' });
+        var Hp = horiz ? [a, k] : [k, b];
+        return {
+          enonce: 'Dans un repère orthonormé (unité : le centimètre), le cercle $(\\mathscr{C})$ a pour centre $\\Omega' + cpl(a, b) + '$ et pour rayon ' + u(r, 'cm') + '. La droite $(\\Delta)$ est parallèle à l\'axe des ' + (horiz ? 'abscisses' : 'ordonnées') + ' et passe par le point $K' + (horiz ? cpl(0, k) : cpl(k, 0)) + '$.<br>a) Calculer la distance du point $\\Omega$ à la droite $(\\Delta)$.<br>b) Préciser la position de $(\\Delta)$ par rapport à $(\\mathscr{C})$.<br>c) Combien ont-ils de points communs ?',
+          figure: f.svg(),
+          questions: [qnum('a) Distance :', d, 'cm'), qcm(rng, 'b) La droite $(\\Delta)$ est :', NOMS[pos], [NOMS.ext, NOMS.tan, NOMS.sec]), qnum('c) Nombre de points communs :', NB0[pos])],
+          indices: ['La perpendiculaire à $(\\Delta)$ passant par $\\Omega$ est ' + (horiz ? 'verticale' : 'horizontale') + ' : son pied $H$ a pour coordonnées $' + cpl(Hp[0], Hp[1]) + '$.', 'Compare la distance $\\Omega H$ au rayon.'],
+          solution: [
+            'La droite $(\\Delta)$ est ' + (horiz ? 'horizontale (tous ses points ont pour ordonnée $' + n(k) + '$)' : 'verticale (tous ses points ont pour abscisse $' + n(k) + '$)') + '. Le pied de la perpendiculaire issue de $\\Omega$ est $H' + cpl(Hp[0], Hp[1]) + '$.',
+            'Distance : $\\Omega H = |' + n(horiz ? b : a) + ' - ' + T.par(k) + '| = ' + d + '$ cm.',
+            pos === 'tan' ? '$\\Omega H = r$ : la droite est tangente au cercle en $H$ ; un seul point commun.' : pos === 'ext' ? '$\\Omega H > r$ : la droite est extérieure au cercle ; aucun point commun.' : '$\\Omega H < r$ : la droite est sécante au cercle ; deux points communs.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var th = 2 * rng.int(15, 50), aob = 180 - th, oab = th / 2, MA = rng.int(20, 90) / 10;
+        var dOM = 1 / Math.sin(rad(th / 2)), phi = 90 - th / 2;
+        var O = [0, 0], M = [dOM, 0], A = pt(O, phi, 1), B = pt(O, -phi, 1);
+        f = EM.fig.fit([[-1, -1], [1, 1], M], { w: 300, h: 200, pad: 26 });
+        f.circle(O, 1, { light: true }).seg(M, A).seg(M, B).seg(O, A, { accent: true }).seg(O, B, { accent: true }).seg(A, B, { dash: true });
+        f.rightAngle(O, A, M).rightAngle(O, B, M).angle(A, M, B, th + '°', { r: 30 });
+        f.point(O, 'O', 'o').point(M, 'M', 'e').point(A, 'A', 'n').point(B, 'B', 's');
+        return {
+          enonce: 'D\'un point $M$ extérieur à un cercle de centre $O$, on trace les deux tangentes au cercle ; elles le touchent en $A$ et en $B$. On sait que $' + w('AMB') + ' = ' + dg(th) + '$ et $MA = ' + n(MA) + '$ cm.<br>a) Calculer $' + w('AOB') + '$.<br>b) Calculer $' + w('OAB') + '$.<br>c) Calculer $MB$.',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('AOB') + ' =$', aob, '°'), qnum('b) $' + w('OAB') + ' =$', oab, '°'), qnum('c) $MB =$', MA, 'cm')],
+          indices: ['Une tangente est perpendiculaire au rayon au point de contact : les angles $' + w('OAM') + '$ et $' + w('OBM') + '$ sont droits.', 'La somme des angles d\'un quadrilatère vaut $360^\\circ$. Le triangle $OAB$ est isocèle en $O$.'],
+          solution: [
+            'Les tangentes sont perpendiculaires aux rayons : $' + w('OAM') + ' = ' + w('OBM') + ' = 90^\\circ$.',
+            'Dans le quadrilatère $OAMB$ : $' + w('AOB') + ' = 360^\\circ - 90^\\circ - 90^\\circ - ' + dg(th) + ' = ' + dg(aob) + '$.',
+            'Le triangle $OAB$ est isocèle en $O$ ($OA = OB$, rayons) : $' + w('OAB') + ' = \\dfrac{180^\\circ - ' + dg(aob) + '}{2} = ' + dg(oab) + '$.',
+            'Les triangles $OAM$ et $OBM$ sont rectangles, avec la même hypoténuse $[OM]$ et $OA = OB$ : d\'après Pythagore, $MA^2 = OM^2 - OA^2 = OM^2 - OB^2 = MB^2$. Donc $MB = MA = ' + n(MA) + '$ cm.'
+          ]
+        };
+      }
+      // niveau 3 : distance de l'horizon
+      var hm = rng.pick([15, 20, 30, 50, 80, 100, 120]), Rt = 6370, hk = hm / 1000, OM = R(Rt + hk, 3), dk = Math.sqrt((Rt + hk) * (Rt + hk) - Rt * Rt);
+      var obs = hm <= 30 ? 'au sommet du mât d\'un bateau de pêche, à ' + hm + ' m au-dessus de la mer' : hm <= 80 ? 'au dernier étage d\'un grand immeuble du Plateau à Dakar, à ' + hm + ' m au-dessus de la mer' : 'sur une colline au bord de la mer, à ' + hm + ' m d\'altitude';
+      var O3 = [0, 0], M3 = [0, 1.35], ang3 = Math.acos(1 / 1.35), H3 = pt(O3, 90 - ang3 * 180 / Math.PI, 1);
+      f = EM.fig.fit([[-1.05, -0.4], [1.05, 1.4]], { w: 260, h: 220, pad: 18, title: 'Terre et horizon' });
+      f.circle(O3, 1, { light: true }).seg(O3, M3, { dash: true }).seg(O3, H3, { dash: true }).seg(M3, H3, { accent: true }).rightAngle(O3, H3, M3);
+      f.point(O3, 'O', 's').point(M3, 'M', 'n').point(H3, 'H', 'e');
+      return {
+        enonce: 'On assimile la Terre à une boule de centre $O$ et de rayon $6\\,370$ km. Un observateur, dont l\'œil est en $M$, se trouve ' + obs + '. Son regard vers l\'horizon est tangent à la surface de la Terre au point $H$ (figure non à l\'échelle).<br>a) En quel point le triangle $OHM$ est-il rectangle ?<br>b) Calculer $OM$ en kilomètres.<br>c) Calculer la distance $MH$ à laquelle se trouve l\'horizon, arrondie au dixième de kilomètre.',
+        figure: f.svg(),
+        questions: [qcm(rng, 'a) $OHM$ est rectangle en :', '$H$', ['$O$', '$H$', '$M$']), qnum('b) $OM =$', OM, 'km'), qnum('c) $MH \\approx$', R(dk, 1), 'km', 0.06)],
+        indices: ['La droite $(MH)$ est tangente au cercle en $H$ : elle est perpendiculaire au rayon $[OH]$.', 'Convertis la hauteur en kilomètres, puis applique le théorème de Pythagore : $MH^2 = OM^2 - OH^2$.'],
+        solution: [
+          '$(MH)$ est tangente au cercle en $H$, donc $(MH) \\perp (OH)$ : le triangle $OHM$ est rectangle en $H$.',
+          '$' + hm + '$ m $= ' + n(hk) + '$ km, donc $OM = 6\\,370 + ' + n(hk) + ' = ' + n(OM) + '$ km.',
+          'D\'après le théorème de Pythagore : $MH^2 = OM^2 - OH^2 = ' + n(OM) + '^2 - 6\\,370^2 \\approx ' + n(R(dk * dk, 2)) + '$.',
+          '$MH \\approx ' + n(R(dk, 1)) + '$ km : l\'observateur voit jusqu\'à environ ' + n(Math.round(dk)) + ' km.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Pyramide et cône : éléments, toit de case, apothème             */
+  /* ================================================================== */
+  var TOITS = [[3, 2.25], [2.4, 1.8], [2, 1.5], [3.2, 2.4], [2.5, 2], [3, 2], [2.8, 2.1], [3.5, 2.5]];
+  var PYRS = [[3, 4, 5], [5, 12, 13], [4, 3, 5], [6, 8, 10], [8, 6, 10], [9, 12, 15], [12, 5, 13], [8, 15, 17]];
+
+  EM.gen.register({
+    id: '4e-plus-pyramide-cone-aires',
+    titre: 'Pyramide et cône : éléments, toit de case conique, apothème et aire latérale',
+    chapitres: ['4e-pyramide-cone'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      if (niveau === 1) {
+        var B0 = rng.pick([[3, 'triangulaire'], [4, 'carrée'], [5, 'pentagonale'], [6, 'hexagonale'], [8, 'octogonale']]), k = B0[0];
+        return {
+          enonce: 'On considère une pyramide à base ' + B0[1] + ' (sa base est un polygone à ' + k + ' côtés).<br>Combien a-t-elle de faces, d\'arêtes et de sommets ? Quelle est la nature de ses faces latérales ?',
+          questions: [qnum('Nombre de faces :', k + 1), qnum('Nombre d\'arêtes :', 2 * k), qnum('Nombre de sommets :', k + 1), qcm(rng, 'Faces latérales :', 'des triangles', ['des triangles', 'des rectangles', 'des polygones à ' + k + ' côtés', 'des disques'])],
+          indices: ['Chaque côté de la base porte une face latérale triangulaire ; toutes ces faces se rejoignent au sommet de la pyramide.', 'Arêtes : celles de la base, plus celles qui relient chaque sommet de la base au sommet de la pyramide.'],
+          solution: [
+            'Faces : la base et ' + k + ' faces latérales, soit $' + k + ' + 1 = ' + (k + 1) + '$ faces.',
+            'Arêtes : ' + k + ' arêtes sur la base et ' + k + ' arêtes latérales, soit $2 \\times ' + k + ' = ' + (2 * k) + '$ arêtes.',
+            'Sommets : les ' + k + ' sommets de la base et le sommet principal, soit ' + m(k + 1) + ' sommets.',
+            'Les faces latérales sont des triangles' + (k === 4 ? ' (isocèles si la pyramide est régulière).' : '.')
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var Tt = rng.pick(TOITS), r = Tt[0], h = Tt[1], g2 = Math.sqrt(R(r * r + h * h, 6)), exact = Math.abs(g2 * 100 - Math.round(g2 * 100)) < 1e-6;
+        var Al = Math.PI * r * g2, Alr = Math.round(Al), prix = rng.pick([1500, 2000, 2500, 3000]);
+        var village = rng.pick(['en Casamance', 'dans le Saloum', 'près de Kédougou', 'dans le Fouta']);
+        var S = [0, h], A = [-r, 0], B = [r, 0], O = [0, 0];
+        var f = EM.fig.fit([S, A, B, [0, -0.35 * r]], { w: 260, h: 190, pad: 30 });
+        f.seg(A, S).seg(S, B).seg(S, O, { dash: true }).seg(O, B, { dash: true, accent: true }).rightAngle(B, O, S);
+        f.add('<ellipse class="fig-line fig-nofill fig-thin" cx="' + f.X(0) + '" cy="' + f.Y(0) + '" rx="' + (f.X(r) - f.X(0)) + '" ry="' + R((f.X(r) - f.X(0)) * 0.3, 2) + '"/>');
+        f.point(S, 'S', 'n').point(O, 'O', 'so').point(B, 'B', 'e');
+        return {
+          enonce: 'Le toit d\'une case ' + village + ' a la forme d\'un cône de révolution de sommet $S$, dont la base est un disque de centre $O$ et de rayon $OB = ' + n(r) + '$ m. Sa hauteur est $SO = ' + n(h) + '$ m.<br>a) Calculer la longueur de la génératrice $SB$' + (exact ? '.' : ', arrondie au centimètre.') + '<br>b) Calculer l\'aire latérale du toit, arrondie au m² : c\'est la surface de paille à poser.<br>c) La pose de la paille coûte ' + T.fcfa(prix) + ' par m² (aire arrondie). Calculer le coût.',
+          figure: f.svg(),
+          questions: [qnum('a) $SB \\approx$', R(g2, 2), 'm', exact ? null : 0.006), qnum('b) Aire latérale :', Alr, 'm²', 0.6), qnum('c) Coût :', Alr * prix, 'F CFA', prix)],
+          indices: ['Le triangle $SOB$ est rectangle en $O$ : $SB^2 = SO^2 + OB^2$.', 'Aire latérale d\'un cône : $\\mathcal{A}_\\ell = \\pi \\times r \\times g$, où $g$ est la génératrice.'],
+          solution: [
+            'Le triangle $SOB$ est rectangle en $O$. D\'après le théorème de Pythagore : $SB^2 = ' + n(h) + '^2 + ' + n(r) + '^2 = ' + n(R(h * h, 4)) + ' + ' + n(R(r * r, 4)) + ' = ' + n(R(g2 * g2, 4)) + '$, donc $SB ' + (exact ? '= ' : '\\approx ') + n(R(g2, 2)) + '$ m.',
+            'Aire latérale : $\\pi \\times ' + n(r) + ' \\times ' + n(R(g2, 2)) + ' \\approx ' + n(R(Al, 2)) + '$, soit environ ' + u(Alr, 'm²') + '.',
+            'Coût : $' + Alr + ' \\times ' + n(prix) + ' = ' + n(Alr * prix) + '$ F' + NB + 'CFA.'
+          ]
+        };
+      }
+      // niveau 3 : pyramide régulière à base carrée, apothème
+      var P = rng.pick(PYRS), demi = P[0], hp = P[1], ap = P[2], c = 2 * demi, Al3 = 2 * c * ap, V = c * c * hp / 3, un = rng.pick(['dm', 'm']);
+      var objet = un === 'dm' ? 'Une lampe décorative en verre' : 'Le toit d\'un kiosque';
+      var k0 = 0.42 * c, k1 = 0.3 * c;
+      var pA = [0, 0], pB = [c, 0], pC = [c + k0, k1], pD = [k0, k1], pO = [(c + k0) / 2, k1 / 2], pS = [pO[0], pO[1] + hp], pI = [c / 2, 0];
+      var f3 = EM.fig.fit([pA, pB, pC, pD, pS], { w: 260, h: 230, pad: 28 });
+      f3.seg(pA, pB).seg(pB, pC).seg(pA, pS).seg(pB, pS).seg(pC, pS);
+      f3.seg(pA, pD, { dash: true }).seg(pD, pC, { dash: true }).seg(pD, pS, { dash: true }).seg(pS, pO, { dash: true }).seg(pO, pI, { dash: true }).seg(pS, pI, { accent: true });
+      f3.rightAngle(pI, pO, pS);
+      f3.point(pA, 'A', 'so').point(pB, 'B', 'se').point(pC, 'C', 'e').point(pD, 'D', 'no').point(pS, 'S', 'n').point(pO, 'O', 'e').point(pI, 'I', 's');
+      return {
+        enonce: objet + ' a la forme d\'une pyramide régulière $SABCD$ à base carrée de côté ' + u(c, un) + ' et de hauteur $SO = ' + hp + '$ ' + un + ', où $O$ est le centre du carré. Le point $I$ est le milieu de $[AB]$ ; la longueur $SI$ est l\'apothème de la pyramide.<br>a) Calculer $SI$.<br>b) Calculer l\'aire latérale de la pyramide.<br>c) Calculer son volume.',
+        figure: f3.svg(),
+        questions: [qnum('a) $SI =$', ap, un), qnum('b) Aire latérale :', Al3, un + '²'), qnum('c) Volume :', V, un + '³')],
+        indices: ['Le triangle $SOI$ est rectangle en $O$, avec $OI = \\dfrac{' + c + '}{2}$.', 'Chaque face latérale est un triangle de base ' + u(c, un) + ' et de hauteur $SI$. Volume : $\\dfrac{1}{3} \\times \\mathcal{B} \\times h$.'],
+        solution: [
+          '$O$ est le centre du carré et $I$ le milieu de $[AB]$ : $OI = \\dfrac{' + c + '}{2} = ' + demi + '$ ' + un + '. Le triangle $SOI$ est rectangle en $O$.',
+          'D\'après le théorème de Pythagore : $SI^2 = SO^2 + OI^2 = ' + hp + '^2 + ' + demi + '^2 = ' + (hp * hp) + ' + ' + (demi * demi) + ' = ' + (ap * ap) + '$, donc $SI = ' + ap + '$ ' + un + '.',
+          'Les 4 faces latérales sont des triangles isocèles de base ' + c + ' et de hauteur $SI$ : $\\mathcal{A}_\\ell = 4 \\times \\dfrac{' + c + ' \\times ' + ap + '}{2} = ' + n(Al3) + '$ ' + un + '².',
+          'Volume : $V = \\dfrac{1}{3} \\times ' + c + '^2 \\times ' + hp + ' = \\dfrac{' + n(c * c * hp) + '}{3} = ' + n(V) + '$ ' + un + '³.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 3e — Angles inscrits : diamètre, quadrilatère inscrit, triangle       */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '3e-plus-angles-inscrits-figures',
+    titre: 'Angles inscrits : demi-cercle, angles qui interceptent le même arc, triangle inscrit',
+    chapitres: ['3e-angles-inscrits'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var O = [0, 0], f = EM.fig.fit([[-1.12, -1.12], [1.12, 1.12]], { w: 240, h: 240, title: 'Cercle de centre O' });
+      f.circle(O, 1, { light: true });
+      var arc = function (a, b) { return '\\overset{\\frown}{' + a + b + '}'; };
+      if (niveau === 1) {
+        var a = rng.int(20, 58), sens = rng.bool() ? 1 : -1, A = [-1, 0], B = [1, 0], M = pt(O, sens * 2 * a, 1);
+        f.seg(A, B).seg(A, M).seg(M, B).seg(O, M, { dash: true, accent: true });
+        f.angle(B, A, M, a + '°', { r: 30 }).angle(A, M, B, '?', { r: 20, accent: true });
+        f.point(A, 'A', 'o').point(B, 'B', 'e').point(M, 'M', posAngle(sens * 2 * a)).point(O, 'O', sens > 0 ? 's' : 'n');
+        return {
+          enonce: '$[AB]$ est un diamètre d\'un cercle de centre $O$, et $M$ est un point de ce cercle. On sait que $' + w('MAB') + ' = ' + dg(a) + '$.<br>a) Calculer $' + w('AMB') + '$.<br>b) Calculer $' + w('MBA') + '$.<br>c) Calculer l\'angle au centre $' + w('MOB') + '$.',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('AMB') + ' =$', 90, '°'), qnum('b) $' + w('MBA') + ' =$', 90 - a, '°'), qnum('c) $' + w('MOB') + ' =$', 2 * a, '°')],
+          indices: ['Un angle inscrit qui intercepte un demi-cercle (son côté opposé est un diamètre) est droit.', 'L\'angle inscrit $' + w('MAB') + '$ et l\'angle au centre $' + w('MOB') + '$ interceptent le même arc $' + arc('M', 'B') + '$.'],
+          solution: [
+            '$[AB]$ est un diamètre et $M$ est sur le cercle : l\'angle inscrit $' + w('AMB') + '$ intercepte un demi-cercle, donc $' + w('AMB') + ' = 90^\\circ$.',
+            'Le triangle $AMB$ est rectangle en $M$ : ses angles aigus sont complémentaires, $' + w('MBA') + ' = 90^\\circ - ' + dg(a) + ' = ' + dg(90 - a) + '$.',
+            'L\'angle inscrit $' + w('MAB') + '$ et l\'angle au centre $' + w('MOB') + '$ interceptent le même arc $' + arc('M', 'B') + '$ : $' + w('MOB') + ' = 2 \\times ' + dg(a) + ' = ' + dg(2 * a) + '$.'
+          ]
+        };
+      }
+      if (niveau === 2) {
+        var x = rng.int(20, 55), y = rng.int(20, 55), rest = 360 - 2 * x - 2 * y, a1 = Math.max(80, Math.round(rest * rng.dec(0.4, 0.6, 2)));
+        if (rest - a1 < 50) a1 = rest - 50;
+        var t0 = rng.int(180, 260), tA = t0, tB = tA + a1, tC = tB + 2 * x, tD = tC + (rest - a1);
+        var pA = pt(O, tA, 1), pB = pt(O, tB, 1), pC = pt(O, tC, 1), pD = pt(O, tD, 1);
+        var det = (pC[0] - pA[0]) * (pD[1] - pB[1]) - (pC[1] - pA[1]) * (pD[0] - pB[0]);
+        var s = ((pB[0] - pA[0]) * (pD[1] - pB[1]) - (pB[1] - pA[1]) * (pD[0] - pB[0])) / det, pI = [pA[0] + s * (pC[0] - pA[0]), pA[1] + s * (pC[1] - pA[1])];
+        f.poly([pA, pB, pC, pD]).seg(pA, pC).seg(pB, pD);
+        f.angle(pB, pA, pC, x + '°', { r: 26 }).angle(pA, pB, pD, y + '°', { r: 26 });
+        f.point(pA, 'A', posAngle(tA)).point(pB, 'B', posAngle(tB)).point(pC, 'C', posAngle(tC)).point(pD, 'D', posAngle(tD)).point(pI, 'I', posAngle(tC + (rest - a1) / 2));
+        return {
+          enonce: '$A$, $B$, $C$, $D$ sont quatre points d\'un cercle, dans cet ordre. Les cordes $[AC]$ et $[BD]$ se coupent en $I$. On sait que $' + w('BAC') + ' = ' + dg(x) + '$ et $' + w('ABD') + ' = ' + dg(y) + '$.<br>a) Calculer $' + w('BDC') + '$.<br>b) Calculer $' + w('ACD') + '$.<br>c) Calculer $' + w('AIB') + '$.',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('BDC') + ' =$', x, '°'), qnum('b) $' + w('ACD') + ' =$', y, '°'), qnum('c) $' + w('AIB') + ' =$', 180 - x - y, '°')],
+          indices: ['Deux angles inscrits qui interceptent le même arc ont la même mesure. Repère l\'arc intercepté par chaque angle.', 'Pour $' + w('AIB') + '$, utilise la somme des angles du triangle $AIB$.'],
+          solution: [
+            'Les angles inscrits $' + w('BDC') + '$ et $' + w('BAC') + '$ interceptent le même arc $' + arc('B', 'C') + '$ : $' + w('BDC') + ' = ' + dg(x) + '$.',
+            'Les angles inscrits $' + w('ACD') + '$ et $' + w('ABD') + '$ interceptent le même arc $' + arc('A', 'D') + '$ : $' + w('ACD') + ' = ' + dg(y) + '$.',
+            'Dans le triangle $AIB$ : $' + w('IAB') + ' = ' + w('BAC') + ' = ' + dg(x) + '$ et $' + w('IBA') + ' = ' + w('ABD') + ' = ' + dg(y) + '$, donc $' + w('AIB') + ' = 180^\\circ - ' + dg(x) + ' - ' + dg(y) + ' = ' + dg(180 - x - y) + '$.'
+          ]
+        };
+      }
+      // niveau 3 : triangle inscrit et angles au centre
+      var al = 2 * rng.int(20, 80), be = 2 * rng.int(20, 80);
+      while (al + be > 300) be -= 20;
+      var ta = rng.int(190, 250), qA = pt(O, ta, 1), qB = pt(O, ta + al, 1), qC = pt(O, ta + al + be, 1);
+      f.poly([qA, qB, qC]).seg(O, qA, { dash: true }).seg(O, qB, { dash: true }).seg(O, qC, { dash: true });
+      f.angle(qA, O, qB, al + '°', { r: 18, accent: true }).angle(qB, O, qC, be + '°', { r: 26, accent: true });
+      f.point(qA, 'A', posAngle(ta)).point(qB, 'B', posAngle(ta + al)).point(qC, 'C', posAngle(ta + al + be)).point(O, 'O', posAngle(ta + al + be + (360 - al - be) / 2));
+      return {
+        enonce: 'Le triangle $ABC$ est inscrit dans un cercle de centre $O$. On sait que $' + w('AOB') + ' = ' + dg(al) + '$ et $' + w('BOC') + ' = ' + dg(be) + '$ (les angles au centre interceptent les arcs $' + arc('A', 'B') + '$ et $' + arc('B', 'C') + '$ qui ne contiennent pas le troisième sommet).<br>a) Calculer $' + w('ACB') + '$.<br>b) Calculer $' + w('BAC') + '$.<br>c) En déduire $' + w('ABC') + '$.',
+        figure: f.svg(),
+        questions: [qnum('a) $' + w('ACB') + ' =$', al / 2, '°'), qnum('b) $' + w('BAC') + ' =$', be / 2, '°'), qnum('c) $' + w('ABC') + ' =$', 180 - (al + be) / 2, '°')],
+        indices: ['L\'angle inscrit $' + w('ACB') + '$ intercepte le même arc $' + arc('A', 'B') + '$ que l\'angle au centre $' + w('AOB') + '$.', 'Pour le dernier angle, utilise la somme des angles du triangle.'],
+        solution: [
+          'L\'angle inscrit $' + w('ACB') + '$ et l\'angle au centre $' + w('AOB') + '$ interceptent l\'arc $' + arc('A', 'B') + '$ : $' + w('ACB') + ' = \\dfrac{' + dg(al) + '}{2} = ' + dg(al / 2) + '$.',
+          'L\'angle inscrit $' + w('BAC') + '$ et l\'angle au centre $' + w('BOC') + '$ interceptent l\'arc $' + arc('B', 'C') + '$ : $' + w('BAC') + ' = \\dfrac{' + dg(be) + '}{2} = ' + dg(be / 2) + '$.',
+          'Somme des angles du triangle $ABC$ : $' + w('ABC') + ' = 180^\\circ - ' + dg(al / 2) + ' - ' + dg(be / 2) + ' = ' + dg(180 - (al + be) / 2) + '$.'
+        ]
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 3e — Polygones réguliers : nombre de côtés, hexagone, carré inscrit   */
+  /* ================================================================== */
+  var POLYS = { 5: 'pentagone', 6: 'hexagone', 8: 'octogone', 9: 'ennéagone', 10: 'décagone', 12: 'dodécagone' };
+
+  EM.gen.register({
+    id: '3e-plus-polygones-reguliers',
+    titre: 'Polygones réguliers : retrouver le nombre de côtés, hexagone et carré inscrits',
+    chapitres: ['3e-angles-inscrits'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var O = [0, 0], f;
+      if (niveau === 1) {
+        var nn = Number(rng.pick(Object.keys(POLYS))), centreA = F(360, nn), inter = F(180).sub(centreA), parCentre = rng.bool();
+        var donne = parCentre ? 'l\'angle au centre qui intercepte un côté mesure $' + dg(centreA.value()) + '$' : 'chacun de ses angles mesure $' + dg(inter.value()) + '$';
+        return {
+          enonce: 'Un polygone régulier est inscrit dans un cercle de centre $O$ ; ' + donne + '.<br>a) Combien ce polygone a-t-il de côtés ?<br>b) Comment s\'appelle-t-il ?<br>c) ' + (parCentre ? 'Calculer la mesure de chacun de ses angles.' : 'Calculer la mesure de l\'angle au centre qui intercepte un côté.'),
+          questions: [qnum('a) Nombre de côtés :', nn), qcm(rng, 'b) Nom :', 'un ' + POLYS[nn], rng.sample(Object.keys(POLYS).filter(function (k) { return Number(k) !== nn; }), 3).map(function (k) { return 'un ' + POLYS[k]; })), qnum(parCentre ? 'c) Angle du polygone :' : 'c) Angle au centre :', parCentre ? inter.value() : centreA.value(), '°')],
+          indices: ['Pour un polygone régulier à $n$ côtés : angle au centre $= \\dfrac{360^\\circ}{n}$, et angle du polygone $= 180^\\circ - \\dfrac{360^\\circ}{n}$.', parCentre ? 'Résous $\\dfrac{360}{n} = ' + n(centreA.value()) + '$.' : 'Commence par l\'angle au centre : $180^\\circ - ' + dg(inter.value()) + '$.'],
+          solution: (parCentre ? [
+            'L\'angle au centre vaut $\\dfrac{360^\\circ}{n}$, donc $n = \\dfrac{360}{' + n(centreA.value()) + '} = ' + nn + '$.'
+          ] : [
+            'L\'angle du polygone vaut $180^\\circ - \\dfrac{360^\\circ}{n}$ : l\'angle au centre vaut donc $180^\\circ - ' + dg(inter.value()) + ' = ' + dg(centreA.value()) + '$.',
+            'Puis $n = \\dfrac{360}{' + n(centreA.value()) + '} = ' + nn + '$.'
+          ]).concat([
+            'C\'est un ' + POLYS[nn] + ' régulier (' + nn + ' côtés).',
+            parCentre ? 'Chaque angle du polygone mesure $180^\\circ - ' + dg(centreA.value()) + ' = ' + dg(inter.value()) + '$.' : 'L\'angle au centre mesure $' + dg(centreA.value()) + '$.'
+          ])
+        };
+      }
+      if (niveau === 2) {
+        var r = rng.int(4, 12) * 5, aire = 3 * Math.sqrt(3) / 2 * r * r, ctx = rng.pick(['Un artisan de Soumbédioune fabrique un plateau', 'Une association de Rufisque dessine un motif de pagne', 'Un menuisier de Thiès fabrique une table basse']);
+        var pts6 = []; for (var i = 0; i < 6; i++) pts6.push(pt(O, 30 + 60 * i, 1));
+        f = EM.fig.fit([[-1.12, -1.12], [1.12, 1.12]], { w: 230, h: 230 });
+        f.circle(O, 1, { light: true }).poly(pts6, { fill: true }).seg(O, pts6[0], { accent: true }).seg(O, pts6[1], { accent: true });
+        f.point(O, 'O', 's').point(pts6[0], 'A', 'e').point(pts6[1], 'B', 'n');
+        return {
+          enonce: ctx + ' en forme d\'hexagone régulier inscrit dans un cercle de centre $O$ et de rayon ' + u(r, 'cm') + '.<br>a) Calculer l\'angle au centre $' + w('AOB') + '$ et en déduire la nature du triangle $AOB$.<br>b) Calculer la longueur d\'un côté, puis le périmètre de l\'hexagone.<br>c) Calculer l\'aire de l\'hexagone, arrondie au cm².',
+          figure: f.svg(),
+          questions: [qnum('a) $' + w('AOB') + ' =$', 60, '°'), qcm(rng, 'a) Le triangle $AOB$ est :', 'équilatéral', ['équilatéral', 'rectangle en $O$', 'isocèle mais pas équilatéral']), qnum('b) Côté :', r, 'cm'), qnum('b) Périmètre :', 6 * r, 'cm'), qnum('c) Aire :', Math.round(aire), 'cm²', 1)],
+          indices: ['Les 6 angles au centre se partagent $360^\\circ$. Le triangle $AOB$ est isocèle en $O$ (deux rayons).', 'L\'hexagone est formé de 6 triangles équilatéraux de côté $r$ ; la hauteur d\'un triangle équilatéral de côté $r$ est $\\dfrac{r\\sqrt{3}}{2}$.'],
+          solution: [
+            '$' + w('AOB') + ' = \\dfrac{360^\\circ}{6} = 60^\\circ$. Le triangle $AOB$ est isocèle en $O$ avec un angle de $60^\\circ$ au sommet : ses angles à la base mesurent $\\dfrac{180^\\circ - 60^\\circ}{2} = 60^\\circ$. Il est équilatéral.',
+            'Donc $AB = OA = ' + r + '$ cm : le côté de l\'hexagone est égal au rayon. Périmètre : $6 \\times ' + r + ' = ' + (6 * r) + '$ cm.',
+            'Hauteur d\'un triangle équilatéral de côté ' + r + ' (Pythagore) : $h = \\sqrt{' + r + '^2 - ' + n(r / 2) + '^2} = \\dfrac{' + r + '\\sqrt{3}}{2}$. Aire d\'un triangle : $\\dfrac{' + r + ' \\times h}{2} = \\dfrac{' + n(r * r) + '\\sqrt{3}}{4}$.',
+            'Aire de l\'hexagone : $6 \\times \\dfrac{' + n(r * r) + '\\sqrt{3}}{4} = \\dfrac{' + n(3 * r * r) + '\\sqrt{3}}{2} \\approx ' + n(Math.round(aire)) + '$ cm².'
+          ]
+        };
+      }
+      // niveau 3 : carré et triangle équilatéral inscrits
+      var r3 = rng.int(2, 9), carre = [], tri = [];
+      for (var j = 0; j < 4; j++) carre.push(pt(O, 45 + 90 * j, 1));
+      for (j = 0; j < 3; j++) tri.push(pt(O, 90 + 120 * j, 1));
+      f = EM.fig.fit([[-1.12, -1.12], [1.12, 1.12]], { w: 230, h: 230 });
+      f.circle(O, 1, { light: true }).poly(carre).poly(tri, { accent: true }).seg(O, carre[0], { dash: true }).seg(O, carre[1], { dash: true }).rightAngle(carre[0], O, carre[1]);
+      f.point(O, 'O', 's').point(carre[0], 'A', 'ne').point(carre[1], 'B', 'no').point(tri[1], 'E', 'so').point(tri[2], 'F', 'se');
+      return {
+        enonce: 'Dans un cercle de centre $O$ et de rayon ' + u(r3, 'cm') + ', on inscrit un carré $ABCD$ et un triangle équilatéral $EFG$ (en couleur).<br>a) Calculer la valeur exacte du côté $AB$ du carré.<br>b) Calculer la valeur exacte du côté $EF$ du triangle équilatéral.',
+        figure: f.svg(),
+        questions: [{ label: 'a) $AB =$', type: 'number', reponse: r3 + '*sqrt(2)', reponseTex: T.mono(r3, '\\sqrt{2}', true), unite: 'cm' }, { label: 'b) $EF =$', type: 'number', reponse: r3 + '*sqrt(3)', reponseTex: T.mono(r3, '\\sqrt{3}', true), unite: 'cm' }],
+        indices: ['Carré : l\'angle au centre $' + w('AOB') + '$ mesure $90^\\circ$ ; applique Pythagore dans le triangle $AOB$.', 'Triangle équilatéral : $' + w('EOF') + ' = 120^\\circ$. Trace la hauteur $[OH]$ du triangle isocèle $EOF$ : $' + w('OEH') + ' = 30^\\circ$ et $EH = OE \\times \\cos 30^\\circ$.'],
+        solution: [
+          'Carré : $' + w('AOB') + ' = \\dfrac{360^\\circ}{4} = 90^\\circ$ et $OA = OB = ' + r3 + '$. D\'après Pythagore dans $AOB$ rectangle en $O$ : $AB^2 = ' + r3 + '^2 + ' + r3 + '^2 = ' + (2 * r3 * r3) + '$, donc $AB = \\sqrt{' + (2 * r3 * r3) + '} = ' + T.mono(r3, '\\sqrt{2}', true) + '$ cm.',
+          'Triangle : $' + w('EOF') + ' = \\dfrac{360^\\circ}{3} = 120^\\circ$. Le triangle $EOF$ est isocèle en $O$, donc $' + w('OEF') + ' = \\dfrac{180^\\circ - 120^\\circ}{2} = 30^\\circ$. Soit $H$ le milieu de $[EF]$ : $(OH) \\perp (EF)$.',
+          'Dans le triangle $OEH$ rectangle en $H$ : $EH = OE \\times \\cos 30^\\circ = ' + r3 + ' \\times \\dfrac{\\sqrt{3}}{2}$, donc $EF = 2 \\times EH = ' + T.mono(r3, '\\sqrt{3}', true) + '$ cm.'
+        ],
+        aide: 'Écris la valeur exacte avec √, par exemple 5√2 (ou 5*sqrt(2)).'
       };
     }
   });

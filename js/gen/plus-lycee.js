@@ -49,6 +49,10 @@
   }
   /** Valeur arrondie au centième (écriture TeX), exacte si elle tombe juste. */
   function ap(x, d) { var v = typeof x === 'number' ? x : fr(x).value(); return T.num(rd(v, d == null ? 2 : d)); }
+  /** « = valeur » si elle a au plus deux décimales, sinon « ≈ arrondi au centième ». */
+  function egal2(x) { var v = fr(x).value(); return rd(v, 2) === rd(v, 9) ? '= ' + T.num(rd(v, 2)) : '\\approx ' + ap(v); }
+  /** Fraction « num/den » avec le signe devant : « - \dfrac{8}{h} » ou « + \dfrac{8}{h} » */
+  function fracSigne(n, den, first) { var t = '\\dfrac{' + Math.abs(n) + '}{' + den + '}'; return first ? (n < 0 ? '-' : '') + t : (n < 0 ? ' - ' : ' + ') + t; }
   /** Question à choix : mélange, sans doublon. */
   function qcm(rng, label, bonne, autres) {
     var all = [bonne];
@@ -115,7 +119,7 @@
 
   /** Pas de graduation « rond » pour une étendue donnée. */
   function pas(r) {
-    var raw = r / 8, p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), m = raw / p;
+    var raw = r / 10, p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), m = raw / p;
     return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p;
   }
   /** Bornes verticales d'une fenêtre à partir d'un échantillon de la fonction. */
@@ -149,6 +153,12 @@
     morceaux.forEach(function (m) { fig.curve(m.f, { from: m.from, to: m.to, accent: true }); });
     (opt.points || []).forEach(function (p) { fig.point(p[0], p[1], p[2] || 'ne'); });
     return fig.svg();
+  }
+
+  /** Position d'étiquette (n, ne, e…) pointant de G vers P : l'étiquette s'écarte de la figure. */
+  function posLoin(P, G) {
+    var a = Math.atan2(P[1] - G[1], P[0] - G[0]) * 180 / Math.PI, dirs = ['e', 'ne', 'n', 'no', 'o', 'so', 's', 'se'];
+    return dirs[((Math.round(a / 45) % 8) + 8) % 8];
   }
 
   /* ---------- nombres complexes à parties rationnelles ---------- */
@@ -225,8 +235,8 @@
           figure: fg.svg(),
           questions: [
             { label: '1) $k =$', type: 'number', reponse: k },
-            { label: '2) $A\'B\' =$', type: 'number', reponse: Lp, unite: 'cm' },
-            { label: '3) Aire de $A\'B\'C\'$ :', type: 'number', reponse: aireP, unite: 'cm²' },
+            { label: '2) $A\'B\' =$', type: 'number', reponse: Lp, reponseTex: nb(Lp), unite: 'cm' },
+            { label: '3) Aire de $A\'B\'C\'$ :', type: 'number', reponse: aireP, reponseTex: nb(aireP), unite: 'cm²' },
             qcm(rng, '4) Les droites $(AB)$ et $(A\'B\')$ sont :', 'strictement parallèles', ['sécantes', 'confondues', 'perpendiculaires'])
           ],
           indices: [
@@ -314,7 +324,7 @@
             '3) Déterminer l\'intersection des plans $(CIJ)$ et $(ABC)$.<br>4) Les droites $(IJ)$ et $(BC)$ sont-elles coplanaires ?',
           figure: tetraFig(k.value(), 1),
           questions: [
-            { label: '1) $IJ =$', type: 'number', reponse: IJ, unite: 'cm' },
+            { label: '1) $IJ =$', type: 'number', reponse: IJ, reponseTex: nb(IJ), unite: 'cm' },
             qcm(rng, '2) La droite $(IJ)$ est :', 'strictement parallèle au plan $(ABC)$', ['sécante au plan $(ABC)$', 'contenue dans le plan $(ABC)$']),
             qcm(rng, '3) Les plans $(CIJ)$ et $(ABC)$ se coupent suivant :', 'la droite passant par $C$ et parallèle à $(AB)$', ['la droite $(AB)$', 'la droite $(AC)$', 'la droite $(BC)$']),
             qcm(rng, '4) Les droites $(IJ)$ et $(BC)$ sont :', 'non coplanaires', ['sécantes', 'strictement parallèles'])
@@ -345,9 +355,9 @@
         questions: [
           qcm(rng, '1) Les droites $(JK)$ et $(BC)$ sont :', 'strictement parallèles', ['sécantes', 'non coplanaires']),
           { label: '2) $k =$', type: 'number', reponse: k },
-          { label: '2) $IJ =$', type: 'number', reponse: IJ2, unite: 'cm' },
-          { label: '3) Périmètre de $IJK$ :', type: 'number', reponse: perP, unite: 'cm' },
-          { label: '3) Aire de $IJK$ :', type: 'number', reponse: aireP, unite: 'cm²' }
+          { label: '2) $IJ =$', type: 'number', reponse: IJ2, reponseTex: nb(IJ2), unite: 'cm' },
+          { label: '3) Périmètre de $IJK$ :', type: 'number', reponse: perP, reponseTex: nb(perP), unite: 'cm' },
+          { label: '3) Aire de $IJK$ :', type: 'number', reponse: aireP, reponseTex: nb(aireP), unite: 'cm²' }
         ],
         indices: [
           'Si deux plans sont parallèles, tout plan qui coupe l\'un coupe l\'autre, et les deux droites d\'intersection sont parallèles.',
@@ -369,10 +379,10 @@
   /* 1ère S — Statistiques : médiane et quartiles d'une série en classes */
   /* ================================================================== */
   var CTX_CLASSES = [
-    { t: 'Durée (en minutes) des appels passés en une journée depuis un télécentre de Thiès', a0: 0, w: 2, u: 'min', ind: 'appels', de: 'd\'appels' },
-    { t: 'Recette journalière (en milliers de F CFA) des boutiques d\'un marché de Kaolack', a0: 10, w: 10, u: 'milliers de F CFA', ind: 'boutiques', de: 'de boutiques' },
-    { t: 'Âge (en années) des joueurs inscrits à un tournoi de navétanes à Rufisque', a0: 15, w: 3, u: 'ans', ind: 'joueurs', de: 'de joueurs' },
-    { t: 'Masse (en kg) des sacs de mil pesés au marché hebdomadaire de Diaobé', a0: 40, w: 5, u: 'kg', ind: 'sacs', de: 'de sacs' }
+    { t: 'Durée (en minutes) des appels passés en une journée depuis un télécentre de Thiès', a0: 0, w: 2, u: 'min', ind: 'appels', de: 'd\'appels', g: 'la durée', un: 'une durée', fem: true },
+    { t: 'Recette journalière (en milliers de F CFA) des boutiques d\'un marché de Kaolack', a0: 10, w: 10, u: 'milliers de F CFA', ind: 'boutiques', de: 'de boutiques', g: 'la recette', un: 'une recette', fem: true },
+    { t: 'Âge (en années) des joueurs inscrits à un tournoi de navétanes à Rufisque', a0: 15, w: 3, u: 'ans', ind: 'joueurs', de: 'de joueurs', g: 'l\'âge', un: 'un âge', fem: false },
+    { t: 'Masse (en kg) des sacs de mil pesés au marché hebdomadaire de Diaobé', a0: 40, w: 5, u: 'kg', ind: 'sacs', de: 'de sacs', g: 'la masse', un: 'une masse', fem: true }
   ];
   function figECC(bornes, E, N) {
     var x0 = bornes[0], x1 = bornes[bornes.length - 1], w = bornes[1] - bornes[0];
@@ -419,24 +429,24 @@
         ' \\\\ \\hline \\text{Effectif cumulé} & ' + E.join(' & ') + ' \\\\ \\hline\\end{array}$$';
       var sol = ['L\'effectif total est $N = ' + ns.join(' + ') + ' = ' + N + '$. Effectifs cumulés croissants (nombre de valeurs strictement inférieures à chaque borne) :' + ecc];
       var Me = interp(F(N, 2)), qs, enonce;
-      var phrMe = 'La médiane correspond à l\'effectif cumulé $\\dfrac{N}{2} = ' + nb(F(N, 2)) + '$, atteint dans la classe ' + classe(Me.i) + ' (entre $' + E[Me.i] + '$ et $' + E[Me.i + 1] + '$). Par interpolation linéaire : $Me$ vérifie $' + Me.tex.replace('x =', 'Me =') + '$ ' + ctx.u + '.';
+      var phrMe = 'La médiane correspond à l\'effectif cumulé $\\dfrac{N}{2} = ' + nb(F(N, 2)) + '$, atteint dans la classe ' + classe(Me.i) + ' (entre $' + E[Me.i] + '$ et $' + E[Me.i + 1] + '$). Par interpolation linéaire : $' + Me.tex.replace('x =', 'Me =') + '$ ' + ctx.u + '.';
       if (niveau === 1) {
         var imode = ns.indexOf(mx), j = rng.int(2, 4), mIdx;
         do { mIdx = rng.int(1, 4); } while (mIdx === j);
         var pct = F((N - E[mIdx]) * 100, N);
         trace('1s-stat-mediane-classes', { niveau: 1, bornes: bornes, ns: ns, j: j, m: mIdx });
-        enonce = ctx.t + ' :<br>' + tab + '1) Déterminer la classe modale de cette série.<br>2) Calculer les effectifs cumulés croissants et donner le nombre ' + ctx.de + ' dont la valeur est strictement inférieure à $' + T.num(bornes[j]) + '$.<br>' +
-          '3) Déterminer la médiane $Me$ de la série par interpolation linéaire (arrondie au centième).<br>4) Calculer le pourcentage ' + ctx.de + ' dont la valeur est supérieure ou égale à $' + T.num(bornes[mIdx]) + '$ (arrondi au dixième).';
+        enonce = ctx.t + ' :<br>' + tab + '1) Déterminer la classe modale de cette série.<br>2) Calculer les effectifs cumulés croissants et donner le nombre ' + ctx.de + ' dont ' + ctx.g + ' est strictement inférieur' + (ctx.fem ? 'e' : '') + ' à $' + T.num(bornes[j]) + '$ ' + ctx.u + '.<br>' +
+          '3) Déterminer la médiane $Me$ de la série par interpolation linéaire (arrondie au centième).<br>4) Calculer le pourcentage ' + ctx.de + ' dont ' + ctx.g + ' est supérieur' + (ctx.fem ? 'e' : '') + ' ou égal' + (ctx.fem ? 'e' : '') + ' à $' + T.num(bornes[mIdx]) + '$ ' + ctx.u + ' (arrondi au dixième).';
         qs = [
           qcm(rng, '1) Classe modale :', classe(imode), [0, 1, 2, 3, 4].map(classe)),
-          { label: '2) Nombre ' + ctx.de + ' de valeur inférieure à $' + T.num(bornes[j]) + '$ :', type: 'number', reponse: E[j] },
+          { label: '2) Nombre ' + ctx.de + ' concernés :', type: 'number', reponse: E[j] },
           { label: '3) $Me \\approx$', type: 'number', reponse: Me.v, tol: 0.01, reponseTex: ap(Me.v), unite: ctx.u },
           { label: '4) Pourcentage :', type: 'number', reponse: pct, tol: 0.1, reponseTex: ap(pct, 1), unite: '%' }
         ];
         sol.unshift('La classe modale est la classe de plus grand effectif : ' + classe(imode) + ' (effectif $' + mx + '$).');
-        sol.push('Il y a $' + E[j] + '$ ' + ctx.ind + ' de valeur strictement inférieure à $' + T.num(bornes[j]) + '$ (effectif cumulé à cette borne).');
+        sol.push('Il y a $' + E[j] + '$ ' + ctx.ind + ' dont ' + ctx.g + ' est strictement inférieur' + (ctx.fem ? 'e' : '') + ' à $' + T.num(bornes[j]) + '$ ' + ctx.u + ' : c\'est l\'effectif cumulé croissant à cette borne.');
         sol.push(phrMe);
-        sol.push('$' + E[mIdx] + '$ ' + ctx.ind + ' ont une valeur inférieure à $' + T.num(bornes[mIdx]) + '$, donc $' + N + ' - ' + E[mIdx] + ' = ' + (N - E[mIdx]) + '$ ont une valeur supérieure ou égale : $\\dfrac{' + (N - E[mIdx]) + '}{' + N + '} \\times 100 ' + (pct.isInt() || nb(pct).indexOf('dfrac') < 0 ? '= ' + nb(pct) : '\\approx ' + ap(pct, 1)) + '$ %.');
+        sol.push('$' + E[mIdx] + '$ ' + ctx.ind + ' ont ' + ctx.un + ' strictement inférieur' + (ctx.fem ? 'e' : '') + ' à $' + T.num(bornes[mIdx]) + '$ ' + ctx.u + ', donc $' + N + ' - ' + E[mIdx] + ' = ' + (N - E[mIdx]) + '$ ont ' + ctx.un + ' supérieur' + (ctx.fem ? 'e' : '') + ' ou égal' + (ctx.fem ? 'e' : '') + ' : $\\dfrac{' + (N - E[mIdx]) + '}{' + N + '} \\times 100 ' + (pct.isInt() || nb(pct).indexOf('dfrac') < 0 ? '= ' + nb(pct) : '\\approx ' + ap(pct, 1)) + '$ %.');
       } else {
         var Q1 = interp(F(N, 4)), Q3 = interp(F(3 * N, 4)), EI = Q3.v.sub(Q1.v);
         var moy = F(0);
@@ -450,13 +460,13 @@
           { label: '$Me \\approx$', type: 'number', reponse: Me.v, tol: 0.01, reponseTex: ap(Me.v), unite: ctx.u },
           { label: '$Q_3 \\approx$', type: 'number', reponse: Q3.v, tol: 0.01, reponseTex: ap(Q3.v), unite: ctx.u },
           { label: 'Écart interquartile $Q_3 - Q_1 \\approx$', type: 'number', reponse: EI, tol: 0.02, reponseTex: ap(EI), unite: ctx.u },
-          { label: '$\\overline{x} =$', type: 'number', reponse: moy, tol: 0.01, reponseTex: (nb(moy).indexOf('dfrac') < 0 ? nb(moy) : ap(moy)), unite: ctx.u }
+          { label: '$\\overline{x} \\approx$', type: 'number', reponse: moy, tol: 0.01, reponseTex: ap(moy), unite: ctx.u }
         ];
         sol.push('$Q_1$ correspond à l\'effectif cumulé $\\dfrac{N}{4} = ' + nb(F(N, 4)) + '$, atteint dans la classe ' + classe(Q1.i) + ' : $' + Q1.tex.replace('x =', 'Q_1 =') + '$.');
         sol.push(phrMe);
         sol.push('$Q_3$ correspond à l\'effectif cumulé $\\dfrac{3N}{4} = ' + nb(F(3 * N, 4)) + '$, atteint dans la classe ' + classe(Q3.i) + ' : $' + Q3.tex.replace('x =', 'Q_3 =') + '$.');
         sol.push('Écart interquartile : $Q_3 - Q_1 \\approx ' + ap(EI) + '$ ' + ctx.u + ' : la moitié centrale des ' + ctx.ind + ' se situe dans un intervalle de cette amplitude.');
-        sol.push('Centres des classes : $' + ns.map(function (n, i) { return T.num((bornes[i] + bornes[i + 1]) / 2); }).join(' \\,;\\, ') + '$. $\\overline{x} = \\dfrac{' + ns.map(function (n, i) { return n + ' \\times ' + T.num((bornes[i] + bornes[i + 1]) / 2); }).join(' + ') + '}{' + N + '} ' + (nb(moy).indexOf('dfrac') < 0 ? '= ' + nb(moy) : '\\approx ' + ap(moy)) + '$ ' + ctx.u + '.');
+        sol.push('Centres des classes : $' + ns.map(function (n, i) { return T.num((bornes[i] + bornes[i + 1]) / 2); }).join(' \\,;\\, ') + '$. $\\overline{x} = \\dfrac{' + ns.map(function (n, i) { return n + ' \\times ' + T.num((bornes[i] + bornes[i + 1]) / 2); }).join(' + ') + '}{' + N + '} ' + egal2(moy) + '$ ' + ctx.u + '.');
       }
       return {
         enonce: enonce,
@@ -669,8 +679,8 @@
       var sol = [
         '$s$ a une écriture de la forme $z\' = az + b$. Les conditions $s(A) = A\'$ et $s(B) = B\'$ donnent $z_{A\'} = az_A + b$ et $z_{B\'} = az_B + b$.',
         'Par soustraction : $a = \\dfrac{z_{B\'} - z_{A\'}}{z_B - z_A} = \\dfrac{' + cTex(dp) + '}{' + cTex(dd) + '}' +
-          (dd.y.isZero() ? '' : ' = \\dfrac{' + cPar(dp) + cPar(cConj(dd)) + '}{' + cN2(dd).tex() + '}') + ' = ' + cTex(a) + '$.',
-        'Puis $b = z_{A\'} - az_A = ' + cTex(A1) + ' - ' + cPar(a) + cPar(A) + ' = ' + cTex(b) + '$. Donc $s : ' + ecrSim(a, b) + '$.'
+          (dd.y.isZero() ? '' : ' = ' + (cN2(dd).equals(1) ? cPar(dp) + ' \\times ' + cPar(cConj(dd)) : '\\dfrac{' + cPar(dp) + cPar(cConj(dd)) + '}{' + cN2(dd).tex() + '}')) + ' = ' + cTex(a) + '$.',
+        'Puis $b = z_{A\'} - az_A = ' + cTex(A1) + ' - ' + cPar(a) + ' \\times ' + cPar(A) + ' = ' + cTex(b) + '$. Donc $s : ' + ecrSim(a, b) + '$.'
       ];
       var qs = [
         { label: '$a$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [a.x, a.y] },
@@ -682,7 +692,7 @@
       qs.push({ label: 'Centre $\\Omega$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [omega.x, omega.y] });
       var Cimg = null, C0 = null;
       if (niveau === 2) {
-        qs.splice(1, 0, { label: 'Rapport $k =$', type: 'number', reponse: d.kS, reponseTex: d.k }, { label: 'Angle $\\theta =$', type: 'number', reponse: d.thS, reponseTex: d.th });
+        qs.splice(1, 0, { label: 'Rapport $k =$', type: 'number', reponse: d.kS, reponseTex: d.k }, { label: 'Angle $\\theta$ (mesure principale) :', type: 'number', reponse: d.thS, reponseTex: d.th });
         do { C0 = Cx(rng.int(-3, 3), rng.int(-3, 3)); } while (cEq(C0, A) || cEq(C0, B));
         Cimg = cAdd(cMul(a, C0), b);
         qs.push({ label: 'Point $C$ tel que $s(C) = C\'$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [C0.x, C0.y] });
@@ -726,7 +736,7 @@
             { label: '2) $a\'$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [ai.x, ai.y] },
             { label: '2) $b\'$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [bi.x, bi.y] },
             { label: '2) Rapport de $s^{-1}$ :', type: 'number', reponse: di.kS, reponseTex: di.k },
-            { label: '2) Angle de $s^{-1}$ :', type: 'number', reponse: di.thS, reponseTex: di.th }
+            { label: '2) Angle de $s^{-1}$ (mesure principale) :', type: 'number', reponse: di.thS, reponseTex: di.th }
           ],
           indices: [
             'Le centre est le point invariant : $\\omega = a\\omega + b$.',
@@ -758,7 +768,7 @@
           { label: '1) $a$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [a.x, a.y] },
           { label: '1) $b$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [b.x, b.y] },
           { label: '2) Rapport $k =$', type: 'number', reponse: dc.kS, reponseTex: dc.k },
-          { label: '2) Angle $\\theta =$', type: 'number', reponse: dc.thS, reponseTex: dc.th },
+          { label: '2) Angle $\\theta$ (mesure principale) :', type: 'number', reponse: dc.thS, reponseTex: dc.th },
           { label: '2) Centre $\\Omega$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [om.x, om.y] },
           qcm(rng, '2) $s$ est :', nat, ['une rotation', 'une homothétie', 'une similitude qui n\'est ni une rotation ni une homothétie', 'une translation'])
         ],
@@ -890,7 +900,7 @@
             { label: '3) $' + u + ' =$', type: 'expr', variable: v, reponse: expr.s, reponseTex: expr.tex }
           ],
           indices: [
-            '$MF = e \\times MH$ avec $e = 1$ : c\'est la définition d\'une parabole. Écris $MF^2 = MH^2$ avec $M(x \\,;\\, y)$ et $MH = |' + u + ' - ' + T.par(de) + '|$.',
+            '$MF = e \\times MH$ avec $e = 1$ : c\'est la définition d\'une parabole. Écris $MF^2 = MH^2$ avec $M(x \\,;\\, y)$ et $MH = |' + u + (de ? T.signed(-de) : '') + '|$.',
             'Le sommet est le milieu du segment joignant $F$ à son projeté sur $(D)$ ; le paramètre $p$ est la distance de $F$ à $(D)$.'
           ],
           solution: [
@@ -898,7 +908,7 @@
             '$M(x \\,;\\, y) \\in (\\Gamma) \\iff MF^2 = MH^2 \\iff ' + carre(u, f1) + ' + ' + carre(v, f2) + ' = ' + carre(u, de) + '$.',
             'D\'où $' + carre(v, f2) + ' = ' + carre(u, de) + ' - ' + carre(u, f1) + ' = ' + T.poly([2 * P, de * de - f1 * f1], u) + ' = ' + (2 * P) + T.xMinus(sm, u) + '$.',
             'Le paramètre est la distance de $F$ à $(D)$ : $p = |' + f1 + ' - ' + T.par(de) + '| = ' + Math.abs(P) + '$. Le sommet est le milieu de $F$ et de son projeté sur $(D)$ : $S' + pt(Sm[0], Sm[1]) + '$.',
-            'En isolant $' + u + '$ : $' + u + ' = \\dfrac{' + carre(v, f2) + '}{' + (2 * P) + '}' + (sm.isZero() ? '' : T.signed(sm)) + ' = ' + expr.tex + '$.'
+            'En isolant $' + u + '$ : $' + u + ' = ' + (P < 0 ? '-' : '') + '\\dfrac{' + carre(v, f2) + '}{' + Math.abs(2 * P) + '}' + (sm.isZero() ? '' : T.signed(sm)) + ' = ' + expr.tex + '$.'
           ],
           aide: 'Sommet : (1/2 ; -3) ; expression en ' + v + ', par exemple 1/4' + v + '^2 - ' + v + ' + 3.'
         };
@@ -927,7 +937,7 @@
           '$e = ' + e.tex() + (ell ? ' < 1' : ' > 1') + '$ : $(\\Gamma)$ est ' + (ell ? 'une ellipse' : 'une hyperbole') + ' de foyer $F$, de directrice associée $(D)$.',
           '$M(x \\,;\\, y) \\in (\\Gamma) \\iff MF^2 = e^2 MH^2 \\iff (x - ' + c + ')^2 + y^2 = ' + e.mul(e).tex() + '\\left(x - ' + dir.tex() + '\\right)^2$.',
           'En développant : $x^2 - ' + (2 * c) + 'x + ' + (c * c) + ' + y^2 = ' + coefTex(e.mul(e)) + 'x^2 - ' + (2 * c) + 'x + ' + (a * a) + '$, soit $' + coefTex(F(a * a - c * c, a * a)) + 'x^2 + y^2 = ' + (a * a - c * c) + '$.',
-          'En divisant par $' + T.par(a * a - c * c) + '$ : $\\dfrac{x^2}{' + (a * a) + '} ' + (ell ? '+' : '-') + ' \\dfrac{y^2}{' + b2 + '} = 1$. Donc $\\alpha = ' + (a * a) + '$ et $\\beta = ' + b2 + '$ ($a = ' + a + '$, $c = ' + c + '$, $e = \\dfrac{c}{a}$).',
+          'En divisant par $' + T.par(a * a - c * c) + '$ : $' + (a === 1 ? 'x^2' : '\\dfrac{x^2}{' + (a * a) + '}') + ' ' + (ell ? '+' : '-') + ' \\dfrac{y^2}{' + b2 + '} = 1$. Donc $\\alpha = ' + (a * a) + '$ et $\\beta = ' + b2 + '$ ($a = ' + a + '$, $c = ' + c + '$, $e = \\dfrac{c}{a}$).',
           'L\'équation ne change pas si l\'on remplace $x$ par $-x$ : $(\\Gamma)$ est symétrique par rapport à $(Oy)$. Le second foyer est $F\'(' + (-c) + ' \\,;\\, 0)$ et la seconde directrice est $(D\') : x = ' + dir.neg().tex() + '$.'
         ],
         aide: 'Valeurs exactes : fractions acceptées (par exemple -9/2) ; point : (-3 ; 0).'
@@ -1046,8 +1056,8 @@
         ],
         solution: [
           '$\\vect{AM}' + t3(AM) + '$ et $\\vec{u}' + t3(u) + '$, donc $\\vect{AM} \\wedge \\vec{u} = ' + t3(w) + '$.',
-          '$\\|\\vect{AM} \\wedge \\vec{u}\\| = \\sqrt{' + W2 + '}$ et $\\|\\vec{u}\\| = \\sqrt{' + uu + '}$, donc $d(M, (\\Delta)) = \\sqrt{\\dfrac{' + W2 + '}{' + uu + '}} = ' + radTex(dist.m, dist.s) + '$.',
-          '$\\vect{AM} \\cdot \\vec{u} = ' + dot(AM, u) + '$, donc $\\lambda = \\dfrac{' + dot(AM, u) + '}{' + uu + '}' + (lam.d === uu ? '' : ' = ' + lam.tex()) + '$ et $H = A + \\lambda\\vec{u}$, soit $H' + t3(Hh) + '$.'
+          '$\\|\\vect{AM} \\wedge \\vec{u}\\| = \\sqrt{' + W2 + '}$ et $\\|\\vec{u}\\| = \\sqrt{' + uu + '}$, donc $d(M, (\\Delta)) = ' + (uu === 1 ? '\\sqrt{' + W2 + '}' : '\\sqrt{\\dfrac{' + W2 + '}{' + uu + '}}') + (uu === 1 && dist.m.equals(1) ? '' : ' = ' + radTex(dist.m, dist.s)) + '$.',
+          '$\\vect{AM} \\cdot \\vec{u} = ' + dot(AM, u) + '$, donc $\\lambda = ' + (uu === 1 ? lam.tex() : '\\dfrac{' + dot(AM, u) + '}{' + uu + '}' + (lam.d === uu ? '' : ' = ' + lam.tex())) + '$ et $H = A + \\lambda\\vec{u}$, soit $H' + t3(Hh) + '$.'
         ],
         aide: 'Coordonnées : (1 ; -2 ; 3), fractions acceptées ; distance exacte, par exemple sqrt(14)/2.'
       };
@@ -1085,7 +1095,7 @@
         'On partage la série, rangée suivant les valeurs croissantes de $x$, en deux groupes de $' + h + '$ points.',
         'Premier groupe : $\\bar{x}_1 = \\dfrac{' + xs.slice(0, h).join(' + ') + '}{' + h + '}$ et $\\bar{y}_1 = \\dfrac{' + ys.slice(0, h).join(' + ') + '}{' + h + '}$, d\'où $G_1' + gT(G1) + '$.',
         'Second groupe : $\\bar{x}_2 = \\dfrac{' + xs.slice(h).join(' + ') + '}{' + h + '}$ et $\\bar{y}_2 = \\dfrac{' + ys.slice(h).join(' + ') + '}{' + h + '}$, d\'où $G_2' + gT(G2) + '$.',
-        'La droite de Mayer est la droite $(G_1G_2)$ : $a = \\dfrac{y_{G_2} - y_{G_1}}{x_{G_2} - x_{G_1}} = ' + aT + '$ et $b = y_{G_1} - a\\,x_{G_1} = ' + bT + '$, soit $y = ax + b$.'
+        'La droite de Mayer est la droite $(G_1G_2)$ : $a = \\dfrac{y_{G_2} - y_{G_1}}{x_{G_2} - x_{G_1}} = ' + aT + '$ et $b = y_{G_1} - a\\,x_{G_1} = ' + bT + '$, soit $(G_1G_2) : y ' + (rd(a.value(), 2) === a.value() && rd(b.value(), 2) === b.value() ? '=' : '\\approx') + ' ' + (rd(a.value(), 2) === 1 ? '' : rd(a.value(), 2) === -1 ? '-' : ap(a)) + 'x' + (rd(b.value(), 2) === 0 ? '' : T.signed(rd(b.value(), 2))) + '$.'
       ];
       var qs = [
         { label: '$G_1$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: G1, tol: 0.01, reponseTex: gT(G1) },
@@ -1132,9 +1142,9 @@
     examen: true,
     gen: function (rng, niveau) {
       var a = rng.pick([1, 2, -1, -2]), k = rng.pick([-1, 1, 2]), xTe = rng.bool();
-      var fTex = coefTex(a) + 'x(\\ln x' + T.signed(-k) + ')', fS = S(a) + '*x*(ln(x)-' + S(k) + ')';
+      var fTex = coefTex(a) + 'x(\\ln x' + T.signed(-k) + ')';
       var fdev = T.sum([{ c: a, v: 'x\\ln x' }, { c: -a * k, v: 'x' }]);
-      var dTex = k === 1 ? coefTex(a) + '\\ln x' : coefTex(a) + '(\\ln x' + T.signed(1 - k) + ')', dS = S(a) + '*(ln(x)+' + S(1 - k) + ')';
+      var dTex = k === 1 ? coefTex(a) + '\\ln x' : a === 1 ? '\\ln x' + T.signed(1 - k) : coefTex(a) + '(\\ln x' + T.signed(1 - k) + ')', dS = S(a) + '*(ln(x)+' + S(1 - k) + ')';
       var x0 = eVal(1, k - 1), fx0 = eVal(-a, k - 1), mini = a > 0;
       var tg = xTe ? { tex: T.sum([{ c: a * (2 - k), v: 'x' }, { c: -a, v: 'e' }]), s: S(a * (2 - k)) + '*x-' + S(a) + '*e', at: 'e' }
         : { tex: T.poly([a * (1 - k), -a]), s: polyS([a * (1 - k), -a]), at: '1' };
@@ -1149,9 +1159,9 @@
       trace('ts-pb-etude-ln', { niveau: niveau, a: a, k: k, xT: xTe ? Math.E : 1 });
       var tab = tabVar(['0', x0.tex, '+\\infty'], mini ? ['-', '+'] : ['+', '-'], ['0'], ['0', fx0.tex, a > 0 ? '+\\infty' : '-\\infty']);
       var solVar = [
-        '<b>Dérivée.</b> $f = ' + (a === 1 ? '' : a === -1 ? '-' : a + ' ') + 'u \\times v$ avec $u(x) = x$ et $v(x) = \\ln x' + T.signed(-k) + '$ : $f\'(x) = ' + coefTex(a) + '\\left[1 \\times (\\ln x' + T.signed(-k) + ') + x \\times \\dfrac{1}{x}\\right] = ' + dTex + '$.',
-        '$\\ln x' + T.signed(1 - k).replace(' + 0', '') + ' \\geq 0 \\iff \\ln x \\geq ' + (k - 1) + ' \\iff x \\geq ' + x0.tex + '$ (car $\\exp$ est croissante). Comme $' + a + (a > 0 ? ' > 0' : ' < 0') + '$, $f\'(x)$ est ' + (mini ? 'négative' : 'positive') + ' sur $]0 \\,;\\, ' + x0.tex + '[$ et ' + (mini ? 'positive' : 'négative') + ' sur $]' + x0.tex + ' \\,;\\, +\\infty[$.' + tab,
-        '$f$ admet un ' + (mini ? 'minimum' : 'maximum') + ' en $x_0 = ' + x0.tex + '$ : $f(x_0) = ' + T.num(a) + ' \\times ' + x0.tex + ' \\times \\left(' + (k - 1) + T.signed(-k) + '\\right) = ' + fx0.tex + '$.'
+        '<b>Dérivée.</b> $f = ' + (a === 1 ? '' : a === -1 ? '-' : a + ' ') + 'u \\times v$ avec $u(x) = x$ et $v(x) = \\ln x' + T.signed(-k) + '$ : $f\'(x) = ' + (a === 1 ? '' : coefTex(a) + '\\left[') + '1 \\times (\\ln x' + T.signed(-k) + ') + x \\times \\dfrac{1}{x}' + (a === 1 ? '' : '\\right]') + ' = ' + dTex + '$.',
+        '$\\ln x' + T.signed(1 - k).replace(' + 0', '') + ' \\geq 0 \\iff \\ln x \\geq ' + (k - 1) + ' \\iff x \\geq ' + x0.tex + '$ (car $\\exp$ est croissante). ' + (a === 1 ? 'Donc' : 'Comme $' + a + (a > 0 ? ' > 0' : ' < 0') + '$,') + ' $f\'(x)$ est ' + (mini ? 'négative' : 'positive') + ' sur $]0 \\,;\\, ' + x0.tex + '[$ et ' + (mini ? 'positive' : 'négative') + ' sur $]' + x0.tex + ' \\,;\\, +\\infty[$.' + tab,
+        '$f$ admet un ' + (mini ? 'minimum' : 'maximum') + ' en $x_0 = ' + x0.tex + '$ : $f(x_0) = ' + (a === 1 ? '' : T.num(a) + ' \\times ') + x0.tex + ' \\times \\left(' + (k - 1) + T.signed(-k) + '\\right) = ' + fx0.tex + '$.'
       ];
       var fig, qs, sol, enonce;
       var xmax = Math.max(Math.exp(k), xTe ? Math.E : 1, 1.4) * 1.25 + 0.3, Y = fenetreY([fN], 0.001, xmax, -12, 12);
@@ -1170,7 +1180,7 @@
         sol = [
           '$\\ln x$ n\'existe que pour $x > 0$ : $D_f = ]0 \\,;\\, +\\infty[$.',
           '<b>En $0^+$.</b> $f(x) = ' + fdev + '$. Or $' + lim('0^+') + ' x\\ln x = 0$ (limite de référence) et $' + lim('0^+') + ' x = 0$, donc $' + lim('0^+') + ' f(x) = 0$.',
-          '<b>En $+\\infty$.</b> $' + lim('+\\infty') + ' x = +\\infty$ et $' + lim('+\\infty') + ' (\\ln x' + T.signed(-k) + ') = +\\infty$ ; par produit (et car $' + a + (a > 0 ? ' > 0' : ' < 0') + '$), $' + lim('+\\infty') + ' f(x) = ' + (a > 0 ? '+' : '-') + '\\infty$.'
+          '<b>En $+\\infty$.</b> $' + lim('+\\infty') + ' x = +\\infty$ et $' + lim('+\\infty') + ' (\\ln x' + T.signed(-k) + ') = +\\infty$ ; ' + (a === 1 ? 'par produit' : 'par produit, et comme $' + a + (a > 0 ? ' > 0' : ' < 0') + '$') + ', $' + lim('+\\infty') + ' f(x) = ' + (a > 0 ? '+' : '-') + '\\infty$.'
         ].concat(solVar);
         fig = graphe(-0.3, xmax, Y[0], Y[1], [{ f: fN, from: 0.001 }]);
       } else {
@@ -1194,7 +1204,7 @@
           '<b>Équation.</b> Pour $x > 0$ : $f(x) = 0 \\iff ' + coefTex(a) + 'x(\\ln x' + T.signed(-k) + ') = 0 \\iff \\ln x = ' + k + '$ (car $x \\neq 0$) $\\iff x = ' + rac.tex + '$.',
           '<b>Intégration par parties.</b> On pose $u(x) = \\ln x$ et $v\'(x) = x$, donc $u\'(x) = \\dfrac{1}{x}$ et $v(x) = \\dfrac{x^2}{2}$ : $I = \\left[\\dfrac{x^2}{2}\\ln x\\right]_{' + lo + '}^{' + hi + '} - \\displaystyle\\int_{' + lo + '}^{' + hi + '} \\dfrac{x}{2}\\,dx = \\left[\\dfrac{x^2}{2}\\ln x - \\dfrac{x^2}{4}\\right]_{' + lo + '}^{' + hi + '} = ' + I.tex + '$.',
           '<b>Aire.</b> Sur $[' + lo + ' \\,;\\, ' + hi + ']$, $\\ln x' + T.signed(-k) + (k > 0 ? ' \\leq 0' : ' \\geq 0') + '$, donc $f(x)$ a le signe de $' + (k > 0 ? -a : a) + '$ : la courbe est ' + ((k > 0 ? -a : a) > 0 ? 'au-dessus' : 'en dessous') + ' de l\'axe des abscisses.',
-          '$\\displaystyle\\int_{' + lo + '}^{' + hi + '} f(x)\\,dx = ' + coefTex(a) + '\\left(I' + T.signed(-k) + '\\displaystyle\\int_{' + lo + '}^{' + hi + '} x\\,dx\\right)$ avec $\\displaystyle\\int_{' + lo + '}^{' + hi + '} x\\,dx = ' + J + '$ ; on trouve $\\displaystyle\\int_{' + lo + '}^{' + hi + '} f(x)\\,dx \\approx ' + ap(integ) + '$.',
+          '$\\displaystyle\\int_{' + lo + '}^{' + hi + '} f(x)\\,dx = ' + coefTex(a) + '\\left(I' + T.mono(-k, '\\displaystyle\\int_{' + lo + '}^{' + hi + '} x\\,dx') + '\\right)$ avec $\\displaystyle\\int_{' + lo + '}^{' + hi + '} x\\,dx = ' + J + '$ ; on trouve $\\displaystyle\\int_{' + lo + '}^{' + hi + '} f(x)\\,dx \\approx ' + ap(integ) + '$.',
           'Avec une unité de $1$ cm : $\\mathcal{A} = \\left|\\displaystyle\\int_{' + lo + '}^{' + hi + '} f(x)\\,dx\\right| = ' + aire.tex + ' \\approx ' + ap(aireV) + '$ cm².'
         ]);
         var lb = Math.min(1, Math.exp(k)), hb = Math.max(1, Math.exp(k));
@@ -1206,7 +1216,7 @@
         questions: qs,
         indices: [
           'Pour dériver, écris $f(x) = ' + coefTex(a) + 'x \\times (\\ln x' + T.signed(-k) + ')$ et utilise $(uv)\' = u\'v + uv\'$ ; pour les limites, souviens-toi que $' + lim('0^+') + ' x\\ln x = 0$.',
-          niveau === 1 ? 'Le signe de $f\'(x)$ dépend de celui de $\\ln x - ' + T.par(k - 1) + '$ : compare $x$ à $' + x0.tex + '$.'
+          niveau === 1 ? 'Le signe de $f\'(x)$ dépend de celui de $\\ln x' + (k - 1 ? T.signed(1 - k) : '') + '$ : compare $x$ à $' + x0.tex + '$.'
             : 'Pour l\'intégrale, pose $u(x) = \\ln x$ et $v\'(x) = x$. L\'aire est la valeur absolue de l\'intégrale de $f$ entre les bornes.'
         ],
         solution: sol,
@@ -1226,7 +1236,7 @@
       var v = rng.pick([1, -1]), sg = rng.pick([1, -1]), c = rng.pick([2, 3, 4]), p = rng.int(-3, 3), u = rng.pick([1, 2]);
       var m = sg * v, q = sg * p, K = sg * c;
       var ex = v > 0 ? 'e^{-x}' : 'e^{x}', exS = v > 0 ? 'e^(-x)' : 'e^(x)';
-      var fTex = T.sum([{ c: m, v: 'x' }, { c: q }, { c: K, v: ex }]), fS = S(m) + '*x+' + S(q) + '+' + S(K) + '*' + exS;
+      var fTex = T.sum([{ c: m, v: 'x' }, { c: q }, { c: K, v: ex }]);
       var asy = { tex: T.poly([m, q]), s: polyS([m, q]) };
       var dTex = T.sum([{ c: m }, { c: -v * K, v: ex }]), dS = S(m) + '-' + S(v * K) + '*' + exS;
       var x0 = { tex: (v > 0 ? '' : '-') + '\\ln ' + c, s: S(v) + '*ln(' + c + ')' };
@@ -1248,7 +1258,7 @@
       var solAsy = '<b>Asymptote.</b> $f(x) - (' + asy.tex + ') = ' + K + ex + '$ et $' + lim(cote) + ' ' + K + ex + ' = 0$ : la droite $\\Delta : y = ' + asy.tex + '$ est asymptote oblique à $(\\mathcal{C})$ en $' + cote + '$.';
       var solPos = 'Pour tout réel $x$, $' + ex + ' > 0$, donc $f(x) - (' + asy.tex + ') = ' + K + ex + '$ est ' + (sg > 0 ? 'positif' : 'négatif') + ' : $(\\mathcal{C})$ est ' + (sg > 0 ? 'au-dessus' : 'en dessous') + ' de $\\Delta$.';
       var solVar = [
-        '<b>Dérivée.</b> $(' + ex + ')\' = ' + (v > 0 ? '-e^{-x}' : 'e^{x}') + '$, donc $f\'(x) = ' + dTex + ' = ' + coefTex(m) + '\\left(1 - ' + c + ex + '\\right)$.',
+        '<b>Dérivée.</b> $(' + ex + ')\' = ' + (v > 0 ? '-e^{-x}' : 'e^{x}') + '$, donc $f\'(x) = ' + dTex + (m === 1 ? '' : ' = -\\left(1 - ' + c + ex + '\\right)') + '$.',
         '$1 - ' + c + ex + ' = 0 \\iff ' + ex + ' = \\dfrac{1}{' + c + '} \\iff x = ' + x0.tex + '$. On en déduit le signe de $f\'$, puis le tableau :' + tab,
         '$f$ admet un ' + (mini ? 'minimum' : 'maximum') + ' en $x_0 = ' + x0.tex + '$ : $f(x_0) = ' + T.sum([{ c: m, v: '(' + x0.tex + ')' }, { c: q }]) + ' + ' + T.par(K) + ' \\times \\dfrac{1}{' + c + '} = ' + fx0.tex + '$.'
       ];
@@ -1285,7 +1295,7 @@
         sol = [solAsy, solPos].concat(solVar).concat([
           '<b>Tangente en $0$.</b> $f(0) = ' + (q + K) + '$ et $f\'(0) = ' + (m - v * K) + '$, donc $(T) : y = ' + T.poly(tg) + '$.',
           '<b>Aire.</b> L\'écart entre $(\\mathcal{C})$ et $\\Delta$ est $|f(x) - (' + asy.tex + ')| = ' + c + ex + '$. En unités d\'aire : $\\displaystyle\\int_{' + bornes[0] + '}^{' + bornes[1] + '} ' + c + ex + '\\,dx = \\left[' + prim + '\\right]_{' + bornes[0] + '}^{' + bornes[1] + '} = ' + (optA ? (c - 1) : c + '\\left(1 - e^{-1}\\right)') + '$ u.a.',
-          'Une unité d\'aire vaut $' + u + ' \\times ' + u + ' = ' + (u * u) + '$ cm², donc $\\mathcal{A} = ' + aire.tex + (optA ? '' : ' \\approx ' + ap(u * u * aU)) + '$ cm².'
+          (u === 1 ? 'Une unité d\'aire vaut $1$ cm², donc' : 'Une unité d\'aire vaut $' + u + ' \\times ' + u + ' = ' + (u * u) + '$ cm², donc') + ' $\\mathcal{A} = ' + aire.tex + (optA ? '' : ' \\approx ' + ap(u * u * aU)) + '$ cm².'
         ]);
         var bN = optA ? (v > 0 ? [0, Math.log(c)] : [-Math.log(c), 0]) : (v > 0 ? [0, 1] : [-1, 0]);
         fig = graphe(X0, X1, Y[0], Y[1], [{ f: fN }], { droites: [[[0, q], [1, m + q]]], aire: { f: fN, g: gN, a: bN[0], b: bN[1] } });
@@ -1296,7 +1306,7 @@
         questions: qs,
         indices: [
           'En $' + cote + '$, $' + ex + '$ tend vers $0$ : $f(x)$ se comporte comme $' + asy.tex + '$. En $' + autre + '$, mets $' + ex + '$ en facteur et utilise les croissances comparées.',
-          '$f\'(x) = ' + coefTex(m) + '(1 - ' + c + ex + ')$ s\'annule quand $' + ex + ' = \\dfrac{1}{' + c + '}$. Pour l\'aire, intègre l\'écart $f(x) - (' + asy.tex + ')$ et multiplie par l\'aire d\'une unité.'
+          '$f\'(x) = ' + (m === 1 ? '1 - ' + c + ex : '-(1 - ' + c + ex + ')') + '$ s\'annule quand $' + ex + ' = \\dfrac{1}{' + c + '}$. Pour l\'aire, intègre l\'écart $f(x) - (' + asy.tex + ')$ et multiplie par l\'aire d\'une unité.'
         ],
         solution: sol,
         aide: 'Valeurs exactes : ln(3), 2 - ln(2), 4(1-e^(-1))… ; expressions : 1 - 3e^(-x).'
@@ -1315,7 +1325,7 @@
       var al = rng.pick([1, -1, 2, -2]), k = rng.int(1, 3), d = rng.int(-3, 3), be = rng.int(-4, 4), ga = al * k * k;
       var A = al, B = be - al * d, C = ga - be * d, c0 = al * d + be;
       var dT = T.poly([1, -d]), dS0 = polyS([1, -d]);
-      var fTex = '\\dfrac{' + T.poly([A, B, C]) + '}{' + dT + '}', fS = polyS([A, B, C]) + '/' + dS0;
+      var fTex = '\\dfrac{' + T.poly([A, B, C]) + '}{' + dT + '}';
       var decTex = T.poly([al, be]) + (ga > 0 ? ' + ' : ' - ') + '\\dfrac{' + Math.abs(ga) + '}{' + dT + '}';
       var Np = [al, -2 * al * d, al * d * d - ga], den2 = d === 0 ? 'x^2' : '(' + dT + ')^2';
       var dTex = '\\dfrac{' + T.poly(Np) + '}{' + den2 + '}', dS = polyS(Np) + '/' + dS0 + '^2';
@@ -1332,9 +1342,9 @@
       var fig = graphe(X0, X1, Y[0], Y[1], [{ f: fN, to: d - 0.02 }, { f: fN, from: d + 0.02 }]);
       var sDecomp = 'On écrit $(\\alpha x + \\beta)(' + dT + ') + \\gamma = \\alpha x^2 + (\\beta' + T.mono(-d, '\\alpha') + ')x' + T.mono(-d, '\\beta') + ' + \\gamma$. Par identification avec $' + T.poly([A, B, C]) + '$ : $\\alpha = ' + al + '$, $\\beta = ' + be + '$, $\\gamma = ' + ga + '$, soit $f(x) = ' + decTex + '$.';
       var sAV = 'En $x = ' + d + '$, le numérateur vaut $' + ga + ' \\neq 0$ et le dénominateur s\'annule : $' + lim(d + '^+') + ' f(x) = ' + (ga > 0 ? '+' : '-') + '\\infty$ et $' + lim(d + '^-') + ' f(x) = ' + (ga > 0 ? '-' : '+') + '\\infty$. La droite d\'équation $x = ' + d + '$ est asymptote verticale.';
-      var sAO = '$f(x) - (' + asy.tex + ') = \\dfrac{' + ga + '}{' + dT + '}$ tend vers $0$ en $\\pm\\infty$ : la droite $\\Delta : y = ' + asy.tex + '$ est asymptote oblique.';
-      var sDer = '$f\'(x) = \\dfrac{(' + T.poly([2 * A, B]) + ')(' + dT + ') - (' + T.poly([A, B, C]) + ')}{' + den2 + '} = ' + dTex + ' = \\dfrac{' + coefTex(al) + '(' + T.poly([1, -x1]) + ')(' + T.poly([1, -x2]) + ')}{' + den2 + '}$.';
-      var sVar = 'Le dénominateur est positif : $f\'(x)$ a le signe de $' + coefTex(al) + '(x - ' + T.par(x1) + ')(x - ' + T.par(x2) + ')$, qui est celui de $' + al + '$ à l\'extérieur des racines $' + x1 + '$ et $' + x2 + '$.' + tab;
+      var sAO = '$f(x) - (' + asy.tex + ') = ' + fracSigne(ga, dT, true) + '$ tend vers $0$ en $\\pm\\infty$ : la droite $\\Delta : y = ' + asy.tex + '$ est asymptote oblique.';
+      var sDer = '$f\'(x) = \\dfrac{(' + T.poly([2 * A, B]) + ')(' + dT + ') - (' + T.poly([A, B, C]) + ')}{' + den2 + '} = ' + dTex + ' = \\dfrac{' + coefTex(al) + (x1 === 0 ? 'x' + T.xMinus(x2) : x2 === 0 ? 'x' + T.xMinus(x1) : T.xMinus(x1) + T.xMinus(x2)) + '}{' + den2 + '}$.';
+      var sVar = 'Le dénominateur est positif : $f\'(x)$ a le signe de $' + coefTex(al) + T.xMinus(x1) + T.xMinus(x2) + '$, qui est celui de $' + al + '$ à l\'extérieur des racines $' + x1 + '$ et $' + x2 + '$.' + tab;
       var sExt = '$f$ admet un maximum local $f(' + maxX + ') = ' + maxV + '$ et un minimum local $f(' + minX + ') = ' + minV + '$ (on peut utiliser $f(x) = ' + decTex + '$ pour les calculer).';
       var qs, enonce, sol = [];
       if (niveau === 1) {
@@ -1365,7 +1375,7 @@
           '3) Calculer $f\'(x)$ et dresser le tableau de variation de $f$ ; préciser ses extremums locaux.<br>' +
           '4) Montrer que le point $\\Omega$, intersection des deux asymptotes, est centre de symétrie de $(\\mathcal{C})$.';
         sol = [sDecomp, sAV, '$' + lim('+\\infty') + ' f(x) = ' + (al > 0 ? '+' : '-') + '\\infty$ et $' + lim('-\\infty') + ' f(x) = ' + (al > 0 ? '-' : '+') + '\\infty$ (comportement de $' + T.poly([al, 0]) + '$). ' + sAO, sDer, sVar, sExt,
-          'Les asymptotes se coupent en $\\Omega(' + d + ' \\,;\\, ' + c0 + ')$. Pour $h \\neq 0$ : $f(' + d + ' + h) - ' + T.par(c0) + ' = ' + T.mono(al, 'h', true) + ' + \\dfrac{' + ga + '}{h}$, expression impaire en $h$ ; donc $f(' + d + ' - h) + f(' + d + ' + h) = 2 \\times ' + T.par(c0) + '$ : $\\Omega$ est centre de symétrie de $(\\mathcal{C})$.'];
+          'Les asymptotes se coupent en $\\Omega(' + d + ' \\,;\\, ' + c0 + ')$. Pour $h \\neq 0$ : $f(' + d + ' + h)' + (c0 ? T.signed(-c0) : '') + ' = ' + T.mono(al, 'h', true) + fracSigne(ga, 'h') + '$, expression impaire en $h$ ; donc $f(' + d + ' - h) + f(' + d + ' + h) = 2 \\times ' + T.par(c0) + '$ : $\\Omega$ est centre de symétrie de $(\\mathcal{C})$.'];
       } else {
         var cas = rng.pick([0, 1, 2]), mm;
         if (cas === 0) mm = c0 + (Math.abs(2 * al * k) > 1 ? rng.int(-1, 1) : 0);
@@ -1396,7 +1406,7 @@
           : '$' + mm + ' > ' + Mn + '$ : sur $' + bMin + '$, $f$ prend deux fois la valeur $' + mm + '$ (une fois avant et une fois après son minimum) ; sur $' + bMax + '$, $f(x) \\leq ' + Mx + ' < ' + mm + '$ : deux solutions.';
         sol = [sDecomp, sAO, 'Sur $]' + d + ' \\,;\\, +\\infty[$, $' + dT + ' > 0$ donc $f(x) - (' + asy.tex + ')$ a le signe de $' + ga + '$ : $(\\mathcal{C})$ est ' + (ga > 0 ? 'au-dessus' : 'en dessous') + ' de $\\Delta$.', sDer, sVar, sExt,
           'Sur $' + bMax + '$, $f$ admet un maximum égal à $' + Mx + '$ ; sur $' + bMin + '$, un minimum égal à $' + Mn + '$, et $' + Mx + ' < ' + Mn + '$. ' + expl,
-          'Vérification : $f(x) = ' + mm + ' \\iff ' + T.poly(qd) + ' = 0$ (avec $x \\neq ' + d + '$), de discriminant $' + disc + '$' + (disc > 0 ? ' > 0' : disc === 0 ? '' : ' < 0') + '.'];
+          'Vérification : $f(x) = ' + mm + ' \\iff ' + T.poly(qd) + ' = 0$ (avec $x \\neq ' + d + '$), de discriminant $' + disc + (disc > 0 ? ' > 0' : disc === 0 ? '' : ' < 0') + '$.'];
       }
       return {
         enonce: enonce,
@@ -1470,22 +1480,22 @@
       var qs, enonce, sol;
       if (niveau === 1) {
         qs = [
-          { label: '1) $u_1 =$', type: 'number', reponse: u1 },
-          { label: '1) $u_2 =$', type: 'number', reponse: u2 },
-          { label: '2) Raison $q =$', type: 'number', reponse: q },
-          { label: '2) $v_0 =$', type: 'number', reponse: v0 },
+          { label: '1) $u_1 =$', type: 'number', reponse: u1, reponseTex: nb(u1) },
+          { label: '1) $u_2 =$', type: 'number', reponse: u2, reponseTex: nb(u2) },
+          { label: '2) Raison $q =$', type: 'number', reponse: q, reponseTex: nb(q) },
+          { label: '2) $v_0 =$', type: 'number', reponse: v0, reponseTex: nb(v0) },
           { label: '3) $u_n =$', type: 'expr', variable: 'n', reponse: un.s, reponseTex: un.tex, domaine: [0, 8] },
-          { label: '4) $\\lim\\limits_{n \\to +\\infty} u_n =$', type: 'number', reponse: l }
+          { label: '4) $\\lim\\limits_{n \\to +\\infty} u_n =$', type: 'number', reponse: l, reponseTex: nb(l) }
         ];
         enonce = intro + '1) Calculer $u_1$ et $u_2$.<br>2) On pose, pour tout entier naturel $n$, $v_n = u_n - ' + T.num(l.value()) + '$. Montrer que $(v_n)$ est une suite géométrique ; préciser sa raison $q$ et son premier terme $v_0$.<br>' +
           '3) Exprimer $v_n$, puis $u_n$, en fonction de $n$.<br>4) En déduire la limite de la suite $(u_n)$. ' + c.nature;
         sol = solBase;
       } else {
         qs = [
-          { label: '1) $u_1 =$', type: 'number', reponse: u1 },
-          { label: '2) $\\ell =$', type: 'number', reponse: l },
+          { label: '1) $u_1 =$', type: 'number', reponse: u1, reponseTex: nb(u1) },
+          { label: '2) $\\ell =$', type: 'number', reponse: l, reponseTex: nb(l) },
           { label: '2) $u_n =$', type: 'expr', variable: 'n', reponse: un.s, reponseTex: un.tex, domaine: [0, 8] },
-          { label: '2) $\\lim\\limits_{n \\to +\\infty} u_n =$', type: 'number', reponse: l },
+          { label: '2) $\\lim\\limits_{n \\to +\\infty} u_n =$', type: 'number', reponse: l, reponseTex: nb(l) },
           { label: '3) $S_n =$', type: 'expr', variable: 'n', reponse: Sn.s, reponseTex: Sn.tex, domaine: [0, 8] },
           { label: '4) Plus petit entier $n$ :', type: 'number', reponse: n0 }
         ];
@@ -1495,7 +1505,7 @@
           'Si $(v_n)$ est géométrique de raison $' + T.num(q.value()) + '$, alors $\\ell$ vérifie $\\ell = ' + T.num(q.value()) + '\\ell + ' + T.num(b.value()) + '$, soit $' + T.num(F(1).sub(q).value()) + '\\ell = ' + T.num(b.value()) + '$ et $\\ell = ' + T.num(l.value()) + '$. Réciproquement :'
         ].concat(solBase.slice(1)).concat([
           '$S_n = (v_0 + v_1 + \\dots + v_n) + (n + 1)\\ell = v_0 \\times \\dfrac{1 - q^{n+1}}{1 - q} + ' + T.num(l.value()) + '(n + 1) = ' + Sn.tex + '$.',
-          '$|u_n - \\ell| = ' + T.num(av) + ' \\times ' + qPuiss(q, 'n') + ' < ' + T.num(ev) + ' \\iff ' + qPuiss(q, 'n') + ' < ' + (ev / av < 1e-3 ? '\\dfrac{' + T.num(ev) + '}{' + T.num(av) + '}' : T.num(rd(ev / av, 6))) + ' \\iff n\\ln(' + T.num(qv) + ') < \\ln\\left(\\dfrac{' + T.num(ev) + '}{' + T.num(av) + '}\\right) \\iff n > \\dfrac{\\ln(' + T.num(ev) + '/' + T.num(av) + ')}{\\ln(' + T.num(qv) + ')} \\approx ' + ap(seuil) + '$ (on divise par $\\ln(' + T.num(qv) + ') < 0$, ce qui change le sens).',
+          '$|u_n - \\ell| = ' + T.num(av) + ' \\times ' + qPuiss(q, 'n') + ' < ' + T.num(ev) + ' \\iff ' + qPuiss(q, 'n') + ' < \\dfrac{' + T.num(ev) + '}{' + T.num(av) + '} \\iff n\\ln(' + T.num(qv) + ') < \\ln\\left(\\dfrac{' + T.num(ev) + '}{' + T.num(av) + '}\\right) \\iff n > \\dfrac{\\ln(' + T.num(ev) + '/' + T.num(av) + ')}{\\ln(' + T.num(qv) + ')} \\approx ' + ap(seuil) + '$ (on divise par $\\ln(' + T.num(qv) + ') < 0$, ce qui change le sens).',
           'Le plus petit entier qui convient est $n = ' + n0 + '$.'
         ]);
       }
@@ -1585,12 +1595,12 @@
       var n0 = niveau === 2 ? 2 : 1;
       qs.push({ label: n0 + ') $q$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [r3S(q.x), r3S(q.y)], reponseTex: pt(r3Tex(q.x), r3Tex(q.y)) });
       qs.push({ label: n0 + ') $|q| =$', type: 'number', reponse: mod.s, reponseTex: mod.tex });
-      qs.push({ label: n0 + ') $\\arg(q) =$', type: 'number', reponse: arg.s, reponseTex: arg.tex });
+      qs.push({ label: n0 + ') Argument principal de $q$ :', type: 'number', reponse: arg.s, reponseTex: arg.tex });
       qs.push(qcm(rng, (n0 + 1) + ') Le triangle $ABC$ est :', Q.nat, NAT_TRI));
       qs.push({ label: (n0 + 2) + ') $b$ : $(x \\,;\\, y) =$', type: 'tuple', reponse: [r3S(bb.x), r3S(bb.y)], reponseTex: pt(r3Tex(bb.x), r3Tex(bb.y)) });
       var wq = z3Mul(q, z3(w));
       sol.push('$z_C - z_A = ' + z3Tex(wq) + '$ et $z_B - z_A = ' + cTex(w) + '$, donc $q = \\dfrac{' + z3Tex(wq) + '}{' + cTex(w) + '}' + (w.y.isZero() ? '' : ' = \\dfrac{' + z3Par(wq) + cPar(cConj(w)) + '}{' + cN2(w).tex() + '}') + ' = ' + z3Tex(q) + '$.');
-      sol.push('$|q| = ' + mod.tex + '$ et $\\arg(q) = ' + arg.tex + '$ (à $2\\pi$ près) : $q = ' + (mod.tex === '1' ? '' : mod.tex) + '\\left(\\cos ' + cosTrig(Q.t) + ' + i\\sin ' + cosTrig(Q.t) + '\\right)$.');
+      sol.push('$|q| = ' + mod.tex + '$ et $\\arg(q) = ' + arg.tex + '$ (à $2\\pi$ près) : $q = ' + (mod.tex === '1' ? '\\cos ' + cosTrig(Q.t) + ' + i\\sin ' + cosTrig(Q.t) : mod.tex + '\\left(\\cos ' + cosTrig(Q.t) + ' + i\\sin ' + cosTrig(Q.t) + '\\right)') + '$.');
       var just;
       if (/en \$A\$ \(non/.test(Q.nat)) just = '$\\dfrac{AC}{AB} = |q| = 2$ et $\\left(\\vect{AB}, \\vect{AC}\\right) = \\arg(q) = ' + arg.tex + '$ : le triangle $ABC$ est rectangle en $A$, mais pas isocèle ($AC = 2AB$).';
       else if (/en \$A\$/.test(Q.nat)) just = '$\\dfrac{AC}{AB} = |q| = 1$ et $\\left(\\vect{AB}, \\vect{AC}\\right) = \\arg(q) = ' + arg.tex + '$ : $AB = AC$ et l\'angle en $A$ est droit, le triangle $ABC$ est rectangle isocèle en $A$.';
@@ -1617,7 +1627,8 @@
         var span = Math.max(ff.xmax - ff.xmin, ff.ymax - ff.ymin);
         ff.axes({ step: 1, labelStep: span > 12 ? 2 : 1 });
         ff.poly([pA, pB, pC], { accent: true });
-        ff.point(pA, 'A', 'so').point(pB, 'B', 'se').point(pC, 'C', 'n');
+        var Gc = [(pA[0] + pB[0] + pC[0]) / 3, (pA[1] + pB[1] + pC[1]) / 3];
+        ff.point(pA, 'A', posLoin(pA, Gc)).point(pB, 'B', posLoin(pB, Gc)).point(pC, 'C', posLoin(pC, Gc));
         fig = ff.svg();
       }
       return {
@@ -1671,9 +1682,9 @@
       f.text([(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2 + (haut ? 0.3 : -0.6)], txt, { small: true });
     };
     var tx = function (x) { return T.txt(x); };
-    br(R, N1, tx(c.p1 / 100), true); br(R, N2, tx(1 - c.p1 / 100), false);
-    br(N1, L[0], tx(c.a / 100), true); br(N1, L[1], tx(rd(1 - c.a / 100, 4)), false);
-    br(N2, L[2], tx(c.b / 100), true); br(N2, L[3], tx(rd(1 - c.b / 100, 4)), false);
+    br(R, N1, tx(c.p1 / 100), true); br(R, N2, '…', false);
+    br(N1, L[0], tx(c.a / 100), true); br(N1, L[1], '…', false);
+    br(N2, L[2], tx(c.b / 100), true); br(N2, L[3], '…', false);
     f.text([N1[0] + 0.05, N1[1] - 0.15], c.Etxt).text([N2[0] + 0.05, N2[1] - 0.15], c.E2);
     f.text([L[0][0] + 0.2, L[0][1] - 0.15], c.D).text([L[1][0] + 0.2, L[1][1] - 0.15], c.D2).text([L[2][0] + 0.2, L[2][1] - 0.15], c.D).text([L[3][0] + 0.2, L[3][1] - 0.15], c.D2);
     return f.svg();
@@ -1692,32 +1703,33 @@
       trace('ts-pb-probabilites', { niveau: niveau, p1: c.p1, a: c.a, b: c.b, n: n });
       var Pe = 'P(' + c.E + ')', PeD = 'P(' + c.E + ' \\cap ' + c.D + ')';
       var sol = [
-        'D\'après l\'énoncé : $' + Pe + ' = ' + T.num(P1.value()) + '$, $P_{' + c.E + '}(' + c.D + ') = ' + T.num(Pa.value()) + '$ et $P_{' + c.Eb + '}(' + c.D + ') = ' + T.num(Pb.value()) + '$ (voir l\'arbre).',
+        'D\'après l\'énoncé : $' + Pe + ' = ' + T.num(P1.value()) + '$, $P_{' + c.E + '}(' + c.D + ') = ' + T.num(Pa.value()) + '$ et $P_{' + c.Eb + '}(' + c.D + ') = ' + T.num(Pb.value()) + '$. ' +
+          'On complète l\'arbre avec les probabilités contraires : $P(' + c.Eb + ') = ' + T.num(F(1).sub(P1).value()) + '$, $P_{' + c.E + '}(' + c.Db + ') = ' + T.num(F(1).sub(Pa).value()) + '$ et $P_{' + c.Eb + '}(' + c.Db + ') = ' + T.num(F(1).sub(Pb).value()) + '$ (la somme des probabilités issues d\'un même nœud vaut $1$).',
         '$' + PeD + ' = ' + Pe + ' \\times P_{' + c.E + '}(' + c.D + ') = ' + T.num(P1.value()) + ' \\times ' + T.num(Pa.value()) + ' = ' + T.num(inter.value()) + '$.',
         '$' + c.E + '$ et $' + c.Eb + '$ forment une partition de l\'univers ; d\'après la formule des probabilités totales : $P(' + c.D + ') = ' + PeD + ' + P(' + c.Eb + ' \\cap ' + c.D + ') = ' + T.num(inter.value()) + ' + ' + T.num(F(1).sub(P1).value()) + ' \\times ' + T.num(Pb.value()) + ' = ' + T.num(pD.value()) + '$.',
         '$P_{' + c.D + '}(' + c.E + ') = \\dfrac{' + PeD + '}{P(' + c.D + ')} = \\dfrac{' + T.num(inter.value()) + '}{' + T.num(pD.value()) + '} \\approx ' + ap(post, 3) + '$.',
         'Chacune des $' + n + '$ épreuves a deux issues, « $' + c.D + '$ » (succès, de probabilité $p = ' + T.num(p) + '$) ou non, et les épreuves sont indépendantes : $X$ suit la loi binomiale $\\mathcal{B}(' + n + ' \\,;\\, ' + T.num(p) + ')$.'
       ];
-      var qs, enonce = c.texte + '<br>1) Recopier et compléter l\'arbre pondéré ci-contre.<br>2) Calculer $' + PeD + '$, puis montrer que $P(' + c.D + ') = ' + T.num(pD.value()) + '$.<br>3) Calculer ' + c.qBayes + ' (arrondir à $10^{-3}$).<br>4) ' + c.X + ' ';
+      var qs, enonce = c.texte + '<br>1) Recopier et compléter l\'arbre pondéré ci-dessous.<br>2) Calculer $' + PeD + '$, puis montrer que $P(' + c.D + ') = ' + T.num(pD.value()) + '$.<br>3) Calculer ' + c.qBayes + ' (arrondir à $10^{-3}$).<br>4) ' + c.X + ' ';
       if (niveau === 1) {
         enonce += 'Justifier que $X$ suit une loi binomiale dont on précisera les paramètres, puis calculer l\'espérance $E(X)$ et l\'interpréter.';
         qs = [
-          { label: '2) $' + PeD + ' =$', type: 'number', reponse: inter },
-          { label: '2) $P(' + c.D + ') =$', type: 'number', reponse: pD },
+          { label: '2) $' + PeD + ' =$', type: 'number', reponse: inter, reponseTex: nb(inter) },
+          { label: '2) $P(' + c.D + ') =$', type: 'number', reponse: pD, reponseTex: nb(pD) },
           { label: '3) $P_{' + c.D + '}(' + c.E + ') \\approx$', type: 'number', reponse: post.value(), tol: 0.001, reponseTex: ap(post, 3) },
-          { label: '4) Paramètres $(n \\,;\\, p) =$', type: 'tuple', reponse: [n, pD] },
-          { label: '4) $E(X) =$', type: 'number', reponse: E }
+          { label: '4) Paramètres $(n \\,;\\, p) =$', type: 'tuple', reponse: [n, pD], reponseTex: pt(n, nb(pD)) },
+          { label: '4) $E(X) =$', type: 'number', reponse: E, reponseTex: nb(E) }
         ];
         sol.push('$E(X) = np = ' + n + ' \\times ' + T.num(p) + ' = ' + T.num(E.value()) + '$ : en moyenne, sur un grand nombre de séries de $' + n + '$ épreuves, on observe environ $' + T.num(E.value()) + '$ succès par série.');
       } else {
         enonce += 'Préciser la loi de $X$, puis calculer $P(X = 0)$, $P(X = 2)$ et $P(X \\geq 1)$ (arrondis à $10^{-3}$) et l\'espérance $E(X)$.';
         qs = [
-          { label: '2) $P(' + c.D + ') =$', type: 'number', reponse: pD },
+          { label: '2) $P(' + c.D + ') =$', type: 'number', reponse: pD, reponseTex: nb(pD) },
           { label: '3) $P_{' + c.D + '}(' + c.E + ') \\approx$', type: 'number', reponse: post.value(), tol: 0.001, reponseTex: ap(post, 3) },
           { label: '4) $P(X = 0) \\approx$', type: 'number', reponse: p0, tol: 0.001, reponseTex: ap(p0, 3) },
           { label: '4) $P(X = 2) \\approx$', type: 'number', reponse: p2, tol: 0.001, reponseTex: ap(p2, 3) },
           { label: '4) $P(X \\geq 1) \\approx$', type: 'number', reponse: 1 - p0, tol: 0.001, reponseTex: ap(1 - p0, 3) },
-          { label: '4) $E(X) =$', type: 'number', reponse: E }
+          { label: '4) $E(X) =$', type: 'number', reponse: E, reponseTex: nb(E) }
         ];
         sol.push('$P(X = 0) = (1 - p)^{' + n + '} = ' + T.num(rd(1 - p, 6)) + '^{' + n + '} \\approx ' + ap(p0, 3) + '$.');
         sol.push('$P(X = 2) = C_{' + n + '}^{2}\\,p^2(1 - p)^{' + (n - 2) + '} = ' + Cnk(n, 2) + ' \\times ' + T.num(p) + '^2 \\times ' + T.num(rd(1 - p, 6)) + '^{' + (n - 2) + '} \\approx ' + ap(p2, 3) + '$.');
@@ -1748,6 +1760,7 @@
     gen: function (rng, niveau) {
       if (niveau === 1) {
         var A = rng.pick([1, -1]), r1 = rng.int(-3, 1), r2 = r1 + 2 * rng.int(1, 2), D0 = rng.int(-4, 4);
+        var facto = coefTex(3 * A) + (r1 === 0 ? 'x' + T.xMinus(r2) : r2 === 0 ? 'x' + T.xMinus(r1) : T.xMinus(r1) + T.xMinus(r2));
         var f = [A, -3 * A * (r1 + r2) / 2, 3 * A * r1 * r2, D0], df = [3 * A, -3 * A * (r1 + r2), 3 * A * r1 * r2];
         var ev = function (co, x) { return co.reduce(function (s, c) { return s * x + c; }, 0); };
         var v1 = ev(f, r1), v2 = ev(f, r2), xT;
@@ -1758,7 +1771,7 @@
         var fN = function (x) { return ev(f, x); }, X0 = r1 - 2, X1 = r2 + 2, Y = fenetreY([fN], X0, X1, Math.min(v1, v2) - 15, Math.max(v1, v2) + 15);
         return {
           enonce: 'Soit $f$ la fonction définie sur $\\R$ par $$f(x) = ' + T.poly(f) + '$$ et $(\\mathcal{C})$ sa courbe représentative dans un repère orthogonal.<br>' +
-            '1) Calculer les limites de $f$ en $-\\infty$ et en $+\\infty$.<br>2) Calculer $f\'(x)$ et vérifier que $f\'(x) = ' + coefTex(3 * A) + T.xMinus(r1) + T.xMinus(r2) + '$.<br>' +
+            '1) Calculer les limites de $f$ en $-\\infty$ et en $+\\infty$.<br>2) Calculer $f\'(x)$ et vérifier que $f\'(x) = ' + facto + '$.<br>' +
             '3) Étudier le signe de $f\'(x)$, dresser le tableau de variation de $f$ et préciser son maximum local et son minimum local.<br>4) Déterminer une équation de la tangente $(T)$ à $(\\mathcal{C})$ au point d\'abscisse $' + xT + '$.',
           figure: graphe(X0, X1, Y[0], Y[1], [{ f: fN }]),
           questions: [
@@ -1775,22 +1788,22 @@
           ],
           solution: [
             'En $\\pm\\infty$, $f(x)$ a la même limite que $' + T.mono(A, 'x^3', true) + '$ : $' + lim('-\\infty') + ' f(x) = ' + (A > 0 ? '-' : '+') + '\\infty$ et $' + lim('+\\infty') + ' f(x) = ' + (A > 0 ? '+' : '-') + '\\infty$.',
-            '$f\'(x) = ' + T.poly(df) + ' = ' + coefTex(3 * A) + '(' + T.poly([1, -(r1 + r2), r1 * r2]) + ') = ' + coefTex(3 * A) + T.xMinus(r1) + T.xMinus(r2) + '$.',
+            '$f\'(x) = ' + T.poly(df) + ' = ' + coefTex(3 * A) + '(' + T.poly([1, -(r1 + r2), r1 * r2]) + ') = ' + facto + '$.',
             '$f\'(x)$ s\'annule en $' + r1 + '$ et $' + r2 + '$ ; il a le signe de $' + (3 * A) + '$ à l\'extérieur des racines.' +
               tabVar(['-\\infty', String(r1), String(r2), '+\\infty'], A > 0 ? ['+', '-', '+'] : ['-', '+', '-'], ['0', '0'], [A > 0 ? '-\\infty' : '+\\infty', String(v1), String(v2), A > 0 ? '+\\infty' : '-\\infty']),
             'Maximum local : $f(' + (A > 0 ? r1 : r2) + ') = ' + maxV + '$ ; minimum local : $f(' + (A > 0 ? r2 : r1) + ') = ' + minV + '$.',
-            '$f(' + xT + ') = ' + fT + '$ et $f\'(' + xT + ') = ' + mT + '$, donc $(T) : y = ' + mT + '(x - ' + T.par(xT) + ') + ' + T.par(fT) + '$, soit $y = ' + T.poly(tg) + '$.'
+            '$f(' + xT + ') = ' + fT + '$ et $f\'(' + xT + ') = ' + mT + '$, donc $(T) : y = ' + (mT === 0 ? '' : coefTex(mT) + T.xMinus(xT)) + (fT === 0 && mT !== 0 ? '' : T.signed(fT, mT === 0)) + '$, soit $y = ' + T.poly(tg) + '$.'
           ],
           aide: 'Expressions développées : 3x^2 - 6x - 9 ; tangente : -9x + 4.'
         };
       }
       var k = rng.int(1, 4), b = rng.int(-3, 3);
-      var fTex = T.sum([{ c: 1, v: 'x' }, { c: b }, { c: -k, v: '\\ln x' }]), fS = 'x+' + S(b) + '-' + S(k) + '*ln(x)';
+      var fTex = T.sum([{ c: 1, v: 'x' }, { c: b }, { c: -k, v: '\\ln x' }]);
       var dTex = '1 - \\dfrac{' + k + '}{x}', dS = '1-' + S(k) + '/x';
       var fk = k === 1 ? { tex: String(1 + b), s: S(1 + b) } : { tex: T.sum([{ c: k + b }, { c: -k, v: '\\ln ' + k }]), s: S(k + b) + '-' + S(k) + '*ln(' + k + ')' };
       var tg = k === 1 ? { at: 'e', tex: '\\left(1 - e^{-1}\\right)x' + T.signed(b).replace(' + 0', ''), s: '(1-e^(-1))*x+' + S(b) }
         : { at: '1', tex: T.poly([1 - k, k + b]), s: polyS([1 - k, k + b]) };
-      var fN = function (x) { return x + b - k * Math.log(x); }, droite = T.poly([1, b]);
+      var fN = function (x) { return x + b - k * Math.log(x); }, droite = T.poly([1, b]), dP = b ? '(' + droite + ')' : 'x';
       trace('tl-pb-fonction', { niveau: 2, k: k, b: b });
       var Y = fenetreY([fN], 0.02, 9, -3, 12);
       return {
@@ -1799,7 +1812,7 @@
           '2) Calculer $f\'(x)$ et vérifier que $f\'(x) = \\dfrac{x - ' + k + '}{x}$. Dresser le tableau de variation de $f$ et préciser son minimum.<br>' +
           '3) Déterminer une équation de la tangente $(T)$ à $(\\mathcal{C})$ au point d\'abscisse $' + tg.at + '$.<br>' +
           '4) Soit $(D)$ la droite d\'équation $y = ' + droite + '$. Étudier la position relative de $(\\mathcal{C})$ et de $(D)$.',
-        figure: graphe(-0.4, 9, Y[0], Y[1], [{ f: fN, from: 0.005 }]),
+        figure: graphe(-0.9, 9, Y[0], Y[1], [{ f: fN, from: 0.005 }]),
         questions: [
           qcm(rng, '1) $' + lim('0^+') + ' f(x) =$', PINF, [MINF, ZERO, '$' + b + '$']),
           { label: '2) $f\'(x) =$', type: 'expr', reponse: dS, reponseTex: dTex, domaine: [0.5, 5] },
@@ -1810,16 +1823,16 @@
         ],
         indices: [
           '$' + lim('0^+') + ' \\ln x = -\\infty$, donc $-' + (k === 1 ? '' : k) + '\\ln x$ tend vers $+\\infty$. Et $(\\ln x)\' = \\dfrac{1}{x}$.',
-          'Pour la position relative, étudie le signe de $f(x) - (' + droite + ') = -' + (k === 1 ? '' : k) + '\\ln x$ : rappelle-toi que $\\ln x < 0$ sur $]0 \\,;\\, 1[$.'
+          'Pour la position relative, étudie le signe de $f(x) - ' + dP + ' = -' + (k === 1 ? '' : k) + '\\ln x$ : rappelle-toi que $\\ln x < 0$ sur $]0 \\,;\\, 1[$.'
         ],
         solution: [
-          '$' + lim('0^+') + ' (' + droite + ') = ' + b + '$ et $' + lim('0^+') + ' \\ln x = -\\infty$, donc $' + lim('0^+') + ' (-' + (k === 1 ? '' : k) + '\\ln x) = +\\infty$ et $' + lim('0^+') + ' f(x) = +\\infty$ : l\'axe des ordonnées (droite d\'équation $x = 0$) est asymptote verticale à $(\\mathcal{C})$.',
+          '$' + lim('0^+') + ' ' + dP + ' = ' + b + '$ et $' + lim('0^+') + ' \\ln x = -\\infty$, donc $' + lim('0^+') + ' (-' + (k === 1 ? '' : k) + '\\ln x) = +\\infty$ et $' + lim('0^+') + ' f(x) = +\\infty$ : l\'axe des ordonnées (droite d\'équation $x = 0$) est asymptote verticale à $(\\mathcal{C})$.',
           '$f\'(x) = 1 - ' + (k === 1 ? '' : k + ' \\times ') + '\\dfrac{1}{x} = ' + dTex + ' = \\dfrac{x - ' + k + '}{x}$. Sur $]0 \\,;\\, +\\infty[$, $x > 0$ donc $f\'(x)$ a le signe de $x - ' + k + '$.' +
             tabVar(['0', String(k), '+\\infty'], ['-', '+'], ['0'], ['+\\infty', fk.tex, '+\\infty']),
-          '$f$ admet un minimum en $x = ' + k + '$ : $f(' + k + ') = ' + k + T.signed(b).replace(' + 0', '') + (k === 1 ? ' - \\ln 1 = ' : ' - ' + k + '\\ln ' + k + ' = ') + fk.tex + (k === 1 ? '' : ' \\approx ' + ap(k + b - k * Math.log(k))) + '$.',
+          '$f$ admet un minimum en $x = ' + k + '$ : $f(' + k + ') = ' + (k === 1 ? '1' + (b ? T.signed(b) : '') + ' - \\ln 1 = ' : b ? k + T.signed(b) + ' - ' + k + '\\ln ' + k + ' = ' : '') + fk.tex + (k === 1 ? '' : ' \\approx ' + ap(k + b - k * Math.log(k))) + '$.',
           k === 1 ? '$f(e) = e' + T.signed(b).replace(' + 0', '') + ' - 1$ et $f\'(e) = 1 - e^{-1}$, donc $(T) : y = \\left(1 - e^{-1}\\right)(x - e) + e' + (b - 1 ? T.signed(b - 1) : '') + '$, soit $y = ' + tg.tex + '$.'
-            : '$f(1) = ' + (1 + b) + '$ (car $\\ln 1 = 0$) et $f\'(1) = ' + (1 - k) + '$, donc $(T) : y = ' + (1 - k) + '(x - 1) + ' + T.par(1 + b) + '$, soit $y = ' + tg.tex + '$.',
-          '$f(x) - (' + droite + ') = -' + (k === 1 ? '' : k) + '\\ln x$. Sur $]0 \\,;\\, 1[$, $\\ln x < 0$ donc la différence est positive : $(\\mathcal{C})$ est au-dessus de $(D)$ ; sur $]1 \\,;\\, +\\infty[$, $(\\mathcal{C})$ est en dessous de $(D)$ ; elles se coupent au point d\'abscisse $1$.'
+            : '$f(1) = ' + (1 + b) + '$ (car $\\ln 1 = 0$) et $f\'(1) = ' + (1 - k) + '$, donc $(T) : y = ' + coefTex(1 - k) + '(x - 1)' + (1 + b ? T.signed(1 + b) : '') + '$, soit $y = ' + tg.tex + '$.',
+          '$f(x) - ' + dP + ' = -' + (k === 1 ? '' : k) + '\\ln x$. Sur $]0 \\,;\\, 1[$, $\\ln x < 0$ donc la différence est positive : $(\\mathcal{C})$ est au-dessus de $(D)$ ; sur $]1 \\,;\\, +\\infty[$, $(\\mathcal{C})$ est en dessous de $(D)$ ; elles se coupent au point d\'abscisse $1$.'
         ],
         aide: 'Valeurs exactes : 2 - 2ln(2) ; expressions : 1 - 2/x, -x + 3.'
       };
@@ -1838,7 +1851,7 @@
     gen: function (rng, niveau) {
       if (niveau === 1) {
         var fi = rng.pick(PRENOMS_F), ga = rng.pick(PRENOMS_G), K = rng.pick([200000, 300000, 500000]);
-        var t = rng.pick([4, 5, 6, 8]), r = rng.pick([5, 6, 8, 10]), qq = F(100 + t, 100), int1 = K * r / 100;
+        var t = rng.pick([4, 5, 6, 8]), r = rng.pick([5, 6, 8, 10].filter(function (x) { return x !== t; })), qq = F(100 + t, 100), int1 = K * r / 100;
         var C1 = K * (100 + t) / 100, C10 = K * Math.pow(1 + t / 100, 10), M10 = K + 10 * int1, nD = 0;
         while (Math.pow(1 + t / 100, nD) < 2) nD++;
         trace('tl-pb-suites', { niveau: 1, K: K, t: t, r: r });
@@ -1886,7 +1899,7 @@
         questions: [
           { label: '1) $u_1 =$', type: 'number', reponse: u1, tol: 0.5, reponseTex: nb(u1) },
           { label: '1) $u_2 \\approx$', type: 'number', reponse: u2, tol: 0.5, reponseTex: (u2.isInt() ? nb(u2) : T.num(Math.round(u2.value()))) },
-          { label: '2) Raison $q =$', type: 'number', reponse: q },
+          { label: '2) Raison $q =$', type: 'number', reponse: q, reponseTex: nb(q) },
           { label: '2) $v_0 =$', type: 'number', reponse: v0 },
           { label: '3) $u_n =$', type: 'expr', variable: 'n', reponse: unS, reponseTex: unT, domaine: [0, 8] },
           { label: '4) $\\lim\\limits_{n \\to +\\infty} u_n =$', type: 'number', reponse: l }

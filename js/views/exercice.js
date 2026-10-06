@@ -36,11 +36,14 @@
       return;
     }
     var code = g.id + '-' + niveau + '-' + seed;
-    var html = '<div class="crumbs"><a href="#/programme">Programme</a> › ' + (ch ? '<a href="#/chapitre/' + chId + '?onglet=exercices">' + esc(ch.titre) + '</a> › ' : '') + 'Exercice</div>' +
-      '<div class="row between" style="margin-bottom:10px"><div class="levels" role="group" aria-label="Niveau de difficulté">';
+    var html = g.mission
+      ? '<div class="crumbs"><a href="#/missions">' + EM.icon('gauche', { taille: 14 }) + 'Missions Sénégal</a></div>' +
+        EM.ui.enTete('mission:' + g.id, 'Mission Sénégal' + (P.classes[g.classe] ? ' · ' + P.classes[g.classe].long : ''), EM.md(g.titre), EM.md(g.resume || ''))
+      : '<div class="crumbs"><a href="#/programme">Programme</a>' + EM.icon('droite', { taille: 14 }) + (ch ? '<a href="#/chapitre/' + chId + '?onglet=exercices">' + esc(ch.titre) + '</a>' + EM.icon('droite', { taille: 14 }) : '') + 'Exercice</div>';
+    html += '<div class="row between" style="margin-bottom:10px"><div class="levels" role="group" aria-label="Niveau de difficulté">';
     for (var n = 1; n <= g.niveaux; n++) html += '<button data-lv="' + n + '" aria-pressed="' + (n === niveau) + '" title="' + EM.ui.niveauNom(n) + '">Niveau ' + n + '</button>';
     html += '</div><div class="row small"><span class="muted">Code :</span> <code>' + esc(code) + '</code>' +
-      '<button class="btn sm ghost" data-act="share" title="Copier le lien de cet exercice">🔗 Partager</button></div></div>' +
+      '<button class="btn sm ghost" data-act="share" title="Copier le lien de cet exercice">' + EM.icon('partager') + 'Partager</button></div></div>' +
       '<div class="card exo"></div>';
     main.innerHTML = html;
 
@@ -52,7 +55,7 @@
       },
       onNext: function () {
         var lv = niveau;
-        if (ctl.state.verifie && !ctl.state.solutionVue && reussitesDeSuite >= 2 && lv < g.niveaux) { lv++; EM.ui.toast('Niveau ' + lv + ' : on monte d\'un cran ! 💪'); reussitesDeSuite = 0; }
+        if (ctl.state.verifie && !ctl.state.solutionVue && reussitesDeSuite >= 2 && lv < g.niveaux) { lv++; EM.ui.toast('Niveau ' + lv + ' : on monte d\'un cran !'); reussitesDeSuite = 0; }
         EM.go('#/exo/' + g.id + '?n=' + lv + '&s=' + newSeed() + '&r=' + reussitesDeSuite + (query.ch ? '&ch=' + query.ch : ''));
       }
     });
@@ -92,14 +95,14 @@
     if (parts[0] === 'chapitre') {
       var ch = P.chapitres[parts[1]];
       if (!ch) return EM.views.introuvable(main);
-      gens = EM.gen.forChapter(parts[1]);
+      gens = EM.gen.forChapter(parts[1]).filter(function (g) { return !g.mission; });
       cibles = [parts[1]];
       titre = ch.titre;
       retour = '#/chapitre/' + parts[1] + '?onglet=exercices';
     } else {
       var k = parts[0] || EM.store.classe();
       if (!k || !P.classes[k]) { EM.choisirClasse(function (kk) { EM.go('#/serie/' + kk); }); return; }
-      gens = EM.gensClasse(k);
+      gens = EM.gensClasse(k, function (g) { return !g.mission; });
       titre = 'Série ' + P.classes[k].nom;
       retour = '#/classe/' + k;
     }
@@ -112,13 +115,13 @@
     var liste = choisirSerie(gens, cibles, N, rng);
     var i = 0, score = 0, resultats = [], xp = 0;
 
-    main.innerHTML = '<div class="crumbs"><a href="' + retour + '">← Retour</a></div>' +
-      '<div class="card"><div class="row between"><h1 style="margin:0">♾️ ' + esc(titre) + '</h1><span class="chip gold" id="sc"></span></div>' +
-      '<div class="meter" style="margin-top:10px"><i id="pb" style="width:0"></i></div></div><div class="card exo"></div>';
+    main.innerHTML = EM.bandeau('serie:' + titre, '<div class="crumbs"><a href="' + retour + '">' + EM.icon('gauche', { taille: 14 }) + 'Retour</a></div>' +
+      '<div class="row between"><div><p class="eyebrow">Série adaptative</p><h1 style="margin:0">' + esc(titre) + '</h1></div><span class="chip gold num" id="sc"></span></div>' +
+      '<div class="meter" style="margin-top:14px"><i id="pb" style="width:0"></i></div>', { rows: 3 }) + '<div class="card exo"></div>';
     var box = main.querySelector('.exo');
 
     function maj() {
-      main.querySelector('#sc').textContent = 'Question ' + Math.min(i + 1, N) + '/' + N + ' · ' + score + ' ✓';
+      main.querySelector('#sc').textContent = 'Question ' + Math.min(i + 1, N) + '/' + N + ' · ' + score + ' réussie' + (score > 1 ? 's' : '');
       main.querySelector('#pb').style.width = (i / N * 100) + '%';
     }
     function suivant() {
@@ -155,7 +158,7 @@
       var rates = resultats.filter(function (r) { return !r.ok; });
       var chFaibles = EM.util.uniq([].concat.apply([], rates.map(function (r) { return r.g.chapitres; }))).filter(function (c) { return P.chapitres[c]; }).slice(0, 5);
       box.innerHTML = '<div class="center"><div class="score-big">' + score + '/' + N + '</div><p class="mention">' +
-        (score >= 9 ? 'Exceptionnel ! 🏆' : score >= 7 ? 'Très bon travail ! 👏' : score >= 5 ? 'C\'est bien, continue ! 💪' : 'Ne lâche rien : chaque erreur t\'apprend quelque chose. 🌱') +
+        (score >= 9 ? 'Exceptionnel !' : score >= 7 ? 'Très bon travail !' : score >= 5 ? 'C\'est bien, continue !' : 'Ne lâche rien : chaque erreur t\'apprend quelque chose.') +
         '</p><p class="muted">+' + xp + ' points gagnés</p></div>' +
         (chFaibles.length ? '<h3>À retravailler</h3><ul>' + chFaibles.map(function (c) { return '<li><a href="#/chapitre/' + c + '">' + esc(P.chapitres[c].titre) + '</a></li>'; }).join('') + '</ul>' : '') +
         '<div class="row"><button class="btn" data-act="again">Nouvelle série</button><a class="btn ghost" href="' + retour + '">Retour</a></div>';
@@ -173,8 +176,9 @@
     if (!d) { main.innerHTML = '<div class="card">Pas encore de défi pour cette classe.</div>'; return; }
     var ex = EM.gen.make(d.gen.id, d.seed, d.niveau);
     var jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-    main.innerHTML = '<div class="card senegal"><h1 style="margin:0">☀️ Défi du jour — ' + esc(cl.nom) + '</h1><p class="muted" style="margin:4px 0 0">' + esc(jour) +
-      ' · le même exercice pour tous les élèves de ' + esc(cl.nom) + ' aujourd\'hui</p></div><div class="card exo"></div><div class="card share hidden"></div>';
+    main.innerHTML = EM.bandeau('defi:' + EM.store.today(), '<p class="eyebrow">Défi du jour · ' + esc(jour) + '</p><h1 style="margin:0">' + esc(cl.long) + '</h1>' +
+      '<p style="margin:8px 0 0">Le même exercice pour tous les élèves de ' + esc(cl.nom) + ' du Sénégal aujourd\'hui.</p>', { rows: 3 }) +
+      '<div class="card exo"></div><div class="card share hidden"></div>';
     EM.ui.exercice(main.querySelector('.exo'), ex, {
       mode: 'pratique',
       onResult: function (r) {
@@ -182,7 +186,7 @@
         var sh = main.querySelector('.share');
         if (r.ok && !r.solutionVue) {
           EM.ui.badges(EM.store.defiReussi());
-          EM.ui.toast('Défi réussi ! +20 points bonus ☀️');
+          EM.ui.toast('Défi réussi ! +20 points bonus');
           var txt = 'J\'ai relevé le défi du jour ELITE MATHÉMATIQUE (' + cl.nom + ', ' + EM.store.today().split('-').reverse().join('/') + ') ! Et toi, tu y arrives ? ' + location.href.split('#')[0] + '#/defi';
           sh.innerHTML = '<h2>Bravo ! Partage ta réussite</h2><p class="muted">Lance le défi à tes camarades de classe.</p><div class="row">' +
             '<a class="btn ok" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(txt) + '">Partager sur WhatsApp</a>' +
@@ -209,7 +213,7 @@
       });
       chapitres = Object.keys(set).sort(function (a, b) { return P.chapitres[a].ordre - P.chapitres[b].ordre; });
     } else chapitres = cl.chapitres.slice();
-    chapitres = chapitres.filter(function (id) { return EM.gen.forChapter(id).length; });
+    chapitres = chapitres.filter(function (id) { return EM.gen.forChapter(id).filter(function (g) { return !g.mission; }).length; });
     var rng = new EM.RNG();
     if (chapitres.length > 12) chapitres = rng.sample(chapitres, 12).sort(function (a, b) { return P.chapitres[a].ordre - P.chapitres[b].ordre; });
     var titre = prerequis ? 'Test des prérequis pour la ' + cl.nom : 'Diagnostic ' + cl.nom;
@@ -218,16 +222,15 @@
       main.innerHTML = '<div class="card"><h1>' + esc(titre) + '</h1><p>Pas assez d\'exercices disponibles pour ce diagnostic.</p><a class="btn" href="#/classe/' + k + '">Retour</a></div>';
       return;
     }
-    main.innerHTML = '<div class="crumbs"><a href="#/classe/' + k + '">← ' + esc(cl.nom) + '</a></div>' +
-      '<div class="card"><h1>🩺 ' + esc(titre) + '</h1><p>' + chapitres.length + ' questions, une par chapitre' + (prerequis ? ' des classes précédentes utile cette année' : '') +
-      '. Réponds sans aide : le but est de repérer ce qui est solide et ce qui est à revoir. Compte environ ' + Math.max(5, chapitres.length * 2) + ' minutes.</p>' +
-      '<button class="btn" data-act="go">Commencer</button></div>';
+    main.innerHTML = EM.ui.enTete('diagnostic:' + k, 'Diagnostic', esc(titre), chapitres.length + ' questions, une par chapitre' + (prerequis ? ' des classes précédentes utiles cette année' : '') +
+      '. Réponds sans aide : le but est de repérer ce qui est solide et ce qui est à revoir. Compte environ ' + Math.max(5, chapitres.length * 2) + ' minutes.',
+      '<button class="btn gold" data-act="go">' + EM.icon('lecture') + 'Commencer</button><a class="btn ghost" href="#/classe/' + k + '">Retour à la ' + esc(cl.nom) + '</a>');
     var i = 0, res = {}, items = [];
     main.querySelector('[data-act="go"]').addEventListener('click', etape);
 
     function etape() {
       if (i >= chapitres.length) return bilan();
-      var id = chapitres[i], g = rng.pick(EM.gen.forChapter(id));
+      var id = chapitres[i], g = rng.pick(EM.gen.forChapter(id).filter(function (g) { return !g.mission; }));
       var ex = EM.gen.make(g.id, newSeed(), 1);
       main.innerHTML = '<div class="card"><div class="row between"><strong>' + esc(titre) + '</strong><span class="chip">' + (i + 1) + '/' + chapitres.length + '</span></div>' +
         '<div class="meter" style="margin-top:8px"><i style="width:' + (i / chapitres.length * 100) + '%"></i></div><p class="small muted" style="margin:8px 0 0">Chapitre : ' + esc(P.chapitres[id].titre) + '</p></div>' +
@@ -252,18 +255,18 @@
         '<p style="margin:0;flex:1">' + ok.length + ' chapitre' + (ok.length > 1 ? 's' : '') + ' réussi' + (ok.length > 1 ? 's' : '') + ' sur ' + chapitres.length + '. ' +
         (ko.length ? 'Voici ton parcours personnalisé, dans l\'ordre conseillé :' : 'Excellent : tu es prêt(e) pour la suite !') + '</p></div></div>';
       if (ko.length) {
-        html += '<div class="card"><h2>🧭 Ton parcours de remédiation</h2><ol class="stack">' + ko.map(function (id) {
+        html += '<div class="card"><h2>Ton parcours de remédiation</h2><ol class="stack">' + ko.map(function (id) {
           return '<li><strong>' + esc(P.chapitres[id].titre) + '</strong> <span class="muted small">(' + esc(P.classes[P.chapitres[id].classes[0]].nom) + ')</span><div class="row" style="margin-top:6px">' +
-            '<a class="btn sm ghost" href="#/chapitre/' + id + '">📖 Revoir le cours</a><a class="btn sm" href="#/serie/chapitre/' + id + '">♾️ S\'entraîner</a></div></li>';
+            '<a class="btn sm ghost" href="#/chapitre/' + id + '">' + EM.icon('livre') + 'Revoir le cours</a><a class="btn sm" href="#/serie/chapitre/' + id + '">' + EM.icon('infini') + 'S\'entraîner</a></div></li>';
         }).join('') + '</ol></div>';
       }
-      if (ok.length) html += '<div class="card"><h2>✅ Points solides</h2><div class="row">' + ok.map(function (id) { return '<span class="chip ok">' + esc(P.chapitres[id].titre) + '</span>'; }).join('') + '</div></div>';
+      if (ok.length) html += '<div class="card"><h2>Points solides</h2><div class="row">' + ok.map(function (id) { return '<span class="chip ok">' + esc(P.chapitres[id].titre) + '</span>'; }).join('') + '</div></div>';
       html += '<div class="card"><h2>Les questions et leurs corrections</h2><div class="corr"></div></div><a class="btn" href="#/classe/' + k + '">Retour à la classe</a>';
       main.innerHTML = html;
       var corr = main.querySelector('.corr');
       items.forEach(function (it, j) {
         var d = document.createElement('details');
-        d.innerHTML = '<summary>' + (it.ok ? '✅' : '❌') + ' Question ' + (j + 1) + ' — ' + esc(P.chapitres[it.id].titre) + '</summary><div class="exo" style="margin:10px 0"></div>';
+        d.innerHTML = '<summary><span class="chip ' + (it.ok ? 'ok' : 'ko') + '">' + EM.icon(it.ok ? 'valide' : 'croix') + (it.ok ? 'Réussi' : 'À revoir') + '</span> Question ' + (j + 1) + ' — ' + esc(P.chapitres[it.id].titre) + '</summary><div class="exo" style="margin:10px 0"></div>';
         corr.appendChild(d);
         d.querySelector('.exo').innerHTML = EM.ui.enonceEtCorrection(it.ex);
       });

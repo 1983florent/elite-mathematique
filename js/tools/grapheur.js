@@ -72,11 +72,11 @@
   }
 
   EM.labo.grapheur = {
-    nom: 'Grapheur', ico: '📈', desc: 'Tracer des courbes, zoomer, lire des valeurs, trouver zéros, extremums et intersections.',
+    nom: 'Grapheur', ico: 'courbe', desc: 'Tracer des courbes, zoomer, lire des valeurs, trouver zéros, extremums et intersections.',
     render: function (main, query) {
       var fns = query.f ? query.f.split('|') : ['x^2 - 2x - 3', '', ''];
       while (fns.length < 3) fns.push('');
-      main.innerHTML = '<div class="crumbs"><a href="#/labo">← Labo</a></div><h1>📈 Grapheur</h1>' +
+      main.innerHTML = '<div class="crumbs"><a href="#/labo">' + EM.icon('gauche', { taille: 14 }) + 'Laboratoire</a></div><h1>Grapheur</h1>' +
         '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start">' +
         '<div class="card"><div class="fns">' + fns.map(function (f, i) {
           return '<div class="fn-row"><span class="swatch" style="background:' + COULEURS[i] + '"></span><label class="sr" for="fn' + i + '">Fonction ' + (i + 1) + '</label>' +

@@ -21,7 +21,7 @@
   };
   ui.badges = function (list) {
     (list || []).forEach(function (b, i) {
-      if (b) setTimeout(function () { ui.toast(b.ico + ' Badge obtenu : ' + b.nom, 3200); }, 400 + i * 3300);
+      if (b) setTimeout(function () { ui.toast('Badge obtenu : ' + b.nom, 3200); }, 400 + i * 3300);
     });
   };
 
@@ -32,7 +32,7 @@
     lastFocus = document.activeElement;
     m.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
       '<div class="modal-head"><h2 id="modal-title">' + title + '</h2>' +
-      '<button class="icon-btn" data-close aria-label="Fermer" style="color:var(--text)">✕</button></div>' +
+      '<button class="icon-btn" data-close aria-label="Fermer">' + EM.icon('fermer') + '</button></div>' +
       '<div class="modal-body">' + html + '</div></div>';
     m.hidden = false;
     m.onclick = function (e) { if (e.target === m || e.target.closest('[data-close]')) ui.closeModal(); };
@@ -74,6 +74,12 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(txt).then(function () { ui.toast(msg || 'Copié'); }, fallback);
     } else fallback();
+  };
+
+  /** En-tête de rubrique sur bandeau à motif. */
+  ui.enTete = function (graine, surtitre, titre, texte, actions) {
+    return EM.bandeau(graine, (surtitre ? '<p class="eyebrow">' + esc(surtitre) + '</p>' : '') + '<h1>' + titre + '</h1>' +
+      (texte ? '<p style="max-width:60ch;margin:0">' + texte + '</p>' : '') + (actions ? '<div class="row" style="margin-top:14px">' + actions + '</div>' : ''), { rows: 3 });
   };
 
   /** Mention selon la note sur 20 (usage des examens sénégalais). */
@@ -184,10 +190,10 @@
     html += '<div class="hints"></div><div class="sol-zone"></div>';
     if (mode === 'pratique') {
       html += '<div class="exo-actions no-print">' +
-        '<button class="btn" data-act="check">Vérifier</button>' +
-        (ex.indices.length ? '<button class="btn ghost" data-act="hint">💡 Indice <span class="hint-count">(0/' + ex.indices.length + ')</span></button>' : '') +
-        '<button class="btn ghost" data-act="sol">Voir la correction</button>' +
-        (opts.onNext ? '<button class="btn gold" data-act="next">Exercice suivant →</button>' : '') +
+        '<button class="btn" data-act="check">' + EM.icon('valide') + 'Vérifier</button>' +
+        (ex.indices.length ? '<button class="btn ghost" data-act="hint">' + EM.icon('ampoule') + 'Indice <span class="hint-count">(0/' + ex.indices.length + ')</span></button>' : '') +
+        '<button class="btn ghost" data-act="sol">' + EM.icon('oeil') + 'Voir la correction</button>' +
+        (opts.onNext ? '<button class="btn gold" data-act="next">Exercice suivant' + EM.icon('fleche') + '</button>' : '') +
         (opts.extraActions || '') + '</div>';
     }
     el.innerHTML = html;
@@ -272,7 +278,7 @@
         row.classList.toggle('ko', !r.ok);
         var fb = row.querySelector('.q-feedback');
         fb.className = 'q-feedback ' + (r.ok ? 'ok' : 'ko');
-        fb.textContent = r.ok ? '✓ Juste' : (r.msg ? '✗ ' + r.msg : r.vide ? '✗ Pas de réponse' : '✗ Pas encore juste');
+        fb.innerHTML = r.ok ? EM.icon('valide') + ' Juste' : EM.icon('croix') + ' ' + esc(r.msg ? r.msg : r.vide ? 'Pas de réponse' : 'Pas encore juste');
         if (q.type === 'choice') {
           Array.prototype.forEach.call(row.querySelectorAll('.choice'), function (b) {
             var j = +b.getAttribute('data-j');
@@ -296,7 +302,7 @@
         el.querySelector('.questions').after(banner);
       }
       banner.className = 'result-banner ' + (res.ok ? 'ok' : 'ko');
-      banner.textContent = res.ok ? pick(['Bravo ! 🎉', 'Excellent ! ✨', 'C\'est juste ! 👏', 'Bien joué ! 💪']) :
+      banner.innerHTML = res.ok ? EM.icon('valide') + pick(['Bravo !', 'Excellent !', 'C\'est juste !', 'Bien joué !']) : EM.icon('info') +
         (state.essais === 1 ? 'Pas tout à fait. Relis l\'énoncé, demande un indice ou réessaie.' : 'Toujours pas… Tu peux consulter la correction.');
       if (!state.verifie) {
         state.verifie = true;
@@ -310,7 +316,7 @@
       if (state.indices >= ex.indices.length) return;
       var box = document.createElement('div');
       box.className = 'hint';
-      box.innerHTML = '<strong>Indice ' + (state.indices + 1) + ' :</strong> ' + EM.md(ex.indices[state.indices]);
+      box.innerHTML = EM.icon('ampoule') + '<div><strong>Indice ' + (state.indices + 1) + ' :</strong> ' + EM.md(ex.indices[state.indices]) + '</div>';
       el.querySelector('.hints').appendChild(box);
       state.indices++;
       var c = el.querySelector('.hint-count');
@@ -322,7 +328,7 @@
     }
 
     function solutionHtml() {
-      var s = '<div class="solution"><h4>Correction</h4><ol>' +
+      var s = '<div class="solution"><h4>' + EM.icon('crayon') + 'Correction détaillée</h4><ol>' +
         ex.solution.map(function (st) { return '<li>' + EM.md(st) + '</li>'; }).join('') + '</ol>';
       var lines = ex.questions.map(function (q) {
         if (q.type === 'choice') return (q.label ? EM.md(q.label) + ' ' : '') + 'Bonne réponse : <strong>' + 'ABCDEFGH'[q.reponse] + '</strong> — ' + EM.md(q.choix[q.reponse]);
@@ -389,7 +395,7 @@
   /** Énoncé + correction, sans saisie (bilans). */
   ui.enonceEtCorrection = function (ex) {
     var s = '<div class="exo-statement">' + EM.md(ex.enonce) + '</div>' + (ex.figure ? '<div class="exo-figure">' + ex.figure + '</div>' : '');
-    s += '<div class="solution"><h4>Correction</h4><ol>' + ex.solution.map(function (st) { return '<li>' + EM.md(st) + '</li>'; }).join('') + '</ol>' +
+    s += '<div class="solution"><h4>' + EM.icon('crayon') + 'Correction détaillée</h4><ol>' + ex.solution.map(function (st) { return '<li>' + EM.md(st) + '</li>'; }).join('') + '</ol>' +
       '<div class="answer-line"><strong>Réponse :</strong> ' + ex.questions.map(function (q) {
         if (q.type === 'choice') return (q.label ? EM.md(q.label) + ' ' : '') + EM.md(q.choix[q.reponse]);
         return EM.md(q.label || '') + ' ' + EM.render.tex(EM.answerTeX(q)) + (q.unite ? ' ' + esc(q.unite) : '');

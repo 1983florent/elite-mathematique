@@ -10,7 +10,7 @@
   EM.views = EM.views || {};
 
   function md(s) { return EM.md(s); }
-  function crumbs(titre) { return '<div class="crumbs"><a href="#/labo">← Labo</a></div><h1>' + titre + '</h1>'; }
+  function crumbs(titre) { return '<div class="crumbs"><a href="#/labo">' + EM.icon('gauche', { taille: 14 }) + 'Laboratoire</a></div><h1>' + titre + '</h1>'; }
   function fmt(x, d) {
     if (!isFinite(x)) return x > 0 ? '+\\infty' : x < 0 ? '-\\infty' : '\\text{indéfini}';
     return T.num(EM.ar.round(x, d == null ? 6 : d));
@@ -66,9 +66,9 @@
 
   /* =================== Calculatrice =================== */
   EM.labo.calculatrice = {
-    nom: 'Calculatrice', ico: '🧮', desc: 'Calcul exact et approché, degrés ou radians, avec aperçu de la formule.',
+    nom: 'Calculatrice', ico: 'calculatrice', desc: 'Calcul exact et approché, degrés ou radians, avec aperçu de la formule.',
     render: function (main) {
-      main.innerHTML = crumbs('🧮 Calculatrice') + '<div class="card"><div class="row between"><div class="levels" role="group" aria-label="Unité d\'angle">' +
+      main.innerHTML = crumbs('Calculatrice') + '<div class="card"><div class="row between"><div class="levels" role="group" aria-label="Unité d\'angle">' +
         '<button data-ang="deg" aria-pressed="true">Degrés</button><button data-ang="rad" aria-pressed="false">Radians</button></div>' +
         '<span class="small muted">Entrée pour calculer · « ans » = résultat précédent</span></div>' +
         '<input class="search-input" id="expr" style="margin-top:10px" placeholder="ex. : (3/4 + 2/3) × 12, √50, cos(60), 2^10, 5!, ln(2)" autocomplete="off" spellcheck="false">' +
@@ -153,7 +153,7 @@
 
   /* =================== Second degré =================== */
   EM.labo['second-degre'] = {
-    nom: 'Second degré', ico: '∆', desc: 'Discriminant, racines (réelles ou complexes), forme canonique, signe, sommet.',
+    nom: 'Second degré', ico: 'parabole', desc: 'Discriminant, racines (réelles ou complexes), forme canonique, signe, sommet.',
     render: function (main) {
       main.innerHTML = crumbs('Second degré pas à pas') +
         '<div class="card"><p>' + md('Étude de $f(x) = ax^2 + bx + c$ avec $a \\neq 0$. Tu peux saisir des fractions (3/4) ou des décimaux.') + '</p>' +
@@ -254,12 +254,12 @@
 
   /* =================== Systèmes linéaires (pivot de Gauss) =================== */
   EM.labo.systemes = {
-    nom: 'Systèmes linéaires', ico: '⚖️', desc: 'Résolution de systèmes 2×2 ou 3×3 par le pivot de Gauss, étape par étape, en fractions exactes.',
+    nom: 'Systèmes linéaires', ico: 'systeme', desc: 'Résolution de systèmes 2×2 ou 3×3 par le pivot de Gauss, étape par étape, en fractions exactes.',
     render: function (main, query) {
       var n = query.n === '3' ? 3 : 2;
       var vars = ['x', 'y', 'z'];
       var def = n === 2 ? [[2, 3, 13], [1, -1, -1]] : [[1, 1, 1, 6], [2, -1, 1, 3], [1, 2, -1, 2]];
-      var h = crumbs('⚖️ Systèmes linéaires') + '<div class="card"><div class="levels" role="group"><a href="#/labo/systemes?n=2" aria-pressed="' + (n === 2) + '">2 inconnues</a>' +
+      var h = crumbs('Systèmes linéaires') + '<div class="card"><div class="levels" role="group"><a href="#/labo/systemes?n=2" aria-pressed="' + (n === 2) + '">2 inconnues</a>' +
         '<a href="#/labo/systemes?n=3" aria-pressed="' + (n === 3) + '">3 inconnues</a></div><div style="margin-top:12px">';
       for (var i = 0; i < n; i++) {
         h += '<div class="row" style="margin-bottom:6px">';
@@ -324,9 +324,9 @@
 
   /* =================== Arithmétique =================== */
   EM.labo.arithmetique = {
-    nom: 'Arithmétique', ico: '🔣', desc: 'PGCD (algorithme d\'Euclide), PPCM, décomposition en facteurs premiers, Bézout, diviseurs.',
+    nom: 'Arithmétique', ico: 'diese', desc: 'PGCD (algorithme d\'Euclide), PPCM, décomposition en facteurs premiers, Bézout, diviseurs.',
     render: function (main) {
-      main.innerHTML = crumbs('🔣 Arithmétique') + '<div class="card"><div class="row"><label class="field">a<input class="inp" id="a" value="1071" inputmode="numeric" size="10"></label>' +
+      main.innerHTML = crumbs('Arithmétique') + '<div class="card"><div class="row"><label class="field">a<input class="inp" id="a" value="1071" inputmode="numeric" size="10"></label>' +
         '<label class="field">b<input class="inp" id="b" value="462" inputmode="numeric" size="10"></label><button class="btn" id="go">Calculer</button></div></div><div id="out"></div>';
       function facto(n) {
         var f = EM.ar.primeFactors(n), cnt = {};
@@ -376,10 +376,10 @@
 
   /* =================== Statistiques =================== */
   EM.labo.statistiques = {
-    nom: 'Statistiques', ico: '📊', desc: 'Moyenne, médiane, quartiles, variance, écart-type, diagramme ; ajustement linéaire à deux variables.',
+    nom: 'Statistiques', ico: 'barres', desc: 'Moyenne, médiane, quartiles, variance, écart-type, diagramme ; ajustement linéaire à deux variables.',
     render: function (main, query) {
       var deux = query.mode === '2';
-      main.innerHTML = crumbs('📊 Statistiques') + '<div class="card"><div class="levels" role="group"><a href="#/labo/statistiques" aria-pressed="' + !deux + '">Une variable</a>' +
+      main.innerHTML = crumbs('Statistiques') + '<div class="card"><div class="levels" role="group"><a href="#/labo/statistiques" aria-pressed="' + !deux + '">Une variable</a>' +
         '<a href="#/labo/statistiques?mode=2" aria-pressed="' + deux + '">Deux variables</a></div>' +
         (deux
           ? '<div class="grid g2" style="margin-top:12px"><label class="field">Valeurs de x (séparées par des espaces ou « ; »)<textarea class="inp" id="x">1 2 3 4 5 6</textarea></label>' +
@@ -483,9 +483,9 @@
   function C(n, p) { if (p < 0 || p > n) return 0; p = Math.min(p, n - p); var r = 1; for (var i = 1; i <= p; i++) r = r * (n - p + i) / i; return Math.round(r); }
   function A(n, p) { if (p < 0 || p > n) return 0; var r = 1; for (var i = 0; i < p; i++) r *= n - i; return r; }
   EM.labo.probabilites = {
-    nom: 'Probabilités', ico: '🎲', desc: 'Factorielles, combinaisons, arrangements, loi binomiale avec tableau et diagramme.',
+    nom: 'Probabilités', ico: 'de', desc: 'Factorielles, combinaisons, arrangements, loi binomiale avec tableau et diagramme.',
     render: function (main) {
-      main.innerHTML = crumbs('🎲 Dénombrement et probabilités') +
+      main.innerHTML = crumbs('Dénombrement et probabilités') +
         '<div class="grid g2"><div class="card"><h2>Dénombrement</h2><div class="row"><label class="field">n<input class="inp" id="dn" value="10" size="5" inputmode="numeric"></label>' +
         '<label class="field">p<input class="inp" id="dp" value="3" size="5" inputmode="numeric"></label></div><div id="dout" class="out" style="margin-top:10px"></div></div>' +
         '<div class="card"><h2>Loi binomiale B(n, p)</h2><div class="row"><label class="field">n<input class="inp" id="bn" value="10" size="5" inputmode="numeric"></label>' +
@@ -525,9 +525,9 @@
 
   /* =================== Nombres complexes =================== */
   EM.labo.complexes = {
-    nom: 'Nombres complexes', ico: '🌀', desc: 'Module, argument, formes trigonométrique et exponentielle, opérations, puissances.',
+    nom: 'Nombres complexes', ico: 'orbite', desc: 'Module, argument, formes trigonométrique et exponentielle, opérations, puissances.',
     render: function (main) {
-      main.innerHTML = crumbs('🌀 Nombres complexes') + '<div class="card"><div class="grid g2">' +
+      main.innerHTML = crumbs('Nombres complexes') + '<div class="card"><div class="grid g2">' +
         '<div class="row">' + md('$z_1 =$') + '<input class="inp" id="a1" value="1" size="4" aria-label="partie réelle de z1"> + i ×<input class="inp" id="b1" value="√3" size="4" aria-label="partie imaginaire de z1"></div>' +
         '<div class="row">' + md('$z_2 =$') + '<input class="inp" id="a2" value="1" size="4" aria-label="partie réelle de z2"> + i ×<input class="inp" id="b2" value="-1" size="4" aria-label="partie imaginaire de z2"></div>' +
         '</div><div class="row" style="margin-top:8px">' + md('Puissance $n$ pour $z_1^n$ :') + '<input class="inp" id="pn" value="6" size="3" inputmode="numeric"></div></div><div id="out"></div>';
@@ -613,9 +613,9 @@
     return [sg(r[0], cosNeg), sg(r[1], sinNeg), base === 90 ? r[2] : sg(r[2], tanNeg)];
   }
   EM.labo.trigo = {
-    nom: 'Cercle trigonométrique', ico: '⭕', desc: 'Fais tourner un point sur le cercle : cosinus, sinus, tangente, radians, valeurs exactes.',
+    nom: 'Cercle trigonométrique', ico: 'cercle', desc: 'Fais tourner un point sur le cercle : cosinus, sinus, tangente, radians, valeurs exactes.',
     render: function (main) {
-      main.innerHTML = crumbs('⭕ Cercle trigonométrique') + '<div class="grid g2"><div class="card"><div id="svg" class="exo-figure"></div>' +
+      main.innerHTML = crumbs('Cercle trigonométrique') + '<div class="grid g2"><div class="card"><div id="svg" class="exo-figure"></div>' +
         '<label class="field">Angle en degrés : <span id="dv"></span><input type="range" id="ang" min="-360" max="360" step="5" value="30"></label>' +
         '<div class="row" style="margin-top:8px">' + [0, 30, 45, 60, 90, 120, 135, 150, 180, -90].map(function (a) { return '<button class="btn sm ghost" data-a="' + a + '">' + a + '°</button>'; }).join('') + '</div></div>' +
         '<div class="card"><h2>Valeurs</h2><div id="vals"></div></div></div>';
@@ -662,10 +662,10 @@
     'Angle': [['degré', Math.PI / 180], ['radian', 1], ['grade', Math.PI / 200], ['tour', 2 * Math.PI]]
   };
   EM.labo.convertisseur = {
-    nom: 'Conversions', ico: '📏', desc: 'Longueurs, masses, capacités, aires, volumes, durées, angles : tableau de conversion.',
+    nom: 'Conversions', ico: 'regle', desc: 'Longueurs, masses, capacités, aires, volumes, durées, angles : tableau de conversion.',
     render: function (main) {
       var cats = Object.keys(UNITES);
-      main.innerHTML = crumbs('📏 Conversions d\'unités') + '<div class="card"><div class="row"><label class="field">Grandeur<select class="inp" id="cat">' +
+      main.innerHTML = crumbs('Conversions d\'unités') + '<div class="card"><div class="row"><label class="field">Grandeur<select class="inp" id="cat">' +
         cats.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label><label class="field">Valeur<input class="inp" id="val" value="2,5" size="8"></label>' +
         '<label class="field">Unité<select class="inp" id="u"></select></label></div></div><div class="card" id="out"></div>';
       var cat = main.querySelector('#cat'), u = main.querySelector('#u');
@@ -695,10 +695,10 @@
       if (id === 'grapheur') EM.ui.badges(EM.store.outil('grapheur'));
       return EM.labo[id].render(main, query) || null;
     }
-    main.innerHTML = '<div class="page-head"><div><h1>🧪 Laboratoire de mathématiques</h1><p class="muted" style="margin:0">Des outils qui montrent les étapes, pour comprendre et vérifier — pas pour tricher !</p></div></div>' +
+    main.innerHTML = EM.ui.enTete('labo', 'Outils', 'Laboratoire de mathématiques', 'Des outils qui montrent les étapes, pour comprendre et vérifier ses résultats.') +
       '<div class="grid g3">' + ORDRE.filter(function (k) { return EM.labo[k]; }).map(function (k) {
         var t = EM.labo[k];
-        return '<a class="tile" href="#/labo/' + k + '"><span class="ico" aria-hidden="true">' + t.ico + '</span><span><h3>' + esc(t.nom) + '</h3><p>' + esc(t.desc) + '</p></span></a>';
+        return '<a class="tile" href="#/labo/' + k + '"><span class="ico-box">' + EM.icon(t.ico) + '</span><span><h3>' + esc(t.nom) + '</h3><p>' + esc(t.desc) + '</p></span></a>';
       }).join('') + '</div>';
   };
 })(typeof window !== 'undefined' ? window : globalThis);

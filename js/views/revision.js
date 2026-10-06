@@ -26,7 +26,7 @@
       titre = P.chapitres[query.chapitre].titre;
     } else {
       if (!k || !P.classes[k]) {
-        main.innerHTML = '<div class="card"><h1>🗂️ Révision espacée</h1><p>Choisis ta classe pour réviser ses cartes.</p>' + EM.classesPicker() + '</div>';
+        main.innerHTML = EM.ui.enTete('revision', 'S\'entraîner', 'Révision espacée', 'Choisis ta classe pour réviser ses cartes.') + '<div class="card">' + EM.classesPicker() + '</div>';
         main.addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (b) { S.setClasse(b.getAttribute('data-k')); EM.route(); } });
         return;
       }
@@ -45,8 +45,8 @@
     var dues = S.cartesDues(ids, 12);
     var max = Math.max.apply(null, boites.concat([1]));
 
-    var html = '<div class="page-head"><div><h1>🗂️ Révision espacée</h1><p class="muted" style="margin:0">' + esc(titre) + ' · ' + cartes.length + ' cartes</p></div>' +
-      (query.chapitre ? '' : '<div class="row"><a class="btn sm ghost" href="#/revision?classe=' + k + (query.avant ? '' : '&avant=1') + '">' + (query.avant ? 'Seulement ma classe' : 'Inclure les prérequis') + '</a></div>') + '</div>' +
+    var html = EM.ui.enTete('revision:' + (k || ''), 'Révision espacée · méthode des boîtes de Leitner', esc(titre), cartes.length + ' cartes de définitions, formules et propriétés. Une carte sue revient plus tard ; une carte oubliée revient demain.',
+      query.chapitre ? '' : '<a class="btn sm ghost" href="#/revision?classe=' + k + (query.avant ? '' : '&avant=1') + '">' + (query.avant ? 'Seulement ma classe' : 'Inclure les prérequis des classes précédentes') + '</a>') +
       '<div class="card"><div class="row between"><div><strong>' + dues.length + '</strong> carte' + (dues.length > 1 ? 's' : '') + ' à réviser aujourd\'hui</div>' +
       '<span class="small muted">Boîtes de Leitner : 1 = à revoir souvent, 5 = bien ancrée</span></div>' +
       '<div class="leitner" style="margin-top:26px">' + boites.map(function (n, i) {
@@ -56,7 +56,7 @@
     var zone = main.querySelector('.session');
     if (!cartes.length) { zone.innerHTML = '<div class="card">Les cartes de cette classe sont en préparation.</div>'; return; }
     if (!dues.length) {
-      zone.innerHTML = '<div class="card center"><p style="font-size:2rem;margin:0">🎉</p><p>Tout est à jour ! Reviens demain, ou entraîne-toi sur des exercices.</p><a class="btn" href="#/serie/' + (k || '') + '">Série d\'exercices</a></div>';
+      zone.innerHTML = '<div class="card center"><p class="eyebrow">Bravo</p><p>Tout est à jour ! Reviens demain, ou entraîne-toi sur des exercices.</p><a class="btn" href="#/serie/' + (k || '') + '">Série d\'exercices</a></div>';
       return;
     }
     var file = new EM.RNG().shuffle(dues), i = 0, sues = 0;
@@ -69,7 +69,7 @@
       var c = parId[file[i]];
       zone.innerHTML = '<p class="small muted">Carte ' + (i + 1) + ' / ' + file.length + ' · <a href="#/chapitre/' + c.ch + '">' + esc(P.chapitres[c.ch].titre) + '</a></p>' +
         '<div class="flash"><button class="flash-card" data-act="flip" style="width:100%"><span><span class="flash-side">Question</span><br>' + EM.md(c.q) + '<br><span class="small muted">(touche pour voir la réponse)</span></span></button></div>' +
-        '<div class="row hidden" style="justify-content:center;margin-top:14px" data-rep><button class="btn danger" data-act="non">✗ À revoir</button><button class="btn ok" data-act="oui">✓ Je savais</button></div>';
+        '<div class="row hidden" style="justify-content:center;margin-top:14px" data-rep><button class="btn danger" data-act="non">' + EM.icon('croix') + 'À revoir</button><button class="btn ok" data-act="oui">' + EM.icon('valide') + 'Je savais</button></div>';
       zone.querySelector('[data-act="flip"]').addEventListener('click', function () {
         var card = this;
         card.classList.add('back');

@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ELITE MATHÉMATIQUE — Le programme sénégalais de mathématiques</title>
   <meta name="description" content="Cours, exercices corrigés à l'infini, examens blancs BFEM et BAC, outils de calcul : tout le programme sénégalais de mathématiques, du CM2 à la Terminale, même sans connexion.">
-  <meta name="theme-color" content="#1e2a78">
+  <meta name="theme-color" content="#121a52">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="preload" href="vendor/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/lexend.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
   <script>
     // thème choisi avant l'affichage (évite un flash)
@@ -18,47 +20,34 @@
 </head>
 <body>
   <a class="skip" href="#main">Aller au contenu</a>
-  <header class="topbar">
-    <div class="topbar-in">
-      <a class="brand" href="#/" aria-label="Accueil ELITE MATHÉMATIQUE">
-        <img src="icons/logo.svg" alt="" width="34" height="34">
-        <span class="brand-txt"><strong>ELITE</strong> MATHÉMATIQUE</span>
-      </a>
-      <nav class="topnav" aria-label="Navigation principale">
-        <a href="#/programme" data-nav="programme">Programme</a>
-        <a href="#/examens" data-nav="examens">Examens</a>
-        <a href="#/revision" data-nav="revision">Révision</a>
-        <a href="#/labo" data-nav="labo">Labo</a>
-        <a href="#/enseignant" data-nav="enseignant">Enseignant</a>
-        <a href="#/progres" data-nav="progres">Progrès</a>
-      </nav>
-      <div class="topbar-actions">
-        <button class="chip-classe" id="btn-classe" type="button" aria-label="Changer de classe">Classe ▾</button>
-        <button class="icon-btn" id="btn-recherche" type="button" aria-label="Rechercher" title="Rechercher">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-        <button class="icon-btn" id="btn-theme" type="button" aria-label="Changer de thème" title="Mode clair / sombre">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="currentColor"/></svg>
-        </button>
-      </div>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation principale"></aside>
+    <div class="main-col">
+      <header class="topbar">
+        <div class="topbar-in">
+          <a class="brand" href="#/" aria-label="Accueil ELITE MATHÉMATIQUE">
+            <img src="icons/logo.svg" alt="" width="32" height="32">
+            <span class="brand-name">ELITE<span>MATHÉMATIQUE</span></span>
+          </a>
+          <div class="topbar-actions">
+            <button class="chip-classe" id="btn-classe" type="button" aria-label="Changer de classe">Ma classe</button>
+            <button class="icon-btn" id="btn-recherche" type="button" aria-label="Rechercher" title="Rechercher"></button>
+            <button class="icon-btn" id="btn-theme" type="button" aria-label="Changer de thème" title="Mode clair ou sombre"></button>
+          </div>
+        </div>
+        <div class="flag-stripe" aria-hidden="true"><span></span><span></span><span></span></div>
+      </header>
+
+      <main id="main" tabindex="-1">
+        <noscript>
+          <div class="card"><p>ELITE MATHÉMATIQUE a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></div>
+        </noscript>
+        <div class="card loading">Chargement…</div>
+      </main>
     </div>
-    <div class="flag-stripe" aria-hidden="true"><span></span><span></span><span></span></div>
-  </header>
+  </div>
 
-  <main id="main" tabindex="-1">
-    <noscript>
-      <div class="card"><p>ELITE MATHÉMATIQUE a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></div>
-    </noscript>
-    <div class="card loading">Chargement…</div>
-  </main>
-
-  <nav class="bottomnav" aria-label="Navigation">
-    <a href="#/" data-nav="accueil"><span aria-hidden="true">🏠</span>Accueil</a>
-    <a href="#/programme" data-nav="programme"><span aria-hidden="true">📚</span>Cours</a>
-    <a href="#/examens" data-nav="examens"><span aria-hidden="true">📝</span>Examens</a>
-    <a href="#/labo" data-nav="labo"><span aria-hidden="true">🧪</span>Labo</a>
-    <a href="#/progres" data-nav="progres"><span aria-hidden="true">🏆</span>Progrès</a>
-  </nav>
+  <nav class="bottomnav" id="bottomnav" aria-label="Navigation"></nav>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="modal" class="modal" hidden></div>
@@ -69,6 +58,8 @@
   <script src="js/lib/parser.js"></script>
   <script src="js/lib/render.js"></script>
   <script src="js/lib/figures.js"></script>
+  <script src="js/lib/icons.js"></script>
+  <script src="js/lib/motif.js"></script>
   <!-- Programme et contenus -->
   <script src="js/data/programme.js"></script>
   <script src="js/data/contenu-cm2-6e.js"></script>
@@ -102,6 +93,7 @@
   <script src="js/views/revision.js"></script>
   <script src="js/views/progres.js"></script>
   <script src="js/views/enseignant.js"></script>
+  <script src="js/views/decouvrir.js"></script>
   <script src="js/tools/grapheur.js"></script>
   <script src="js/tools/outils.js"></script>
   <script src="js/app.js"></script>

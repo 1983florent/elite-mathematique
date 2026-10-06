@@ -19,7 +19,7 @@
     var k = query.classe || EM.store.classe() || '3e';
     var cl = P.classes[k] || P.classes['3e'];
     var chs = cl.chapitres.filter(function (id) { return EM.gen.forChapter(id).length; });
-    var html = '<div class="page-head"><div><h1>👩🏾‍🏫 Espace enseignant</h1><p class="muted" style="margin:0">Créez en quelques secondes une fiche d\'exercices avec corrigé, à imprimer ou à partager par lien.</p></div></div>' +
+    var html = EM.ui.enTete('enseignant', 'Ressources', 'Espace enseignant', 'Créez en quelques secondes une fiche d\'exercices avec corrigé, à imprimer ou à partager par lien.') +
       '<div class="card"><h2>1. Classe</h2><div class="classes">' + P.listeClasses().map(function (c) {
         return EM.gensClasse(c).length ? '<a class="classe-btn' + (c === cl.id ? ' active' : '') + '" style="--c:' + P.classes[c].couleur + '" href="#/enseignant?classe=' + c + '">' + esc(P.classes[c].nom) + '<small>&nbsp;</small></a>' : '';
       }).join('') + '</div></div>' +
@@ -92,9 +92,9 @@
 
     var tools = '<div class="row no-print" style="margin-bottom:14px"><a class="btn ghost sm" href="#/enseignant?classe=' + esc(query.c || '') + '">← Modifier</a>' +
       (eleve ? '<a class="btn ghost sm" href="' + esc(lien.replace(location.href.split('#')[0], '')) + '">Version papier</a>'
-        : (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm" data-act="print">🖨️ Imprimer / PDF</button>') +
-          (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm ghost" data-act="lien">🔗 Copier le lien élève</button>') +
-          '<a class="btn sm ghost" href="' + esc(lienEleve.replace(location.href.split('#')[0], '')) + '">📱 Version interactive</a>') + '</div>';
+        : (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm" data-act="print">' + EM.icon('imprimer') + 'Imprimer / PDF</button>') +
+          (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm ghost" data-act="lien">' + EM.icon('lien') + 'Copier le lien élève</button>') +
+          '<a class="btn sm ghost" href="' + esc(lienEleve.replace(location.href.split('#')[0], '')) + '">' + EM.icon('telephone') + 'Version interactive</a>') + '</div>';
 
     if (!eleve) {
       var html = tools + '<div class="card sheet">' + head + exos.map(function (x, i) { return EM.ui.exercicePapier(x.ex, i + 1); }).join('');

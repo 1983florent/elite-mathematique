@@ -31,11 +31,11 @@
     fig.title = 'Exercices des 14 derniers jours';
 
     var progressPct = rang.seuil ? Math.round((d.xp - rang.min) / (rang.seuil - rang.min) * 100) : 100;
-    var html = '<div class="page-head"><div><h1>🏆 Mes progrès</h1><p class="muted" style="margin:0">Tout est enregistré sur cet appareil.</p></div>' +
-      '<div class="row"><label class="field" style="font-weight:400">Mon prénom ou pseudo<input class="inp" id="nom" maxlength="40" value="' + esc(S.nom() || '') + '" placeholder="Ex. : Awa"></label></div></div>' +
+    var html = EM.ui.enTete('progres', 'Moi', 'Mes progrès', 'Tout est enregistré sur cet appareil, sans compte ni connexion.') +
+      '<div class="card"><label class="field" style="max-width:340px">Mon prénom ou pseudo<input class="inp" id="nom" maxlength="40" value="' + esc(S.nom() || '') + '" placeholder="Ex. : Awa"></label></div>' +
       '<div class="kpis"><div class="kpi"><strong>' + d.xp + '</strong><span>points</span></div>' +
       '<div class="kpi"><strong>' + esc(rang.nom) + '</strong><span>rang</span></div>' +
-      '<div class="kpi"><strong>🔥 ' + d.serie.n + '</strong><span>jours de suite (record ' + d.serie.record + ')</span></div>' +
+      '<div class="kpi"><strong>' + d.serie.n + '</strong><span>jours de suite (record ' + d.serie.record + ')</span></div>' +
       '<div class="kpi"><strong>' + totalOk + '</strong><span>exercices réussis' + (totalTent ? ' (' + Math.round(totalOk / totalTent * 100) + ' %)' : '') + '</span></div>' +
       '<div class="kpi"><strong>' + maitrises + '</strong><span>chapitres maîtrisés</span></div>' +
       '<div class="kpi"><strong>' + d.revues + '</strong><span>cartes révisées</span></div></div>' +
@@ -59,7 +59,7 @@
     // badges
     html += '<div class="card"><h2>Badges</h2><div class="badges">' + S.badgesDef.map(function (b) {
       var got = d.badges[b.id];
-      return '<div class="badge-card' + (got ? '' : ' locked') + '"><div class="b-ico">' + b.ico + '</div><strong>' + esc(b.nom) + '</strong><span>' + esc(b.desc) + (got ? '<br>✓ ' + esc(got.split('-').reverse().join('/')) : '') + '</span></div>';
+      return '<div class="badge-card' + (got ? '' : ' locked') + '"><span class="ico-box ' + (got ? 'or' : '') + '" style="margin:0 auto 6px">' + EM.icon(b.ico) + '</span><strong>' + esc(b.nom) + '</strong><span>' + esc(b.desc) + (got ? '<br>Obtenu le ' + esc(got.split('-').reverse().join('/')) : '') + '</span></div>';
     }).join('') + '</div></div>';
 
     if (d.examens.length) {

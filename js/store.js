@@ -60,24 +60,24 @@
   ];
 
   var BADGES = [
-    { id: 'premier-pas', ico: '🌱', nom: 'Premier pas', desc: 'Réussir un premier exercice' },
-    { id: 'serie-3', ico: '🔥', nom: 'Régulier', desc: '3 jours de suite' },
-    { id: 'serie-7', ico: '📅', nom: 'Une semaine', desc: '7 jours de suite' },
-    { id: 'serie-30', ico: '🏅', nom: 'Infatigable', desc: '30 jours de suite' },
-    { id: 'cinquante', ico: '✋', nom: 'Cinquante', desc: '50 exercices réussis' },
-    { id: 'cent', ico: '💯', nom: 'Centurion', desc: '100 exercices réussis' },
-    { id: 'mille', ico: '🚀', nom: 'Mille', desc: '1 000 exercices réussis' },
-    { id: 'autonome', ico: '🧠', nom: 'Autonome', desc: '10 réussites de suite sans indice' },
-    { id: 'expert', ico: '⭐', nom: 'Expert', desc: 'Réussir 10 exercices de niveau 3' },
-    { id: 'maitrise-1', ico: '🎯', nom: 'Maîtrise', desc: 'Maîtriser un chapitre' },
-    { id: 'maitrise-10', ico: '🏆', nom: 'Dix chapitres', desc: 'Maîtriser 10 chapitres' },
-    { id: 'examen', ico: '📝', nom: 'Candidat', desc: 'Terminer un examen blanc' },
-    { id: 'admis', ico: '🎓', nom: 'Admis', desc: 'Obtenir au moins 10/20 à un examen blanc' },
-    { id: 'mention', ico: '👑', nom: 'Mention', desc: 'Obtenir au moins 16/20 à un examen blanc' },
-    { id: 'memoire', ico: '🗂️', nom: 'Mémoire', desc: 'Réviser 50 cartes' },
-    { id: 'defi', ico: '☀️', nom: 'Défi du jour', desc: 'Réussir un défi du jour' },
-    { id: 'curieux', ico: '🧪', nom: 'Curieux', desc: 'Utiliser 5 outils du labo' },
-    { id: 'diagnostic', ico: '🩺', nom: 'Bilan', desc: 'Faire un diagnostic de classe' }
+    { id: 'premier-pas', ico: 'valide', nom: 'Premier pas', desc: 'Réussir un premier exercice' },
+    { id: 'serie-3', ico: 'flamme', nom: 'Régulier', desc: '3 jours de suite' },
+    { id: 'serie-7', ico: 'horloge', nom: 'Une semaine', desc: '7 jours de suite' },
+    { id: 'serie-30', ico: 'medaille', nom: 'Infatigable', desc: '30 jours de suite' },
+    { id: 'cinquante', ico: 'cible', nom: 'Cinquante', desc: '50 exercices réussis' },
+    { id: 'cent', ico: 'trophee', nom: 'Centurion', desc: '100 exercices réussis' },
+    { id: 'mille', ico: 'etoile', nom: 'Mille', desc: '1 000 exercices réussis' },
+    { id: 'autonome', ico: 'ampoule', nom: 'Autonome', desc: '10 réussites de suite sans indice' },
+    { id: 'expert', ico: 'etoile', nom: 'Expert', desc: 'Réussir 10 exercices de niveau 3' },
+    { id: 'maitrise-1', ico: 'cible', nom: 'Maîtrise', desc: 'Maîtriser un chapitre' },
+    { id: 'maitrise-10', ico: 'trophee', nom: 'Dix chapitres', desc: 'Maîtriser 10 chapitres' },
+    { id: 'examen', ico: 'copie', nom: 'Candidat', desc: 'Terminer un examen blanc' },
+    { id: 'admis', ico: 'ecole', nom: 'Admis', desc: 'Obtenir au moins 10/20 à un examen blanc' },
+    { id: 'mention', ico: 'medaille', nom: 'Mention', desc: 'Obtenir au moins 16/20 à un examen blanc' },
+    { id: 'memoire', ico: 'cartes', nom: 'Mémoire', desc: 'Réviser 50 cartes' },
+    { id: 'defi', ico: 'soleil', nom: 'Défi du jour', desc: 'Réussir un défi du jour' },
+    { id: 'curieux', ico: 'fiole', nom: 'Curieux', desc: 'Utiliser 5 outils du labo' },
+    { id: 'diagnostic', ico: 'pouls', nom: 'Bilan', desc: 'Faire un diagnostic de classe' }
   ];
 
   function award(id, gained) {

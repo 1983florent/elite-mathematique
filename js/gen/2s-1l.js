@@ -481,7 +481,7 @@
   EM.gen.register({
     id: '2s-signe-fraction',
     titre: 'Signe d\'une fraction rationnelle et inéquation',
-    chapitres: ['2s-polynomes', '2s-second-degre'],
+    chapitres: ['2s-polynomes'],
     niveaux: 2,
     examen: true,
     gen: function (rng, niveau) {
@@ -1343,7 +1343,7 @@
       var th2 = F(k2, r2);
       var nom = rng.pick(PRENOMS);
       return {
-        enonce: '1) La roue d\'une charrette a un rayon de $' + r + '$ cm. Elle tourne d\'un angle de $' + piTex(th) + '$ rad. Calculer la longueur de l\'arc parcouru par un point de la jante (valeur exacte puis arrondi au centième).<br>2) Sur un cercle de rayon $' + r2 + '$ m, ' + nom + ' parcourt un arc de longueur $' + piTex(F(k2)) + '$ m. Quelle est la mesure en radians de l\'angle au centre correspondant ?',
+        enonce: '1) La roue d\'une charrette a un rayon de $' + r + '$ cm. Elle tourne d\'un angle de $' + piTex(th) + '$ rad. Calculer la longueur de l\'arc parcouru par un point de la jante (valeur exacte puis arrondi au centième).<br>2) Sur un cercle de rayon $' + r2 + '$ m, ' + nom + ' parcourt un arc de longueur $' + piTex(F(k2)) + '$ m. Calculer la mesure en radians de l\'angle au centre correspondant.',
         questions: [
           { label: '$\\ell \\approx$', type: 'number', reponse: rd(L, 2), tol: 0.01, unite: 'cm', reponseTex: piTex(Lex) + ' \\approx ' + T.num(rd(L, 2)) + '\\text{ cm}' },
           { label: '$\\theta =$', type: 'number', reponse: piStr(th2), reponseTex: piTex(th2) + '\\text{ rad}' }
@@ -1620,7 +1620,7 @@
         var c = u[0] * A[1] - u[1] * A[0];
         var t = rng.nz(-2, 2), on = rng.bool();
         var Bp = [A[0] + t * u[0], A[1] + t * u[1] + (on ? 0 : rng.pick([1, -1, 2]))];
-        enonce = 'Soit $D$ la droite passant par $A' + pt(A[0], A[1]) + '$ et de vecteur directeur $\\vec{u}' + pt(u[0], u[1]) + '$.<br>1) Déterminer une équation cartésienne de $D$, puis son équation réduite.<br>2) Le point $B' + pt(Bp[0], Bp[1]) + '$ appartient-il à $D$ ?';
+        enonce = 'Soit $D$ la droite passant par $A' + pt(A[0], A[1]) + '$ et de vecteur directeur $\\vec{u}' + pt(u[0], u[1]) + '$.<br>1) Déterminer une équation cartésienne de $D$, puis son équation réduite.<br>2) Dire si le point $B' + pt(Bp[0], Bp[1]) + '$ appartient à $D$.';
         steps = [
           '$M(x \\,;\\, y) \\in D \\iff \\vect{AM}' + pt(T.poly([1, -A[0]]), T.poly([1, -A[1]], 'y')) + '$ et $\\vec{u}$ sont colinéaires.',
           '$\\iff ' + T.par(u[1]) + '\\left(' + T.poly([1, -A[0]]) + '\\right) - ' + T.par(u[0]) + '\\left(' + T.poly([1, -A[1]], 'y') + '\\right) = 0 \\iff ' + cartTex(u[1], -u[0], c) + '$.',
@@ -1823,7 +1823,7 @@
   /** Figure du cube en perspective cavalière ; seg : [X, Y] à mettre en valeur ; plan : liste de sommets */
   function cubeFig(seg, plan) {
     var P = function (n) { var p = CUBE[n]; return [4 * (p[0] + 0.5 * p[1]), 4 * (p[2] + 0.35 * p[1])]; };
-    var f = EM.fig.fit(SOMMETS.map(P), { w: 240, h: 220, pad: 26 });
+    var f = EM.fig.fit(SOMMETS.map(P), { w: 240, h: 220, pad: 26, title: 'Cube ABCDEFGH' });
     if (plan) {
       var pts = plan.map(P);
       var cx = pts.reduce(function (s, p) { return s + p[0]; }, 0) / pts.length, cy = pts.reduce(function (s, p) { return s + p[1]; }, 0) / pts.length;
@@ -2182,7 +2182,7 @@
         var a1 = 500 * rng.int(4, 20), rr = 250 * rng.int(1, 4), N = rng.pick([10, 12, 15, 18, 24]);
         var aN = a1 + (N - 1) * rr, tot = N * (a1 + aN) / 2;
         return {
-          enonce: nom + ' cotise à une tontine du marché de Tilène à Ziguinchor. Le premier mois, elle verse $' + T.num(a1) + '$ F CFA, puis chaque mois $' + T.num(rr) + '$ F CFA de plus que le mois précédent. On note $u_n$ le versement du $n$-ième mois ($u_1 = ' + T.num(a1) + '$).<br>1) Quelle est la nature de la suite $(u_n)$ ? Calculer le versement du ' + N + 'e mois.<br>2) Quel montant total aura-t-elle versé au bout de ' + N + ' mois ?',
+          enonce: nom + ' cotise à une tontine du marché de Tilène à Ziguinchor. Le premier mois, elle verse $' + T.num(a1) + '$ F CFA, puis chaque mois $' + T.num(rr) + '$ F CFA de plus que le mois précédent. On note $u_n$ le versement du $n$-ième mois ($u_1 = ' + T.num(a1) + '$).<br>1) Préciser la nature de la suite $(u_n)$ et calculer le versement du ' + N + 'e mois.<br>2) Calculer le montant total versé au bout de ' + N + ' mois.',
           questions: [
             { label: '$u_{' + N + '} =$', type: 'number', reponse: aN, unite: 'F CFA' },
             { label: 'Total :', type: 'number', reponse: tot, unite: 'F CFA' }
@@ -2198,7 +2198,7 @@
       var p1 = rng.int(12, 30), ra = rng.int(2, 5), R = rng.int(15, 30);
       var pR = p1 + (R - 1) * ra, totP = R * (p1 + pR) / 2;
       return {
-        enonce: 'Dans la tribune d\'un stade de ' + rng.pick(['Dakar', 'Thiès', 'Kaolack', 'Saint-Louis']) + ', le premier rang compte $' + p1 + '$ places et chaque rang compte $' + ra + '$ places de plus que le précédent. La tribune a $' + R + '$ rangs.<br>1) Combien de places compte le dernier rang ?<br>2) Combien de places compte la tribune ?',
+        enonce: 'Dans la tribune d\'un stade de ' + rng.pick(['Dakar', 'Thiès', 'Kaolack', 'Saint-Louis']) + ', le premier rang compte $' + p1 + '$ places et chaque rang compte $' + ra + '$ places de plus que le précédent. La tribune a $' + R + '$ rangs.<br>1) Calculer le nombre de places du dernier rang.<br>2) Calculer le nombre total de places de la tribune.',
         questions: [
           { label: 'Dernier rang :', type: 'number', reponse: pR },
           { label: 'Total :', type: 'number', reponse: totP }
@@ -2344,7 +2344,7 @@
       var n3 = rng.int(2, 6), I3 = C * t * n3 / 100, A3 = C + I3;
       if (cas === 'taux') {
         return {
-          enonce: 'Un capital de $' + T.num(C) + '$ F CFA, placé à intérêts simples pendant $' + n3 + '$ ans, a rapporté $' + T.num(I3) + '$ F CFA d\'intérêts. Quel est le taux annuel de placement (en %) ?',
+          enonce: 'Un capital de $' + T.num(C) + '$ F CFA, placé à intérêts simples pendant $' + n3 + '$ ans, a rapporté $' + T.num(I3) + '$ F CFA d\'intérêts. Déterminer le taux annuel de placement (en %).',
           questions: [{ label: '$t =$', type: 'number', reponse: t, unite: '%' }],
           indices: ['$I = C \\times \\dfrac{t}{100} \\times n$ : isole $t$.'],
           solution: ['$t = \\dfrac{100 \\times I}{C \\times n} = \\dfrac{100 \\times ' + T.num(I3) + '}{' + T.num(C) + ' \\times ' + n3 + '} = ' + T.num(t) + '$. Le taux est de $' + T.num(t) + '\\,\\%$.']
@@ -2352,7 +2352,7 @@
       }
       if (cas === 'capital') {
         return {
-          enonce: nom + ' veut disposer de $' + T.num(A3) + '$ F CFA dans $' + n3 + '$ ans pour ouvrir un atelier de couture. Quel capital doit-il placer aujourd\'hui à intérêts simples au taux annuel de $' + T.num(t) + '\\,\\%$ ?',
+          enonce: nom + ' veut disposer de $' + T.num(A3) + '$ F CFA dans $' + n3 + '$ ans pour ouvrir un atelier de couture. Déterminer le capital qu\'il doit placer aujourd\'hui à intérêts simples au taux annuel de $' + T.num(t) + '\\,\\%$.',
           questions: [{ label: '$C =$', type: 'number', reponse: C, unite: 'F CFA' }],
           indices: ['$A = C + C \\times \\dfrac{t}{100} \\times n = C\\left(1 + \\dfrac{t \\times n}{100}\\right)$.'],
           solution: [
@@ -2362,7 +2362,7 @@
         };
       }
       return {
-        enonce: 'Un capital de $' + T.num(C) + '$ F CFA est placé à intérêts simples au taux annuel de $' + T.num(t) + '\\,\\%$. Au bout de combien d\'années la valeur acquise sera-t-elle de $' + T.num(A3) + '$ F CFA ?',
+        enonce: 'Un capital de $' + T.num(C) + '$ F CFA est placé à intérêts simples au taux annuel de $' + T.num(t) + '\\,\\%$. Déterminer au bout de combien d\'années la valeur acquise sera de $' + T.num(A3) + '$ F CFA.',
         questions: [{ label: '$n =$', type: 'number', reponse: n3, unite: 'ans' }],
         indices: ['L\'intérêt vaut $A - C$.', '$n = \\dfrac{100 \\times I}{C \\times t}$.'],
         solution: [
@@ -2402,7 +2402,7 @@
         var cible = 100000 * rng.int(5, 50);
         var C0 = cible / Math.pow(q, n);
         return {
-          enonce: 'Pour financer les études de sa fille dans $' + n + '$ ans, ' + nom + ' souhaite disposer de $' + T.num(cible) + '$ F CFA. Quelle somme doit-il placer aujourd\'hui à intérêts composés au taux annuel de $' + t + '\\,\\%$ ? (Arrondir au franc.)',
+          enonce: 'Pour financer les études de sa fille dans $' + n + '$ ans, ' + nom + ' souhaite disposer de $' + T.num(cible) + '$ F CFA. Calculer la somme qu\'il doit placer aujourd\'hui à intérêts composés au taux annuel de $' + t + '\\,\\%$ (arrondir au franc).',
           questions: [{ label: '$C_0 \\approx$', type: 'number', reponse: Math.round(C0), tol: 1, unite: 'F CFA' }],
           indices: ['$C_n = C_0 \\times q^n$ avec $q = 1 + \\dfrac{t}{100}$.', 'Donc $C_0 = \\dfrac{C_n}{q^n}$.'],
           solution: [
@@ -2413,7 +2413,7 @@
       }
       var Is = C * t * n / 100, Ic = Cn - C;
       return {
-        enonce: 'Un capital de $' + T.num(C) + '$ F CFA est placé pendant $' + n + '$ ans au taux annuel de $' + t + '\\,\\%$.<br>Comparer les intérêts obtenus à intérêts simples et à intérêts composés (arrondis au franc). Quelle est la différence ?',
+        enonce: 'Un capital de $' + T.num(C) + '$ F CFA est placé pendant $' + n + '$ ans au taux annuel de $' + t + '\\,\\%$.<br>Calculer les intérêts obtenus à intérêts simples et à intérêts composés (arrondis au franc), puis leur différence.',
         questions: [
           { label: 'Intérêts simples :', type: 'number', reponse: Is, tol: 1, unite: 'F CFA' },
           { label: 'Intérêts composés :', type: 'number', reponse: Math.round(Ic), tol: 1, unite: 'F CFA' },
@@ -2462,7 +2462,7 @@
       var k = rng.int(2, 5), a2 = rng.pick([2, 3, 4, 5, 10]);
       var cg2 = Math.pow(1 + a2 / 100, k), tg2 = rd((cg2 - 1) * 100, 2);
       return {
-        enonce: '1) Le prix ' + produit[0] + ' a augmenté de $' + h + '\\,\\%$. De quel pourcentage doit-il baisser pour revenir au prix initial ? (Arrondir à $0{,}01\\,\\%$ ; donner un taux négatif.)<br>2) Un prix augmente de $' + a2 + '\\,\\%$ par an pendant $' + k + '$ ans. Quel est le taux d\'évolution global (arrondi à $0{,}01\\,\\%$) ?',
+        enonce: '1) Le prix ' + produit[0] + ' a augmenté de $' + h + '\\,\\%$. Déterminer le taux d\'évolution qui le ramène au prix initial (arrondi à $0{,}01\\,\\%$ ; c\'est un taux négatif).<br>2) Un prix augmente de $' + a2 + '\\,\\%$ par an pendant $' + k + '$ ans. Calculer le taux d\'évolution global (arrondi à $0{,}01\\,\\%$).',
         questions: [
           { label: 'Taux réciproque :', type: 'number', reponse: rec, tol: 0.01, unite: '%' },
           { label: 'Taux global :', type: 'number', reponse: tg2, tol: 0.01, unite: '%' }

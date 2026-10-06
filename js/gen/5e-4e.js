@@ -79,6 +79,12 @@
   function de(nom) { return (/^[AEIOUÉÈÏ]/.test(nom) ? 'd\'' : 'de ') + nom; }
   function que(nom) { return (/^[AEIOUÉÈÏ]/.test(nom) ? 'qu\'' : 'que ') + nom; }
   function texDeg(x) { return T.num(x) + '°'; }
+  /** Coefficient devant π : « 2\pi », « \pi », « \dfrac{5}{3}\pi ». */
+  function piTex(c) {
+    var f = c instanceof EM.Frac ? c : F(c);
+    if (f.equals(1)) return '\\pi';
+    return (f.d === 1 ? T.num(f.n) : f.tex()) + '\\pi';
+  }
 
   /* ================================================================== */
   /* 5e — Nombres décimaux relatifs                                      */
@@ -176,7 +182,7 @@
         expr = T.num(a) + ' - ' + P(b) + ' \\div ' + P(c);
         sol.push('La division est prioritaire : $' + P(b) + ' \\div ' + P(c) + ' = ' + T.num(q) + '$.');
         sol.push('$A = ' + T.num(a) + ' - ' + P(q) + ' = ' + T.num(a) + T.signed(-q) + ' = ' + T.num(res) + '$');
-        faux = [rnd((a - b) / c), a + q, -res];
+        faux = [ar.isInt((a - b) / c) ? (a - b) / c : a - b, a + q, -res];
       } else if (tpl === 'mulmul') {
         var p1 = a * b, p2 = c * d; res = p1 - p2;
         expr = P(a) + ' \\times ' + P(b) + ' - ' + P(c) + ' \\times ' + P(d);
@@ -298,7 +304,9 @@
         }
       } else {
         var tpl = rng.pick(['plusprod', 'diffdiv']);
-        var p1 = rng.int(1, 5), q1 = rng.int(2, 6), p2 = rng.int(1, 5), q2 = rng.int(2, 9), p3 = rng.int(1, 7), q3 = rng.int(2, 9);
+        function fpos(nmax, dmin, dmax) { var x, y, gd = 0; do { x = rng.int(1, nmax); y = rng.int(dmin, dmax); gd++; } while (gd < 100 && x % y === 0); return [x, y]; }
+        var u1 = fpos(5, 2, 6), u2 = fpos(5, 2, 9), u3 = fpos(7, 2, 9);
+        var p1 = u1[0], q1 = u1[1], p2 = u2[0], q2 = u2[1], p3 = u3[0], q3 = u3[1];
         if (tpl === 'plusprod') {
           expr = fr(p1, q1) + ' + ' + fr(p2, q2) + ' \\times ' + fr(p3, q3);
           var pr = F(p2 * p3, q2 * q3);
@@ -594,7 +602,7 @@
         else sol.push('On distribue : $' + (m === -1 ? '-' : m === 1 ? '' : T.num(m)) + '(' + T.poly([cc, dd]) + ') = ' + T.poly(p2) + '$.');
         sol.push('$C = ' + T.poly(p1) + T.mono(p2[0], 'x') + T.signed(p2[1]) + '$');
         sol.push('$C = ' + T.poly(Rr) + '$');
-        q = { label: '$C =$', type: 'expr', reponse: polyStr(Rr), reponseTex: T.poly(Rr) };
+        q = { label: '$C =$', type: 'expr', reponse: polyStr(Rr), reponseTex: T.poly(Rr), forme: 'somme' };
         indices = ['Distributivité : $k(a + b) = ka + kb$. Fais attention aux signes.', 'Une parenthèse précédée de $-$ se supprime en changeant tous les signes à l\'intérieur.'];
       }
       return { enonce: enonce, questions: [q], indices: indices, solution: sol, aide: niveau > 1 ? 'Écris l\'expression réduite, par exemple 3x^2 - 5x + 2 (x² s\'écrit x^2).' : undefined };
@@ -630,7 +638,7 @@
         var v = rng.pick(veh.v), tm = rng.pick(veh.t), d = rnd(v * tm / 60, 4), th = rnd(tm / 60, 4);
         var cas = rng.pick(['v', 'd', 't']);
         var trajet = veh.trajet;
-        var conv = 'On convertit la durée en heures : ' + duree(tm) + ' $= \\dfrac{' + tm + '}{60}$ h $= ' + T.num(th) + '$ h.';
+        var conv = tm % 60 === 0 ? 'La durée est de $' + th + '$ h.' : 'On convertit la durée en heures : ' + duree(tm) + ' $= \\dfrac{' + tm + '}{60}$ h $= ' + T.num(th) + '$ h.';
         if (cas === 'v') {
           enonce = veh.nom + ' parcourt $' + T.num(d) + '$ km ' + trajet + ' en ' + duree(tm) + '. Calculer sa vitesse moyenne en km/h.';
           sol = [conv, '$v = \\dfrac{d}{t} = \\dfrac{' + T.num(d) + '}{' + T.num(th) + '} = ' + T.num(v) + '$ km/h.'];
@@ -663,7 +671,7 @@
           var fin = hd * 60 + md + tm2, hf = Math.floor(fin / 60), mf = fin % 60;
           enonce = veh.nom + ' quitte ' + veh.dep + ' à $' + hd + '$ h' + (md ? ' $' + (md < 10 ? '0' + md : md) + '$' : '') + ' et parcourt $' + T.num(d2) + '$ km à la vitesse moyenne de $' + v2 + '$ km/h. À quelle heure arrive-t-' + veh.il + ' à ' + veh.arr + ' ?';
           sol = ['Durée du trajet : $t = \\dfrac{d}{v} = \\dfrac{' + T.num(d2) + '}{' + v2 + '} = ' + T.num(th2) + '$ h, soit $' + T.num(th2) + ' \\times 60 = ' + tm2 + '$ min, c\'est-à-dire ' + duree(tm2) + '.',
-            'Heure d\'arrivée : $' + hd + '$ h $' + md + '$ min $+$ ' + duree(tm2) + ' $=$ $' + hf + '$ h $' + mf + '$ min.'];
+            'Heure d\'arrivée : $' + hd + '$ h' + (md ? ' $' + md + '$ min' : '') + ' $+$ ' + duree(tm2) + ' $=$ $' + hf + '$ h' + (mf ? ' $' + mf + '$ min' : '') + '.'];
           questions = [{ label: 'Heures :', type: 'number', reponse: hf, unite: 'h' }, { label: 'Minutes :', type: 'number', reponse: mf, unite: 'min' }];
           indices = ['Calcule d\'abord la durée du trajet avec $t = \\dfrac{d}{v}$.', 'Convertis la partie décimale des heures en minutes (multiplie par $60$), puis ajoute à l\'heure de départ.'];
         }
@@ -1185,7 +1193,7 @@
         var r = rng.int(2, 12), hc = rng.int(3, 30), diam = rng.bool(0.4);
         var Vc = Math.PI * r * r * hc;
         enonce = 'Une boîte de conserve cylindrique a ' + (diam ? 'un diamètre de $' + 2 * r + '$ cm' : 'un rayon de $' + r + '$ cm') + ' et une hauteur de $' + hc + '$ cm. Calculer son volume arrondi au dixième de cm³.';
-        sol = [(diam ? 'Le rayon est la moitié du diamètre : $r = ' + r + '$ cm. ' : '') + '$V = \\pi r^2 h = \\pi \\times ' + r + '^2 \\times ' + hc + ' = ' + r * r * hc + '\\pi$ cm³.', '$V \\approx ' + T.num(rnd(Vc, 1)) + '$ cm³.'];
+        sol = [(diam ? 'Le rayon est la moitié du diamètre : $r = ' + r + '$ cm. ' : '') + '$V = \\pi r^2 h = \\pi \\times ' + r + '^2 \\times ' + hc + ' = ' + piTex(r * r * hc) + '$ cm³.', '$V \\approx ' + T.num(rnd(Vc, 1)) + '$ cm³.'];
         questions = [{ label: 'Volume (cm³) :', type: 'number', reponse: rnd(Vc, 1), tol: 0.06, unite: 'cm³' }];
         ind = indCyl;
       } else if (cas === 'latPrisme') {
@@ -1199,14 +1207,14 @@
       } else if (cas === 'latCyl') {
         var r3 = rng.int(2, 10), h3 = rng.int(5, 25), AL3 = 2 * Math.PI * r3 * h3;
         enonce = 'On veut recouvrir de papier la surface latérale d\'un tambour (sabar) cylindrique de rayon $' + r3 + '$ cm et de hauteur $' + h3 + '$ cm. Calculer l\'aire de papier nécessaire, arrondie au cm².';
-        sol = ['L\'aire latérale d\'un cylindre est $2\\pi r h$ (c\'est un rectangle de longueur $2\\pi r$ et de largeur $h$).', '$\\mathcal{A}_\\ell = 2 \\times \\pi \\times ' + r3 + ' \\times ' + h3 + ' = ' + 2 * r3 * h3 + '\\pi \\approx ' + T.num(Math.round(AL3)) + '$ cm².'];
+        sol = ['L\'aire latérale d\'un cylindre est $2\\pi r h$ (c\'est un rectangle de longueur $2\\pi r$ et de largeur $h$).', '$\\mathcal{A}_\\ell = 2 \\times \\pi \\times ' + r3 + ' \\times ' + h3 + ' = ' + piTex(2 * r3 * h3) + ' \\approx ' + T.num(Math.round(AL3)) + '$ cm².'];
         questions = [{ label: 'Aire latérale (cm²) :', type: 'number', reponse: Math.round(AL3), tol: 0.6, unite: 'cm²' }];
         ind = indCyl;
       } else if (cas === 'reservoir') {
         var r4 = rng.pick([0.5, 1, 1.2, 1.5, 2, 2.5]), h4 = rng.pick([1, 1.5, 2, 2.5, 3, 4]), V4 = Math.PI * r4 * r4 * h4;
         var L4 = Math.round(V4 * 1000);
         enonce = 'Le réservoir d\'eau d\'un forage près de ' + rng.pick(VILLES) + ' est un cylindre de rayon $' + T.num(r4) + '$ m et de hauteur $' + T.num(h4) + '$ m. Calculer son volume en m³ (arrondi au millième), puis sa capacité en litres (arrondie au litre).';
-        sol = ['$V = \\pi r^2 h = \\pi \\times ' + T.num(r4) + '^2 \\times ' + T.num(h4) + ' = ' + T.num(rnd(r4 * r4 * h4)) + '\\pi \\approx ' + T.num(rnd(V4, 3)) + '$ m³.', 'Comme $1$ m³ $= 1\\,000$ L, la capacité est d\'environ $' + T.num(L4) + '$ L.'];
+        sol = ['$V = \\pi r^2 h = \\pi \\times ' + T.num(r4) + '^2 \\times ' + T.num(h4) + ' = ' + piTex(rnd(r4 * r4 * h4)) + ' \\approx ' + T.num(rnd(V4, 3)) + '$ m³.', 'Comme $1$ m³ $= 1\\,000$ L, la capacité est d\'environ $' + T.num(L4) + '$ L.'];
         questions = [{ label: 'Volume (m³) :', type: 'number', reponse: rnd(V4, 3), tol: 0.0015, unite: 'm³' }, { label: 'Capacité (L) :', type: 'number', reponse: L4, tol: 1, unite: 'L' }];
         ind = indCyl.concat(['$1$ m³ $= 1\\,000$ L.']);
       } else {
@@ -1428,7 +1436,7 @@
         questions = [{ label: '$A = ' + prod + '^{k}$ avec $k =$', type: 'number', reponse: n8 }];
         ind = ['$a^n \\times b^n = (ab)^n$ : on ne peut regrouper ainsi que si les exposants sont égaux.', 'Ici les deux exposants valent $' + n8 + '$.'];
       } else {
-        var x1 = rng.int(1, 6), y1 = rng.int(1, 6), x2 = rng.int(1, 6), y2 = rng.int(1, 6);
+        var x1 = rng.int(2, 7), y1 = rng.int(2, 6), x2 = rng.intExcept(2, 7, [x1]), y2 = rng.intExcept(2, 6, [y1]);
         var ex2 = x1 - x2, ey3 = y1 - y2;
         var val2 = F(Math.pow(2, Math.max(ex2, 0)) * Math.pow(3, Math.max(ey3, 0)), Math.pow(2, Math.max(-ex2, 0)) * Math.pow(3, Math.max(-ey3, 0)));
         enonce = 'Calculer et donner le résultat sous forme d\'un entier ou d\'une fraction irréductible : $$A = \\dfrac{' + pw(2, x1) + ' \\times ' + pw(3, y1) + '}{' + pw(2, x2) + ' \\times ' + pw(3, y2) + '}$$';
@@ -1557,7 +1565,7 @@
       }
       return {
         enonce: 'Développer et réduire : $$E = ' + expr + '$$',
-        questions: [{ label: '$E =$', type: 'expr', reponse: polyStr(R), reponseTex: T.poly(R) }],
+        questions: [{ label: '$E =$', type: 'expr', reponse: polyStr(R), reponseTex: T.poly(R), forme: 'somme' }],
         indices: ['$k(a + b) = ka + kb$ et $(a + b)(c + d) = ac + ad + bc + bd$.', 'Attention aux signes, puis regroupe les termes en $x^2$, en $x$ et les constantes.'],
         solution: sol,
         aide: 'Écris le résultat réduit, par exemple 6x^2 - 7x + 2 (x² s\'écrit x^2).'
@@ -1572,15 +1580,15 @@
     niveaux: 2,
     examen: true,
     gen: function (rng, niveau) {
-      var sol = [], enonce, rep, debut;
+      var sol = [], enonce, rep, debut, debutStr;
       if (niveau === 1) {
         var k = rng.int(2, 9), a, b, g = 0;
         do { a = rng.nz(-9, 9); b = rng.nz(-9, 9); g++; } while (g < 100 && (ar.gcd(a, b) !== 1 || a < 0));
         var avecX = rng.bool(0.5);
         var coefs = avecX ? [k * a, k * b, 0] : [k * a, k * b];
         var fac = avecX ? k + 'x' : String(k);
-        debut = fac;
-        enonce = 'Factoriser l\'expression $E = ' + T.poly(coefs) + '$ en complétant : $E = ' + fac + '(\\ldots)$.';
+        debut = fac; debutStr = k + (avecX ? '*x' : '');
+        enonce = 'Factoriser l\'expression $E = ' + T.poly(coefs) + '$ en mettant en facteur $' + fac + '$.';
         sol = ['Chaque terme contient le facteur $' + fac + '$ : $' + T.mono(k * a, avecX ? 'x^2' : 'x', true) + ' = ' + fac + ' \\times ' + (avecX ? (a === 1 ? 'x' : a + 'x') : (a === 1 ? 'x' : a + 'x')) + '$ et $' + T.signed(k * b, true) + (avecX ? 'x' : '') + ' = ' + fac + ' \\times ' + T.par(b) + '$.',
           '$E = ' + fac + lin(a, b) + '$'];
         rep = [a, b];
@@ -1609,14 +1617,15 @@
           enonce = 'Factoriser $E = ' + F1 + lin(c, d) + (sg > 0 ? ' + ' : ' - ') + F1 + '$ en complétant : $E = ' + F1 + '(\\ldots)$.';
           sol = ['Le facteur commun est $' + F1 + '$ ; on écrit $' + F1 + ' = ' + F1 + ' \\times 1$.', '$E = ' + F1 + '\\left[' + lin(c, d) + (sg > 0 ? ' + 1' : ' - 1') + '\\right]$', '$E = ' + F1 + lin(rep[0], rep[1]) + '$', 'Piège classique : il ne faut pas oublier le $' + (sg > 0 ? '+ 1' : '- 1') + '$.'];
         }
-        debut = F1;
+        debut = F1; debutStr = '(' + polyStr([a2, b2]) + ')';
+        enonce = enonce.replace(/ en complétant : .*$/, '.');
       }
       return {
         enonce: enonce,
-        questions: [{ label: 'Expression entre parenthèses : $E = ' + debut + '(\\ldots)$ avec $\\ldots =$', type: 'expr', reponse: polyStr(rep), reponseTex: T.poly(rep) }],
-        indices: ['Repère le facteur commun à tous les termes et écris-le devant une parenthèse (ou un crochet).', 'Dans le crochet, écris ce qui reste de chaque terme, puis réduis. Vérifie en développant.'],
+        questions: [{ label: '$E =$', type: 'expr', reponse: debutStr + '*(' + polyStr(rep) + ')', reponseTex: debut + lin(rep[0], rep[1]), forme: 'produit' }],
+        indices: ['Repère le facteur commun à tous les termes : $E = ' + debut + '(\\ldots)$.', 'Dans la parenthèse (ou le crochet), écris ce qui reste de chaque terme, puis réduis. Vérifie en développant.'],
         solution: sol,
-        aide: 'Écris seulement le contenu de la parenthèse, réduit, par exemple 3x - 2.'
+        aide: 'Écris la forme factorisée, par exemple 3x(2x - 5) ou (x + 1)(3x - 2).'
       };
     }
   });
@@ -1875,5 +1884,413 @@
     }
   });
 
-/*__SUITE__*/
+  /* ================================================================== */
+  /* 4e — Triangle rectangle : Pythagore et cosinus                      */
+  /* ================================================================== */
+  var NOMS_TRI = [['A', 'B', 'C'], ['E', 'F', 'G'], ['R', 'S', 'T'], ['M', 'N', 'P'], ['K', 'L', 'M'], ['I', 'J', 'K']];
+  var TRIPLETS = [[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [20, 21, 29], [6, 8, 10], [9, 12, 15]];
+  /** Triplet pythagoricien (éventuellement multiplié par un coefficient), hypoténuse ≤ 40. */
+  function triplet(rng) {
+    var t, k, g = 0;
+    do { t = rng.pick(TRIPLETS); k = rng.pick([1, 1, 2, 0.5, 1.5, 3]); g++; } while (g < 50 && (t[2] * k > 40 || t[0] * k < 1.5));
+    return [rnd(t[0] * k), rnd(t[1] * k), rnd(t[2] * k)];
+  }
+  /** Triangle rectangle en n[0] ; n[1] sur l'axe horizontal, n[2] sur l'axe vertical. */
+  function triRect(n, l1, l2, lab, angleEn) {
+    var A = [0, 0], B = [l1, 0], C = [0, l2];
+    var f = EM.fig.fit([A, B, C], { w: 260, h: 200 });
+    f.poly([A, B, C]).rightAngle(B, A, C);
+    if (lab[0]) f.segLabel(A, B, lab[0], { inside: C });
+    if (lab[1]) f.segLabel(A, C, lab[1], { inside: B });
+    if (lab[2]) f.segLabel(B, C, lab[2], { inside: A });
+    if (angleEn) f.angle(A, B, C, angleEn, { r: 24, accent: true });
+    f.point(A, n[0], 'so').point(B, n[1], 'se').point(C, n[2], 'n');
+    return f.svg();
+  }
+  function cm(x) { return T.txt(x) + ' cm'; }
+
+  EM.gen.register({
+    id: '4e-pythagore',
+    titre: 'Théorème de Pythagore et sa réciproque',
+    chapitres: ['4e-pythagore'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var n = rng.pick(NOMS_TRI), A = n[0], B = n[1], C = n[2];
+      var sol = [], questions, enonce, fig = null, ind;
+      if (niveau <= 2) {
+        var exact = rng.bool(0.6), l1, l2, hyp;
+        if (exact) { var t = triplet(rng); if (rng.bool()) { l1 = t[0]; l2 = t[1]; } else { l1 = t[1]; l2 = t[0]; } hyp = t[2]; }
+        else {
+          if (niveau === 1) { l1 = rng.int(2, 15); l2 = rng.int(2, 15); hyp = Math.sqrt(l1 * l1 + l2 * l2); if (ar.isInt(hyp)) { l2 += 1; hyp = Math.sqrt(l1 * l1 + l2 * l2); } }
+          else { hyp = rng.int(6, 20); l1 = rng.int(2, hyp - 1); l2 = Math.sqrt(hyp * hyp - l1 * l1); if (ar.isInt(l2)) { l1 -= 1; if (l1 < 1) l1 = 2; l2 = Math.sqrt(hyp * hyp - l1 * l1); } }
+        }
+        var arr = exact ? '' : ' Arrondir au dixième.';
+        if (niveau === 1) {
+          var s2 = rnd(l1 * l1 + l2 * l2), res = exact ? hyp : rnd(Math.sqrt(s2), 1);
+          enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + A + B + ' = ' + T.num(l1) + '$ cm et $' + A + C + ' = ' + T.num(l2) + '$ cm. Calculer $' + B + C + '$.' + arr;
+          sol = ['Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$ : son hypoténuse est $[' + B + C + ']$. D\'après le théorème de Pythagore, $' + B + C + '^2 = ' + A + B + '^2 + ' + A + C + '^2$.',
+            '$' + B + C + '^2 = ' + T.num(l1) + '^2 + ' + T.num(l2) + '^2 = ' + T.num(rnd(l1 * l1)) + ' + ' + T.num(rnd(l2 * l2)) + ' = ' + T.num(s2) + '$',
+            '$' + B + C + ' = \\sqrt{' + T.num(s2) + '}' + (exact ? ' = ' + T.num(res) : ' \\approx ' + T.num(res)) + '$ cm.'];
+          questions = [{ label: '$' + B + C + ' =$', type: 'number', reponse: res, tol: exact ? undefined : 0.05, unite: 'cm' }];
+          fig = triRect(n, l1, l2, [cm(l1), cm(l2), '?']);
+        } else {
+          var echelle = rng.bool(0.3);
+          if (echelle) {
+            var L = rng.pick([3, 4, 5, 6]), d = rng.dec(0.6, 1.8, 1), h2 = rnd(L * L - d * d), hh = rnd(Math.sqrt(h2), 2);
+            var nom = rng.pick(PRENOMS);
+            enonce = nom + ' appuie une échelle de $' + L + '$ m contre le mur vertical d\'une maison à ' + rng.pick(VILLES) + '. Le pied de l\'échelle est posé sur le sol horizontal, à $' + T.num(d) + '$ m du pied du mur. À quelle hauteur le haut de l\'échelle touche-t-il le mur ? Arrondir au centimètre.';
+            sol = ['Le mur, le sol et l\'échelle forment un triangle rectangle dont l\'hypoténuse est l\'échelle.', 'D\'après le théorème de Pythagore : $h^2 + ' + T.num(d) + '^2 = ' + L + '^2$, donc $h^2 = ' + L * L + ' - ' + T.num(rnd(d * d)) + ' = ' + T.num(h2) + '$.', '$h = \\sqrt{' + T.num(h2) + '} \\approx ' + T.num(hh) + '$ m.'];
+            questions = [{ label: 'Hauteur (m) :', type: 'number', reponse: hh, tol: 0.006, unite: 'm' }];
+          } else {
+            var s3 = rnd(hyp * hyp - l1 * l1), res2 = exact ? l2 : rnd(Math.sqrt(s3), 1);
+            enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + B + C + ' = ' + T.num(hyp) + '$ cm et $' + A + B + ' = ' + T.num(l1) + '$ cm. Calculer $' + A + C + '$.' + arr;
+            sol = ['L\'hypoténuse est $[' + B + C + ']$. D\'après le théorème de Pythagore, $' + B + C + '^2 = ' + A + B + '^2 + ' + A + C + '^2$, donc $' + A + C + '^2 = ' + B + C + '^2 - ' + A + B + '^2$.',
+              '$' + A + C + '^2 = ' + T.num(hyp) + '^2 - ' + T.num(l1) + '^2 = ' + T.num(rnd(hyp * hyp)) + ' - ' + T.num(rnd(l1 * l1)) + ' = ' + T.num(s3) + '$',
+              '$' + A + C + ' = \\sqrt{' + T.num(s3) + '}' + (exact ? ' = ' + T.num(res2) : ' \\approx ' + T.num(res2)) + '$ cm.'];
+            questions = [{ label: '$' + A + C + ' =$', type: 'number', reponse: res2, tol: exact ? undefined : 0.05, unite: 'cm' }];
+            fig = triRect(n, l1, exact ? l2 : Math.sqrt(s3), [cm(l1), '?', cm(hyp)]);
+          }
+        }
+        ind = ['Repère l\'angle droit : l\'hypoténuse est le côté opposé, le plus long.', 'Hypoténuse² = somme des carrés des deux autres côtés ; pour un côté de l\'angle droit, on soustrait.'];
+      } else {
+        var rect = rng.bool(0.5), tt = triplet(rng), cotes = tt.slice();
+        if (!rect) {
+          var delta = tt[2] >= 10 ? rng.pick([-1, 1]) : rng.pick([-0.5, 0.5]);
+          cotes[2] = rnd(tt[2] + delta);
+          if (rng.bool(0.4)) { cotes[2] = tt[2]; cotes[0] = rnd(tt[0] + delta); }
+        }
+        var tri = cotes.slice().sort(function (x, y) { return x - y; });
+        var X = rng.pick(n), autres = n.filter(function (v) { return v !== X; }), Y = autres[0], Z = autres[1];
+        var big = tri[2], sq = rnd(big * big), sum = rnd(tri[0] * tri[0] + tri[1] * tri[1]);
+        var ok = Math.abs(sq - sum) < 1e-9;
+        var longs = {};
+        longs[Y + Z] = big; longs[X + Y] = tri[0]; longs[X + Z] = tri[1];
+        var ordre = rng.shuffle([Y + Z, X + Y, X + Z]);
+        enonce = 'On considère un triangle $' + n.join('') + '$ tel que ' + ordre.map(function (s) { return '$' + s + ' = ' + T.num(longs[s]) + '$ cm'; }).join(', ') + '. Ce triangle est-il rectangle ?';
+        sol = ['Le plus grand côté est $[' + Y + Z + ']$ : $' + Y + Z + '^2 = ' + T.num(big) + '^2 = ' + T.num(sq) + '$.',
+          '$' + X + Y + '^2 + ' + X + Z + '^2 = ' + T.num(tri[0]) + '^2 + ' + T.num(tri[1]) + '^2 = ' + T.num(rnd(tri[0] * tri[0])) + ' + ' + T.num(rnd(tri[1] * tri[1])) + ' = ' + T.num(sum) + '$.'];
+        if (ok) sol.push('On a l\'égalité $' + Y + Z + '^2 = ' + X + Y + '^2 + ' + X + Z + '^2$ : d\'après la réciproque du théorème de Pythagore, le triangle est rectangle en $' + X + '$.');
+        else sol.push('$' + Y + Z + '^2 \\neq ' + X + Y + '^2 + ' + X + Z + '^2$ : le triangle n\'est pas rectangle (s\'il l\'était, l\'égalité de Pythagore serait vraie).');
+        var bon = ok ? 'rectangle en $' + X + '$' : 'n\'est pas rectangle';
+        var faux = ['rectangle en $' + X + '$', 'rectangle en $' + Y + '$', 'rectangle en $' + Z + '$', 'n\'est pas rectangle'].filter(function (x) { return x !== bon; });
+        questions = [
+          { label: '$' + Y + Z + '^2 =$', type: 'number', reponse: sq },
+          { label: '$' + X + Y + '^2 + ' + X + Z + '^2 =$', type: 'number', reponse: sum },
+          qcm(rng, 'Le triangle $' + n.join('') + '$ :', { tex: bon }, rng.sample(faux, 2).map(function (x) { return { tex: x }; }))
+        ];
+        ind = ['Calcule séparément le carré du plus grand côté et la somme des carrés des deux autres.', 'Égalité : rectangle (réciproque), au sommet opposé au plus grand côté. Sinon : pas rectangle.'];
+      }
+      return { enonce: enonce, figure: fig, questions: questions, indices: ind, solution: sol };
+    }
+  });
+
+  EM.gen.register({
+    id: '4e-cosinus',
+    titre: 'Cosinus d\'un angle aigu',
+    chapitres: ['4e-cosinus'],
+    niveaux: 3,
+    examen: true,
+    gen: function (rng, niveau) {
+      var n = rng.pick(NOMS_TRI), A = n[0], B = n[1], C = n[2];
+      var ang = '\\widehat{' + A + B + C + '}';
+      var sol = [], questions, enonce, fig;
+      var base = 'Dans le triangle $' + A + B + C + '$ rectangle en $' + A + '$, l\'hypoténuse est $[' + B + C + ']$ et le côté adjacent à l\'angle $' + ang + '$ est $[' + A + B + ']$ : $\\cos ' + ang + ' = \\dfrac{' + A + B + '}{' + B + C + '}$.';
+      if (niveau === 1) {
+        var t = triplet(rng), ab, ac;
+        if (rng.bool()) { ab = t[0]; ac = t[1]; } else { ab = t[1]; ac = t[0]; }
+        var bc = t[2], cs = F(ab, bc);
+        enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + A + B + ' = ' + T.num(ab) + '$ cm, $' + A + C + ' = ' + T.num(ac) + '$ cm et $' + B + C + ' = ' + T.num(bc) + '$ cm. Exprimer $\\cos ' + ang + '$ à l\'aide des longueurs, puis calculer sa valeur exacte.';
+        sol = [base, '$\\cos ' + ang + ' = \\dfrac{' + T.num(ab) + '}{' + T.num(bc) + '} = ' + cs.tex() + (ar.isInt(cs.value() * 1000) && cs.d > 1 ? ' = ' + T.num(cs.value()) : '') + '$.'];
+        questions = [
+          qcm(rng, '$\\cos ' + ang + ' =$', { tex: '$\\dfrac{' + A + B + '}{' + B + C + '}$' }, [{ tex: '$\\dfrac{' + A + C + '}{' + B + C + '}$' }, { tex: '$\\dfrac{' + A + B + '}{' + A + C + '}$' }, { tex: '$\\dfrac{' + B + C + '}{' + A + B + '}$' }]),
+          { label: 'Valeur exacte de $\\cos ' + ang + '$ :', type: 'number', reponse: cs, reponseTex: cs.tex() }
+        ];
+        fig = triRect(n, ab, ac, [cm(ab), cm(ac), cm(bc)], ' ');
+      } else if (niveau === 2) {
+        var a = rng.int(20, 70), cosA = Math.cos(deg(a));
+        if (rng.bool()) {
+          var hyp = rng.dec(4, 15, 1), adj = rnd(hyp * cosA, 1);
+          enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + B + C + ' = ' + T.num(hyp) + '$ cm et $' + ang + ' = ' + a + '°$. Calculer $' + A + B + '$ arrondi au millimètre.';
+          sol = [base, 'Donc $' + A + B + ' = ' + B + C + ' \\times \\cos ' + ang + ' = ' + T.num(hyp) + ' \\times \\cos ' + a + '°$.', '$' + A + B + ' \\approx ' + T.num(adj) + '$ cm.'];
+          questions = [{ label: '$' + A + B + ' =$', type: 'number', reponse: adj, tol: 0.06, unite: 'cm' }];
+          fig = triRect(n, hyp * cosA, hyp * Math.sin(deg(a)), ['?', '', cm(hyp)], a + '°');
+        } else {
+          var adj2 = rng.dec(3, 12, 1), hyp2 = rnd(adj2 / cosA, 1);
+          enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + A + B + ' = ' + T.num(adj2) + '$ cm et $' + ang + ' = ' + a + '°$. Calculer $' + B + C + '$ arrondi au millimètre.';
+          sol = [base, 'Donc $\\cos ' + a + '° = \\dfrac{' + T.num(adj2) + '}{' + B + C + '}$, d\'où $' + B + C + ' = \\dfrac{' + T.num(adj2) + '}{\\cos ' + a + '°}$.', '$' + B + C + ' \\approx ' + T.num(hyp2) + '$ cm.'];
+          questions = [{ label: '$' + B + C + ' =$', type: 'number', reponse: hyp2, tol: 0.06, unite: 'cm' }];
+          fig = triRect(n, adj2, adj2 * Math.tan(deg(a)), [cm(adj2), '', '?'], a + '°');
+        }
+      } else {
+        var ctx3 = rng.bool(0.35), bc3, ab3, g = 0, angle;
+        function demi(x) { return Math.abs(x - Math.round(x)) > 0.45; }
+        if (ctx3) {
+          // rampe : pente douce (entre 4° et 12° environ)
+          do { bc3 = rng.dec(3, 8, 1); ab3 = rnd(bc3 * Math.cos(deg(rng.int(4, 12) + rng.pick([-0.3, 0.2]))), 2); angle = Math.acos(ab3 / bc3) * 180 / Math.PI; g++; } while (g < 50 && (demi(angle) || angle < 4));
+        } else {
+          bc3 = rng.dec(5, 15, 1);
+          do { ab3 = rng.dec(1.5, bc3 - 0.5, 1); angle = Math.acos(ab3 / bc3) * 180 / Math.PI; g++; } while (g < 50 && (angle < 15 || angle > 75 || demi(angle)));
+        }
+        var ar0 = Math.round(angle);
+        if (ctx3) {
+          enonce = 'Une rampe d\'accès de $' + T.num(bc3) + '$ m de long relie le sol à l\'entrée d\'un dispensaire de ' + rng.pick(VILLES) + '. Son extrémité basse est à $' + T.num(ab3) + '$ m (horizontalement) du pied du mur. On modélise la situation par le triangle $' + A + B + C + '$ rectangle en $' + A + '$ (avec $' + B + C + ' = ' + T.num(bc3) + '$ m et $' + A + B + ' = ' + T.num(ab3) + '$ m). Calculer l\'angle $' + ang + '$ que fait la rampe avec le sol, arrondi au degré.';
+        } else {
+          enonce = 'Le triangle $' + A + B + C + '$ est rectangle en $' + A + '$, avec $' + A + B + ' = ' + T.num(ab3) + '$ cm et $' + B + C + ' = ' + T.num(bc3) + '$ cm. Calculer la mesure de l\'angle $' + ang + '$, arrondie au degré.';
+        }
+        sol = [base, '$\\cos ' + ang + ' = \\dfrac{' + T.num(ab3) + '}{' + T.num(bc3) + '} \\approx ' + T.num(rnd(ab3 / bc3, 4)) + '$.', 'Avec la touche $\\cos^{-1}$ de la calculatrice (en degrés) : $' + ang + ' \\approx ' + ar0 + '°$.'];
+        questions = [{ label: '$' + ang + ' \\approx$', type: 'number', reponse: ar0, tol: 0.5, unite: '°' }];
+        fig = triRect(n, ab3, Math.sqrt(bc3 * bc3 - ab3 * ab3), [T.txt(ab3), '', T.txt(bc3)], '?');
+      }
+      return {
+        enonce: enonce,
+        figure: fig,
+        questions: questions,
+        indices: ['$\\cos = \\dfrac{\\text{côté adjacent}}{\\text{hypoténuse}}$ dans un triangle rectangle.', 'Règle ta calculatrice en degrés. Pour trouver un angle, utilise la touche $\\cos^{-1}$.'],
+        solution: sol
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Droite des milieux                                             */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-droite-milieux',
+    titre: 'Théorème de la droite des milieux',
+    chapitres: ['4e-droite-milieux'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var n = rng.pick([['A', 'B', 'C', 'I', 'J'], ['R', 'S', 'T', 'M', 'N'], ['E', 'F', 'G', 'K', 'L'], ['O', 'P', 'Q', 'U', 'V']]);
+      var A = n[0], B = n[1], C = n[2], I = n[3], J = n[4];
+      var pA = [rng.dec(1.5, 4.5, 1), rng.dec(3.5, 5, 1)], pB = [0, 0], pC = [6, rng.dec(-0.5, 0.8, 1)];
+      var pI = [(pA[0] + pB[0]) / 2, (pA[1] + pB[1]) / 2], pJ = [(pA[0] + pC[0]) / 2, (pA[1] + pC[1]) / 2];
+      var f = EM.fig.fit([pA, pB, pC], { w: 280, h: 210 });
+      f.poly([pA, pB, pC]).seg(pI, pJ, { accent: true });
+      var sol = [], questions, enonce;
+      if (niveau === 1) {
+        f.ticks(pA, pI, 1).ticks(pI, pB, 1).ticks(pA, pJ, 2).ticks(pJ, pC, 2);
+        var cas = rng.pick(['IJ', 'BC']);
+        var intro = 'Dans le triangle $' + A + B + C + '$, $' + I + '$ est le milieu de $[' + A + B + ']$ et $' + J + '$ est le milieu de $[' + A + C + ']$.';
+        var thm = 'Dans le triangle $' + A + B + C + '$, $' + I + '$ et $' + J + '$ sont les milieux de $[' + A + B + ']$ et $[' + A + C + ']$. D\'après le théorème de la droite des milieux, $(' + I + J + ') \\parallel (' + B + C + ')$ et $' + I + J + ' = \\dfrac{' + B + C + '}{2}$.';
+        if (cas === 'IJ') {
+          var bc = rng.dec(3, 18, 1);
+          enonce = intro + ' On donne $' + B + C + ' = ' + T.num(bc) + '$ cm. Préciser la position des droites $(' + I + J + ')$ et $(' + B + C + ')$, puis calculer $' + I + J + '$.';
+          sol = [thm, '$' + I + J + ' = \\dfrac{' + T.num(bc) + '}{2} = ' + T.num(rnd(bc / 2)) + '$ cm.'];
+          questions = [{ label: '$' + I + J + ' =$', type: 'number', reponse: rnd(bc / 2), unite: 'cm' }];
+        } else {
+          var ij = rng.dec(1.5, 9, 1);
+          enonce = intro + ' On donne $' + I + J + ' = ' + T.num(ij) + '$ cm. Préciser la position des droites $(' + I + J + ')$ et $(' + B + C + ')$, puis calculer $' + B + C + '$.';
+          sol = [thm, 'Donc $' + B + C + ' = 2 \\times ' + I + J + ' = 2 \\times ' + T.num(ij) + ' = ' + T.num(rnd(2 * ij)) + '$ cm.'];
+          questions = [{ label: '$' + B + C + ' =$', type: 'number', reponse: rnd(2 * ij), unite: 'cm' }];
+        }
+        questions.unshift(qcm(rng, 'Les droites $(' + I + J + ')$ et $(' + B + C + ')$ sont :', { tex: 'parallèles' }, [{ tex: 'perpendiculaires' }, { tex: 'sécantes' }]));
+      } else if (rng.bool(0.5)) {
+        f.ticks(pA, pI, 1).ticks(pI, pB, 1);
+        var ac = rng.dec(4, 16, 1), bc2 = rng.dec(4, 16, 1);
+        enonce = 'Dans le triangle $' + A + B + C + '$, $' + I + '$ est le milieu de $[' + A + B + ']$. La parallèle à $(' + B + C + ')$ passant par $' + I + '$ coupe $[' + A + C + ']$ en $' + J + '$. On donne $' + A + C + ' = ' + T.num(ac) + '$ cm et $' + B + C + ' = ' + T.num(bc2) + '$ cm. Calculer $' + A + J + '$ et $' + I + J + '$.';
+        sol = ['Dans le triangle $' + A + B + C + '$, la droite $(' + I + J + ')$ passe par le milieu $' + I + '$ de $[' + A + B + ']$ et est parallèle à $(' + B + C + ')$ : d\'après la réciproque du théorème de la droite des milieux, $' + J + '$ est le milieu de $[' + A + C + ']$.',
+          '$' + A + J + ' = \\dfrac{' + A + C + '}{2} = ' + T.num(rnd(ac / 2)) + '$ cm.',
+          '$' + I + '$ et $' + J + '$ sont les milieux de $[' + A + B + ']$ et $[' + A + C + ']$, donc $' + I + J + ' = \\dfrac{' + B + C + '}{2} = ' + T.num(rnd(bc2 / 2)) + '$ cm.'];
+        questions = [{ label: '$' + A + J + ' =$', type: 'number', reponse: rnd(ac / 2), unite: 'cm' }, { label: '$' + I + J + ' =$', type: 'number', reponse: rnd(bc2 / 2), unite: 'cm' }];
+      } else {
+        f.ticks(pA, pI, 1).ticks(pI, pB, 1).ticks(pA, pJ, 2).ticks(pJ, pC, 2);
+        var x = rng.int(4, 15), y = rng.int(4, 15), z, g = 0;
+        do { z = rng.int(4, 15); g++; } while (g < 50 && (z >= x + y || x >= y + z || y >= x + z));
+        var per = (x + y + z) / 2;
+        enonce = 'Dans le triangle $' + A + B + C + '$, $' + A + B + ' = ' + x + '$ cm, $' + A + C + ' = ' + y + '$ cm et $' + B + C + ' = ' + z + '$ cm. Les points $' + I + '$ et $' + J + '$ sont les milieux respectifs de $[' + A + B + ']$ et $[' + A + C + ']$. Calculer le périmètre du triangle $' + A + I + J + '$.';
+        sol = ['$' + A + I + ' = \\dfrac{' + x + '}{2} = ' + T.num(x / 2) + '$ cm et $' + A + J + ' = \\dfrac{' + y + '}{2} = ' + T.num(y / 2) + '$ cm.',
+          'D\'après le théorème de la droite des milieux, $' + I + J + ' = \\dfrac{' + B + C + '}{2} = ' + T.num(z / 2) + '$ cm.',
+          'Périmètre de $' + A + I + J + '$ : $' + T.num(x / 2) + ' + ' + T.num(y / 2) + ' + ' + T.num(z / 2) + ' = ' + T.num(per) + '$ cm (la moitié du périmètre de $' + A + B + C + '$).'];
+        questions = [{ label: 'Périmètre de $' + A + I + J + '$ :', type: 'number', reponse: per, unite: 'cm' }];
+      }
+      f.point(pA, A, 'n').point(pB, B, 'so').point(pC, C, 'se').point(pI, I, 'no').point(pJ, J, 'ne');
+      return {
+        enonce: enonce,
+        figure: f.svg(),
+        questions: questions,
+        indices: ['Deux milieux connus : la droite qui les joint est parallèle au troisième côté et mesure sa moitié.', 'Un milieu et une parallèle connus : la réciproque donne le milieu du troisième côté.'],
+        solution: sol
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Vecteurs et translation                                        */
+  /* ================================================================== */
+  function cpl(x, y) { return '(' + T.num(x) + ' \\,;\\, ' + T.num(y) + ')'; }
+
+  EM.gen.register({
+    id: '4e-vecteurs',
+    titre: 'Coordonnées d\'un vecteur et translation',
+    chapitres: ['4e-vecteurs'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var lim = niveau === 1 ? 5 : 4, P = {}, g = 0;
+      do {
+        ['A', 'B', 'C'].forEach(function (k) { P[k] = [rng.int(-lim, lim), rng.int(-lim, lim)]; });
+        g++;
+      } while (g < 200 && ((P.B[0] - P.A[0]) * (P.C[1] - P.A[1]) - (P.B[1] - P.A[1]) * (P.C[0] - P.A[0]) === 0));
+      var ux = P.B[0] - P.A[0], uy = P.B[1] - P.A[1];
+      var sol = [], questions, enonce, D;
+      var donnees = '$A' + cpl(P.A[0], P.A[1]) + '$, $B' + cpl(P.B[0], P.B[1]) + '$ et $C' + cpl(P.C[0], P.C[1]) + '$';
+      var stepAB = '$\\vect{AB}\\,(x_B - x_A \\,;\\, y_B - y_A) = (' + T.num(P.B[0]) + ' - ' + T.par(P.A[0]) + ' \\,;\\, ' + T.num(P.B[1]) + ' - ' + T.par(P.A[1]) + ')$, soit $\\vect{AB}\\,' + cpl(ux, uy) + '$.';
+      var Lw = Math.max(6, 1 + Math.max.apply(null, [P.A, P.B, P.C].map(function (p) { return Math.max(Math.abs(p[0]), Math.abs(p[1])); })));
+      var f = EM.fig.create({ xmin: -Lw, xmax: Lw, ymin: -Lw, ymax: Lw, w: 260, title: 'Repère' });
+      f.axes({ step: 1, labelStep: Lw > 6 ? 2 : 1 });
+      f.vector(P.A, P.B, { accent: true });
+      if (niveau === 1) {
+        D = [P.C[0] + ux, P.C[1] + uy];
+        enonce = 'Dans un repère orthonormé (O, I, J), on donne ' + donnees + '. Calculer les coordonnées du vecteur $\\vect{AB}$, puis celles du point $D$, image de $C$ par la translation de vecteur $\\vect{AB}$.';
+        sol = [stepAB, '$D$ est l\'image de $C$ par la translation de vecteur $\\vect{AB}$ : $\\vect{CD} = \\vect{AB}$.', '$x_D = ' + T.num(P.C[0]) + T.signed(ux) + ' = ' + T.num(D[0]) + '$ et $y_D = ' + T.num(P.C[1]) + T.signed(uy) + ' = ' + T.num(D[1]) + '$ : $D' + cpl(D[0], D[1]) + '$.'];
+        questions = [{ label: 'Coordonnées de $\\vect{AB}$ :', type: 'tuple', reponse: [ux, uy] }, { label: 'Coordonnées de $D$ :', type: 'tuple', reponse: D }];
+      } else {
+        D = [P.C[0] - ux, P.C[1] - uy];
+        var vx = P.C[0] - P.A[0], vy = P.C[1] - P.A[1];
+        enonce = 'Dans un repère orthonormé (O, I, J), on donne ' + donnees + '. Calculer les coordonnées du point $D$ tel que $ABCD$ soit un parallélogramme, puis celles du vecteur $\\vect{AB} + \\vect{BC}$.';
+        sol = [stepAB, '$ABCD$ est un parallélogramme si et seulement si $\\vect{AB} = \\vect{DC}$, c\'est-à-dire $x_C - x_D = ' + T.num(ux) + '$ et $y_C - y_D = ' + T.num(uy) + '$.',
+          '$x_D = ' + T.num(P.C[0]) + ' - ' + T.par(ux) + ' = ' + T.num(D[0]) + '$ et $y_D = ' + T.num(P.C[1]) + ' - ' + T.par(uy) + ' = ' + T.num(D[1]) + '$ : $D' + cpl(D[0], D[1]) + '$.',
+          'D\'après la relation de Chasles, $\\vect{AB} + \\vect{BC} = \\vect{AC}$, et $\\vect{AC}\\,(' + T.num(P.C[0]) + ' - ' + T.par(P.A[0]) + ' \\,;\\, ' + T.num(P.C[1]) + ' - ' + T.par(P.A[1]) + ') = ' + cpl(vx, vy) + '$.'];
+        questions = [{ label: 'Coordonnées de $D$ :', type: 'tuple', reponse: D }, { label: 'Coordonnées de $\\vect{AB} + \\vect{BC}$ :', type: 'tuple', reponse: [vx, vy] }];
+      }
+      f.point(P.A, 'A', 'so').point(P.B, 'B', 'ne').point(P.C, 'C', 'ne');
+      return {
+        enonce: enonce,
+        figure: f.svg(),
+        questions: questions,
+        indices: ['$\\vect{AB}\\,(x_B - x_A \\,;\\, y_B - y_A)$ : « arrivée moins départ ».', niveau === 1 ? 'L\'image de $M(x ; y)$ par la translation de vecteur $\\vec{u}(a ; b)$ est $M\'(x + a ; y + b)$.' : 'Attention à l\'ordre des lettres : $ABCD$ parallélogramme équivaut à $\\vect{AB} = \\vect{DC}$.'],
+        solution: sol,
+        aide: 'Écris des coordonnées sous la forme (2 ; -3).'
+      };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Cercle et tangente                                             */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-cercle-tangente',
+    titre: 'Positions relatives d\'une droite et d\'un cercle, tangente',
+    chapitres: ['4e-cercle-tangente'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var sol = [], questions, enonce, fig = null, ind;
+      if (niveau === 1) {
+        if (rng.bool(0.6)) {
+          var r = rng.dec(2, 8, 1), pos = rng.pick(['ext', 'tan', 'sec']);
+          var d = pos === 'tan' ? r : pos === 'ext' ? rnd(r + rng.dec(0.3, 3, 1)) : rnd(Math.max(0.2, r - rng.dec(0.3, 3, 1)));
+          var noms = { ext: 'extérieure au cercle', tan: 'tangente au cercle', sec: 'sécante au cercle' };
+          var nb = { ext: 0, tan: 1, sec: 2 }[pos];
+          enonce = 'Le cercle $\\mathcal{C}$ a pour centre $O$ et pour rayon $' + T.num(r) + '$ cm. La distance du point $O$ à la droite $(\\Delta)$ est égale à $' + T.num(d) + '$ cm. Préciser la position de $(\\Delta)$ par rapport à $\\mathcal{C}$ et le nombre de points communs.';
+          sol = ['On compare la distance $d = ' + T.num(d) + '$ cm au rayon $r = ' + T.num(r) + '$ cm.',
+            pos === 'tan' ? '$d = r$ : la droite est tangente au cercle ; elle a un seul point commun avec lui.' : pos === 'ext' ? '$d > r$ : la droite est extérieure au cercle ; aucun point commun.' : '$d < r$ : la droite est sécante au cercle ; deux points communs.'];
+          questions = [qcm(rng, 'La droite $(\\Delta)$ est :', { tex: noms[pos] }, [{ tex: noms.ext }, { tex: noms.tan }, { tex: noms.sec }]),
+            { label: 'Nombre de points communs :', type: 'number', reponse: nb }];
+          ind = ['Compare la distance du centre à la droite avec le rayon.', '$d > r$ : extérieure ; $d = r$ : tangente ; $d < r$ : sécante.'];
+        } else {
+          var r1 = rng.int(3, 9), r2 = rng.int(1, r1 - 1), cas = rng.pick(['ext', 'tanExt', 'sec', 'tanInt', 'int']);
+          var dd = cas === 'ext' ? r1 + r2 + rng.int(1, 4) : cas === 'tanExt' ? r1 + r2 : cas === 'sec' ? rng.int(r1 - r2 + 1, r1 + r2 - 1) : cas === 'tanInt' ? r1 - r2 : rng.int(0, r1 - r2 - 1);
+          if (cas === 'int' && dd === 0) dd = r1 - r2 > 1 ? 1 : 0;
+          if (cas === 'int' && r1 - r2 === 1) { cas = 'tanInt'; dd = 1; }
+          var lib = { ext: 'extérieurs l\'un à l\'autre', tanExt: 'tangents extérieurement', sec: 'sécants', tanInt: 'tangents intérieurement', 'int': 'l\'un intérieur à l\'autre (sans point commun)' };
+          enonce = 'Le cercle $\\mathcal{C}$ a pour centre $O$ et pour rayon $' + r1 + '$ cm ; le cercle $\\mathcal{C}\'$ a pour centre $O\'$ et pour rayon $' + r2 + '$ cm. On donne $OO\' = ' + dd + '$ cm. Préciser la position relative des deux cercles.';
+          sol = ['On compare $OO\' = ' + dd + '$ à la somme des rayons $' + r1 + ' + ' + r2 + ' = ' + (r1 + r2) + '$ et à leur différence $' + r1 + ' - ' + r2 + ' = ' + (r1 - r2) + '$.'];
+          sol.push(cas === 'ext' ? '$OO\' > r + r\'$ : les cercles sont extérieurs l\'un à l\'autre.' : cas === 'tanExt' ? '$OO\' = r + r\'$ : les cercles sont tangents extérieurement.' : cas === 'sec' ? '$r - r\' < OO\' < r + r\'$ : les cercles sont sécants (deux points communs).' : cas === 'tanInt' ? '$OO\' = r - r\'$ : les cercles sont tangents intérieurement.' : '$OO\' < r - r\'$ : le petit cercle est intérieur au grand, sans point commun.');
+          var autres = Object.keys(lib).filter(function (k) { return k !== cas; });
+          questions = [qcm(rng, 'Les deux cercles sont :', { tex: lib[cas] }, rng.sample(autres, 3).map(function (k) { return { tex: lib[k] }; }))];
+          ind = ['Compare la distance des centres avec la somme et la différence des rayons.', 'Égalité avec la somme : tangents extérieurement ; avec la différence : tangents intérieurement.'];
+        }
+      } else {
+        var exact = rng.bool(0.6), r3, t3, om, t = null;
+        if (exact) { t = triplet(rng); r3 = t[0]; t3 = t[1]; om = t[2]; if (rng.bool()) { r3 = t[1]; t3 = t[0]; } }
+        else { r3 = rng.int(2, 9); t3 = rng.int(3, 15); om = Math.sqrt(r3 * r3 + t3 * t3); }
+        var inv = rng.bool(0.4);
+        var O = [0, 0], A = [0, -r3], M = [t3, -r3];
+        var f = EM.fig.fit([[-r3, -r3], [r3, r3], M], { w: 280, h: 220 });
+        f.circle(O, r3).line(A, M).seg(O, A).seg(O, M, { dash: true }).rightAngle(O, A, M);
+        f.point(O, 'O', 'no').point(A, 'A', 's').point(M, 'M', 's');
+        fig = f.svg();
+        var arr = exact ? '' : ' Arrondir au dixième.';
+        if (!inv) {
+          var res = exact ? om : rnd(om, 1), s2 = r3 * r3 + t3 * t3;
+          enonce = 'Le cercle $\\mathcal{C}$ de centre $O$ a pour rayon $' + T.num(r3) + '$ cm. La droite $(\\Delta)$ est tangente à $\\mathcal{C}$ au point $A$. Le point $M$ de $(\\Delta)$ vérifie $AM = ' + T.num(t3) + '$ cm. Calculer $OM$.' + arr;
+          sol = ['La tangente en $A$ est perpendiculaire au rayon $[OA]$ : le triangle $OAM$ est rectangle en $A$.', 'D\'après le théorème de Pythagore : $OM^2 = OA^2 + AM^2 = ' + T.num(r3) + '^2 + ' + T.num(t3) + '^2 = ' + T.num(rnd(s2)) + '$.', '$OM = \\sqrt{' + T.num(rnd(s2)) + '}' + (exact ? ' = ' : ' \\approx ') + T.num(res) + '$ cm.'];
+          questions = [qcm(rng, 'Le triangle $OAM$ est rectangle en :', { tex: '$A$' }, [{ tex: '$O$' }, { tex: '$M$' }]), { label: '$OM =$', type: 'number', reponse: res, tol: exact ? undefined : 0.05, unite: 'cm' }];
+        } else {
+          var omv = exact ? om : rng.int(r3 + 2, r3 + 12), s3 = omv * omv - r3 * r3, res2 = exact ? t3 : rnd(Math.sqrt(s3), 1);
+          if (!exact && ar.isInt(Math.sqrt(s3))) { arr = ''; res2 = Math.sqrt(s3); exact = true; }
+          enonce = 'Le cercle $\\mathcal{C}$ de centre $O$ a pour rayon $' + T.num(r3) + '$ cm. La droite $(\\Delta)$ est tangente à $\\mathcal{C}$ au point $A$. Le point $M$ de $(\\Delta)$ est tel que $OM = ' + T.num(omv) + '$ cm. Calculer $AM$.' + arr;
+          sol = ['La tangente en $A$ est perpendiculaire au rayon $[OA]$ : le triangle $OAM$ est rectangle en $A$, d\'hypoténuse $[OM]$.', 'D\'après le théorème de Pythagore : $AM^2 = OM^2 - OA^2 = ' + T.num(omv) + '^2 - ' + T.num(r3) + '^2 = ' + T.num(rnd(s3)) + '$.', '$AM = \\sqrt{' + T.num(rnd(s3)) + '}' + (exact ? ' = ' : ' \\approx ') + T.num(res2) + '$ cm.'];
+          questions = [qcm(rng, 'Le triangle $OAM$ est rectangle en :', { tex: '$A$' }, [{ tex: '$O$' }, { tex: '$M$' }]), { label: '$AM =$', type: 'number', reponse: res2, tol: exact ? undefined : 0.05, unite: 'cm' }];
+        }
+        ind = ['La tangente en $A$ est perpendiculaire au rayon $[OA]$.', 'Applique le théorème de Pythagore dans le triangle rectangle obtenu.'];
+      }
+      return { enonce: enonce, figure: fig, questions: questions, indices: ind, solution: sol };
+    }
+  });
+
+  /* ================================================================== */
+  /* 4e — Pyramide et cône                                               */
+  /* ================================================================== */
+  EM.gen.register({
+    id: '4e-pyramide-cone',
+    titre: 'Volume d\'une pyramide et d\'un cône de révolution',
+    chapitres: ['4e-pyramide-cone'],
+    niveaux: 2,
+    examen: true,
+    gen: function (rng, niveau) {
+      var cas = niveau === 1 ? rng.pick(['pyrCarre', 'pyrRect', 'cone']) : rng.pick(['coneG', 'pyrH', 'tas']);
+      var sol = [], questions, enonce, ind = ['Volume d\'une pyramide ou d\'un cône : $V = \\dfrac{1}{3} \\times \\mathcal{B} \\times h$.', 'Pour un cône, $\\mathcal{B} = \\pi r^2$ ; n\'oublie pas le facteur $\\dfrac{1}{3}$.'];
+      if (cas === 'pyrCarre') {
+        var c = rng.int(2, 12), h = 3 * rng.int(1, 8);
+        if (rng.bool(0.4)) { c = 3 * rng.int(1, 4); h = rng.int(4, 20); }
+        var V = c * c * h / 3;
+        enonce = 'Une pyramide a pour base un carré de côté $' + c + '$ cm et pour hauteur $' + h + '$ cm. Calculer son volume.';
+        sol = ['Aire de la base : $\\mathcal{B} = ' + c + '^2 = ' + c * c + '$ cm².', '$V = \\dfrac{1}{3} \\times ' + c * c + ' \\times ' + h + ' = ' + T.num(V) + '$ cm³.'];
+        questions = [{ label: 'Volume (cm³) :', type: 'number', reponse: V, unite: 'cm³' }];
+      } else if (cas === 'pyrRect') {
+        var a = rng.int(2, 12), b = rng.int(2, 12), h2, g = 0;
+        do { h2 = rng.int(3, 20); g++; } while (g < 50 && (a * b * h2) % 3);
+        if ((a * b * h2) % 3) h2 = 9;
+        var V2 = a * b * h2 / 3;
+        enonce = 'Une pyramide a pour base un rectangle de $' + a + '$ cm sur $' + b + '$ cm et pour hauteur $' + h2 + '$ cm. Calculer son volume.';
+        sol = ['Aire de la base : $\\mathcal{B} = ' + a + ' \\times ' + b + ' = ' + a * b + '$ cm².', '$V = \\dfrac{1}{3} \\times ' + a * b + ' \\times ' + h2 + ' = ' + T.num(V2) + '$ cm³.'];
+        questions = [{ label: 'Volume (cm³) :', type: 'number', reponse: V2, unite: 'cm³' }];
+      } else if (cas === 'cone') {
+        var obj = rng.pick([['Un cornet de glace', 2, 4, 8, 14], ['Un entonnoir', 5, 10, 6, 15], ['Un chapeau de paille conique', 15, 25, 12, 25]]);
+        var r = rng.int(obj[1], obj[2]), h3 = rng.int(obj[3], obj[4]), diam = rng.bool(0.4), V3 = Math.PI * r * r * h3 / 3;
+        var k = F(r * r * h3, 3);
+        enonce = obj[0] + ' a la forme d\'un cône de révolution de ' + (diam ? 'diamètre $' + 2 * r + '$ cm' : 'rayon $' + r + '$ cm') + ' et de hauteur $' + h3 + '$ cm. Calculer son volume arrondi au dixième de cm³.';
+        sol = [(diam ? 'Le rayon est $r = \\dfrac{' + 2 * r + '}{2} = ' + r + '$ cm. ' : '') + '$V = \\dfrac{1}{3} \\pi r^2 h = \\dfrac{1}{3} \\times \\pi \\times ' + r + '^2 \\times ' + h3 + ' = ' + piTex(k) + '$ cm³.', '$V \\approx ' + T.num(rnd(V3, 1)) + '$ cm³.'];
+        questions = [{ label: 'Volume (cm³) :', type: 'number', reponse: rnd(V3, 1), tol: 0.06, unite: 'cm³' }];
+      } else if (cas === 'coneG') {
+        var t = triplet(rng), rr = t[0], hh = t[1], gg = t[2];
+        if (rng.bool()) { rr = t[1]; hh = t[0]; }
+        var V4 = Math.PI * rr * rr * hh / 3;
+        enonce = 'Un cône de révolution a pour rayon de base $' + T.num(rr) + '$ cm et pour génératrice $' + T.num(gg) + '$ cm. Calculer sa hauteur, puis son volume arrondi au cm³.';
+        sol = ['La hauteur, un rayon de la base et une génératrice forment un triangle rectangle d\'hypoténuse la génératrice.', '$h^2 = g^2 - r^2 = ' + T.num(gg) + '^2 - ' + T.num(rr) + '^2 = ' + T.num(rnd(gg * gg)) + ' - ' + T.num(rnd(rr * rr)) + ' = ' + T.num(rnd(hh * hh)) + '$, donc $h = ' + T.num(hh) + '$ cm.',
+          '$V = \\dfrac{1}{3} \\pi \\times ' + T.num(rr) + '^2 \\times ' + T.num(hh) + ' \\approx ' + T.num(Math.round(V4)) + '$ cm³.'];
+        questions = [{ label: 'Hauteur (cm) :', type: 'number', reponse: hh, unite: 'cm' }, { label: 'Volume (cm³) :', type: 'number', reponse: Math.round(V4), tol: 0.6, unite: 'cm³' }];
+        ind = ['Utilise le théorème de Pythagore : $g^2 = r^2 + h^2$.', 'Puis $V = \\dfrac{1}{3}\\pi r^2 h$.'];
+      } else if (cas === 'pyrH') {
+        var c5 = rng.int(3, 12), h5 = rng.int(3, 15), V5 = c5 * c5 * h5 / 3;
+        if (!ar.isInt(V5)) { h5 = 3 * rng.int(1, 5); V5 = c5 * c5 * h5 / 3; }
+        enonce = 'Une pyramide régulière à base carrée de côté $' + c5 + '$ m a un volume de $' + T.num(V5) + '$ m³. Calculer sa hauteur.';
+        sol = ['$V = \\dfrac{1}{3} \\times \\mathcal{B} \\times h$ avec $\\mathcal{B} = ' + c5 + '^2 = ' + c5 * c5 + '$ m².', 'Donc $h = \\dfrac{3V}{\\mathcal{B}} = \\dfrac{3 \\times ' + T.num(V5) + '}{' + c5 * c5 + '} = ' + h5 + '$ m.'];
+        questions = [{ label: 'Hauteur (m) :', type: 'number', reponse: h5, unite: 'm' }];
+        ind = ['Écris $V = \\dfrac{1}{3}\\mathcal{B}h$ puis isole $h$.', '$h = \\dfrac{3V}{\\mathcal{B}}$.'];
+      } else {
+        var Dm = rng.pick([2, 2.4, 3, 3.6, 4, 5]), hm = rng.pick([0.9, 1.2, 1.5, 1.8, 2]), rho = rng.pick([600, 650, 700]);
+        var rm = Dm / 2, Vm = Math.PI * rm * rm * hm / 3, mass = Math.round(Vm * rho / 10) * 10;
+        enonce = 'Au seccos de ' + rng.pick(['Kaolack', 'Kaffrine', 'Nioro du Rip', 'Fatick']) + ', les graines d\'arachide forment un tas conique de diamètre $' + T.num(Dm) + '$ m et de hauteur $' + T.num(hm) + '$ m. Calculer le volume du tas, arrondi au centième de m³. On admet qu\'un mètre cube de graines pèse $' + rho + '$ kg : calculer la masse du tas, arrondie à la dizaine de kilogrammes.';
+        sol = ['Rayon : $r = ' + T.num(rm) + '$ m.', '$V = \\dfrac{1}{3} \\pi \\times ' + T.num(rm) + '^2 \\times ' + T.num(hm) + ' \\approx ' + T.num(rnd(Vm, 2)) + '$ m³.', 'Masse : $' + T.num(rnd(Vm, 4)) + ' \\times ' + rho + ' \\approx ' + T.num(mass) + '$ kg.'];
+        questions = [{ label: 'Volume (m³) :', type: 'number', reponse: rnd(Vm, 2), tol: 0.006, unite: 'm³' }, { label: 'Masse (kg) :', type: 'number', reponse: mass, tol: 10, unite: 'kg' }];
+      }
+      return { enonce: enonce, questions: questions, indices: ind, solution: sol };
+    }
+  });
+
 })(typeof window !== 'undefined' ? window : globalThis);

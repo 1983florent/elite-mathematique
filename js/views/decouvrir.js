@@ -95,8 +95,10 @@
     if (!gs.length) html += '<div class="card"><p class="muted">Les guides sont en préparation.</p></div>';
     else html += '<div class="grid g2">' + gs.map(function (g) {
       var cl = g.classe && EM.programme.classes[g.classe];
-      return '<a class="tile" href="#/guide/' + g.id + '"' + (g.classe === k ? ' style="border-color:var(--gold)"' : '') + '><span class="ico-box ' + (cl ? 'or' : '') + '">' + I(cl ? 'copie' : 'boussole') + '</span>' +
-        '<span><h3>' + esc(g.titre) + '</h3><p>' + EM.md(g.resume || '') + '</p><p class="small" style="margin-top:6px">' + (g.sections || []).length + ' sections' + (cl ? ' · ' + esc(cl.nom) : '') + '</p></span></a>';
+      var pourMoi = (g.classes || [g.classe]).indexOf(k) >= 0;
+      return '<a class="tile" href="#/guide/' + g.id + '"' + (pourMoi ? ' style="border-color:var(--gold)"' : '') + '><span class="ico-box ' + (cl ? 'or' : '') + '">' + I(cl ? 'copie' : 'boussole') + '</span>' +
+        '<span><h3>' + esc(g.titre) + (pourMoi ? ' <span class="chip gold">ta classe</span>' : '') + '</h3><p>' + EM.md(g.resume || '') + '</p><p class="small" style="margin-top:6px">' + (g.sections || []).length + ' sections' +
+        (g.classes ? ' · ' + g.classes.map(function (c) { return esc(EM.programme.classes[c] ? EM.programme.classes[c].nom : c); }).join(', ') : cl ? ' · ' + esc(cl.nom) : '') + '</p></span></a>';
     }).join('') + '</div>';
     main.innerHTML = html;
   };
@@ -139,16 +141,26 @@
 
   /* =================== Grands noms des mathématiques =================== */
   EM.views.histoire = function (main, parts, query) {
-    var hs = EM.histoire || [];
+    var tous = EM.histoire || [];
     var P = EM.programme;
+    var regions = EM.util.uniq(tous.map(function (h) { return h.region; }).filter(Boolean));
+    var region = query.region && regions.indexOf(query.region) >= 0 ? query.region : '';
+    var hs = tous;
     var html = EM.ui.enTete('histoire', 'Ressources', 'Grands noms des mathématiques',
       'De l\'os d\'Ishango à l\'AIMS de Mbour : des femmes et des hommes, d\'Afrique et du monde entier, qui ont construit les mathématiques que tu apprends.');
+    if (regions.length) {
+      html += '<div class="row" style="margin-bottom:16px"><a class="chip' + (region ? '' : ' gold') + '" href="#/histoire">Toutes (' + tous.length + ')</a>' + regions.map(function (r) {
+        var n = tous.filter(function (h) { return h.region === r; }).length;
+        return '<a class="chip' + (region === r ? ' gold' : '') + '" href="#/histoire?region=' + encodeURIComponent(r) + '">' + esc(r) + ' (' + n + ')</a>';
+      }).join('') + '</div>';
+    }
     if (!hs.length) {
       html += '<div class="grid g2">' + (EM.afrique || []).map(function (f) {
         return '<div class="history"><h3>' + esc(f.titre) + '</h3><p>' + EM.md(f.texte) + '</p></div>';
       }).join('') + '</div>';
     } else {
       html += '<div class="grid g2">' + hs.map(function (h, i) {
+        if (region && h.region !== region) return '';
         return '<article class="portrait" id="p-' + i + '"' + (String(query.p) === String(i) ? ' style="border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)"' : '') + '>' +
           '<div class="portrait-head"><div class="monogramme">' + EM.motif('portrait:' + h.nom, { cols: 3, rows: 3, titre: '' }) + '<span>' + esc(EM.initiales(h.nom)) + '</span></div>' +
           '<div><h3>' + esc(h.nom) + '</h3><div class="meta">' + esc([h.epoque, h.lieu, h.domaine].filter(Boolean).join(' · ')) + '</div></div></div>' +

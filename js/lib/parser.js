@@ -305,6 +305,23 @@
     if (!s) return [];
     return s.split(/;|,(?!\d)/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length; });
   }
+  /** L'arbre est-il un produit (éventuellement précédé d'un signe moins) ? */
+  function isProduct(n) {
+    while (n.k === 'neg') n = n.a;
+    if (n.k === 'bin' && n.op === '*') return hasVar(n.a) || hasVar(n.b);
+    if (n.k === 'bin' && n.op === '^') return hasVar(n.a);
+    return false;
+  }
+  function hasVar(n) { return !!n && (n.k === 'var' || hasVar(n.a) || hasVar(n.b)); }
+  /** Contient-il un produit ou une puissance d'une somme contenant la variable (donc non développé) ? */
+  function hasExpandableProduct(n) {
+    if (!n) return false;
+    function isSum(m) { while (m.k === 'neg') m = m.a; return m.k === 'bin' && (m.op === '+' || m.op === '-') && hasVar(m); }
+    if (n.k === 'bin' && n.op === '*' && (isSum(n.a) || isSum(n.b))) return true;
+    if (n.k === 'bin' && n.op === '^' && isSum(n.a)) return true;
+    return hasExpandableProduct(n.a) || hasExpandableProduct(n.b);
+  }
+
   /** Retire une unité écrite après un nombre : « 25 m² », « 60 km/h », « 1 500 F CFA », « 75 min », « 12 % ». */
   var UNIT_RE = /(f\s*cfa|francs?(\s*cfa)?|f|km\/h|m\/s|[kh]?m²|da?m²|[cm]m²|ha|[cdm]?m³|cm³|mm³|km|hm|dam|dm|cm|mm|m|kg|hg|dag|dg|cg|mg|g|t|q|kl|hl|dal|dl|cl|ml|l|h|min|s|°|%|ans?|jours?|mois|heures?|minutes?|secondes?|personnes?|élèves?)$/i;
   function stripUnit(raw) {
@@ -339,6 +356,9 @@
           var v = q.variable || 'x';
           var fu = parse(raw, [v]);
           var fr = parse(q.reponse, [v]);
+          // forme imposée : « produit » (factorisation) ou « somme » (développement)
+          if (q.forme === 'produit' && !isProduct(fu.ast)) return { ok: false, msg: 'La réponse doit être une forme factorisée (un produit).' };
+          if (q.forme === 'somme' && hasExpandableProduct(fu.ast)) return { ok: false, msg: 'La réponse doit être développée (sans parenthèses à distribuer).' };
           var dom = q.domaine || [-3, 3];
           var good = 0;
           for (var i = 0; i < 12; i++) {

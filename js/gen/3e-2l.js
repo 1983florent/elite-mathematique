@@ -445,7 +445,7 @@
       }
       return {
         enonce: 'Développer, réduire et ordonner l\'expression : $$E = ' + E + '$$',
-        questions: [{ label: '$E =$', type: 'expr', reponse: pstr(res), reponseTex: ptex(res) }],
+        questions: [{ label: '$E =$', type: 'expr', forme: 'somme', reponse: pstr(res), reponseTex: ptex(res) }],
         indices: [
           'Rappel : $(a + b)^2 = a^2 + 2ab + b^2$ ; $(a - b)^2 = a^2 - 2ab + b^2$ ; $(a + b)(a - b) = a^2 - b^2$.',
           niveau === 1 ? 'Attention au double produit $2ab$ : on l\'oublie souvent.' : 'Développe chaque partie séparément, puis réduis. Devant une parenthèse précédée de « $-$ », change tous les signes.'
@@ -564,7 +564,7 @@
       }
       return {
         enonce: 'Factoriser l\'expression : $$E = ' + E + '$$',
-        questions: [{ label: '$E =$', type: 'expr', reponse: ansStr, reponseTex: ansTex }],
+        questions: [{ label: '$E =$', type: 'expr', forme: 'produit', reponse: ansStr, reponseTex: ansTex }],
         indices: [
           niveau === 1 ? 'Cherche le facteur commun aux deux termes.' : 'Cherche une identité remarquable : $A^2 - B^2$, $A^2 + 2AB + B^2$ ou $A^2 - 2AB + B^2$.',
           'Vérifie ta réponse en la développant : tu dois retrouver $E$.'
@@ -1252,7 +1252,7 @@
       var pos = (N + 1) / 2, iMed = 0;
       while (ecc[iMed] < pos) iMed++;
       var tab = tableau([[ctx.c].concat(vals.map(String)), ['Effectif'].concat(eff.map(String))]);
-      var solMoy = 'Moyenne : $\\bar{x} = \\dfrac{' + vals.map(function (v, i) { return v + ' \\times ' + eff[i]; }).join(' + ') + '}{' + N + '} = \\dfrac{' + S + '}{' + N + '}' +
+      var solMoy = 'Moyenne : $\\bar{x} = \\dfrac{' + vals.map(function (v, i) { return v + ' \\times ' + eff[i]; }).join(' + ') + '}{' + N + '} = \\dfrac{' + T.num(S) + '}{' + N + '}' +
         (exact ? ' = ' + T.num(moy.value()) : ' \\approx ' + T.num(ar.round(moy.value(), 2))) + '$.';
       var qs, sol, enonce = ctx.t + tab;
       if (niveau === 1) {
@@ -1678,7 +1678,12 @@
       if (niveau <= 2) {
         var alpha = 2 * rng.int(20, 80), beta = alpha / 2;
         var phiA = rng.int(190, 250), phiB = phiA + alpha;
-        var tM = 0.3 + 0.15 * rng.next(), phiM = phiB + (360 - alpha) * tM, phiN = phiB + (360 - alpha) * (tM + 0.3 + 0.1 * rng.next());
+        // M (et N) sur le grand arc, loin des points diamétralement opposés à A et B (figure plus lisible)
+        var t0 = (180 - alpha) / (360 - alpha), t1 = 180 / (360 - alpha), tM, tN, gd = 0;
+        do { tM = 0.2 + 0.25 * rng.next(); tN = 0.55 + 0.25 * rng.next(); }
+        while ((Math.abs(tM - t0) < 0.07 || Math.abs(tM - t1) < 0.07 || Math.abs(tN - t0) < 0.07 || Math.abs(tN - t1) < 0.07) && gd++ < 100);
+        if (rng.bool()) { var tt = tM; tM = tN; tN = tt; }
+        var phiM = phiB + (360 - alpha) * tM, phiN = phiB + (360 - alpha) * tN;
         var pA = P(phiA), pB = P(phiB), pM = P(phiM), pN = P(phiN);
         fg.seg(O, pA, { accent: true }).seg(O, pB, { accent: true }).seg(pM, pA).seg(pM, pB);
         if (niveau === 2) fg.seg(pN, pA, { dash: true }).seg(pN, pB, { dash: true }).seg(pA, pB);

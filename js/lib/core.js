@@ -151,11 +151,13 @@
   Frac.prototype.equals = function (o) { o = F(o); return this.n === o.n && this.d === o.d; };
   Frac.prototype.cmp = function (o) { o = F(o); return this.n * o.d - o.n * this.d; };
   /** Écriture TeX : -\dfrac{3}{4} ou 5 */
+  /** Entier avec séparateur de milliers pour TeX : 6\,480\,000 */
+  function grp(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\\,'); }
   Frac.prototype.tex = function (opt) {
     opt = opt || {};
-    if (this.d === 1) return String(this.n);
+    if (this.d === 1) return (this.n < 0 ? '-' : '') + grp(Math.abs(this.n));
     var cmd = opt.small ? '\\frac' : '\\dfrac';
-    return (this.n < 0 ? '-' : '') + cmd + '{' + Math.abs(this.n) + '}{' + this.d + '}';
+    return (this.n < 0 ? '-' : '') + cmd + '{' + grp(Math.abs(this.n)) + '}{' + grp(this.d) + '}';
   };
   /** Écriture texte : -3/4 */
   Frac.prototype.toString = function () { return this.d === 1 ? String(this.n) : this.n + '/' + this.d; };

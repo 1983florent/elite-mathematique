@@ -343,6 +343,17 @@ table.t { border-collapse: collapse; width: 100%; font-size: .93rem; }
 table.t th, table.t td { border: 1px solid var(--border); padding: 7px 9px; text-align: center; }
 table.t th { background: var(--surface-2); }
 
+/* tableaux insérés dans les énoncés, cours et corrections */
+table.em-tableau, table.em-table, .exo-statement table, .bloc table, .solution table, .senegal table, .sheet-ex table, .method table {
+  display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 8px 0; font-size: .93rem;
+}
+table.em-tableau th, table.em-tableau td, table.em-table th, table.em-table td, .exo-statement table td, .exo-statement table th,
+.bloc table td, .bloc table th, .solution table td, .solution table th, .senegal table td, .senegal table th, .sheet-ex table td, .sheet-ex table th,
+.method table td, .method table th {
+  border: 1px solid var(--border); padding: 6px 9px; text-align: center; white-space: nowrap;
+}
+table.em-tableau th, table.em-table th, .exo-statement table th, .bloc table th, .solution table th, .senegal table th { background: var(--surface-2); }
+
 /* ---------- formulaires ---------- */
 label.field { display: grid; gap: 4px; font-size: .9rem; font-weight: 600; }
 .field input, .field select, .field textarea, input.inp, select.inp, textarea.inp {

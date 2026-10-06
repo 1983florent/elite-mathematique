@@ -78,6 +78,8 @@ Types de questions :
 | `interval` | `{ a, b, ouvA, ouvB }` | `]-∞ ; 3]` |
 
 `reponseTex` (facultatif) fixe l'écriture de la réponse dans la correction.
+Pour le type `expr`, `forme: 'produit'` exige une forme factorisée et `forme: 'somme'` une forme développée
+(sinon toute expression égale serait acceptée). Le type `number` accepte une unité après le nombre (« 25 m² », « 1 500 F CFA »).
 
 Outils utiles : `rng.int(a, b)`, `rng.nz(a, b)` (non nul), `rng.pick(tab)`, `rng.shuffle(tab)`, `rng.dec(a, b, d)` ;
 `EM.T.num(x)` (écriture française), `EM.T.poly([a, b, c])`, `EM.T.mono(c, 'x', premier)`, `EM.T.signed(x)`,

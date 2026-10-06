@@ -92,7 +92,8 @@
 
     var tools = '<div class="row no-print" style="margin-bottom:14px"><a class="btn ghost sm" href="#/enseignant?classe=' + esc(query.c || '') + '">← Modifier</a>' +
       (eleve ? '<a class="btn ghost sm" href="' + esc(lien.replace(location.href.split('#')[0], '')) + '">Version papier</a>'
-        : '<button class="btn sm" data-act="print">🖨️ Imprimer / PDF</button><button class="btn sm ghost" data-act="lien">🔗 Copier le lien élève</button>' +
+        : (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm" data-act="print">🖨️ Imprimer / PDF</button>') +
+          (EM.MODE_EN_LIGNE ? '' : '<button class="btn sm ghost" data-act="lien">🔗 Copier le lien élève</button>') +
           '<a class="btn sm ghost" href="' + esc(lienEleve.replace(location.href.split('#')[0], '')) + '">📱 Version interactive</a>') + '</div>';
 
     if (!eleve) {
@@ -102,11 +103,11 @@
           exos.map(function (x, i) { return EM.ui.correctionPapier(x.ex, i + 1); }).join('');
       }
       main.innerHTML = html + '</div>';
-      main.querySelector('[data-act="print"]').addEventListener('click', function () {
+      if (main.querySelector('[data-act="print"]')) main.querySelector('[data-act="print"]').addEventListener('click', function () {
         if (window.AndroidBridge && window.AndroidBridge.imprimer) window.AndroidBridge.imprimer((query.t || 'Fiche') + ' ' + query.s);
         else window.print();
       });
-      main.querySelector('[data-act="lien"]').addEventListener('click', function () { EM.ui.copy(lienEleve, 'Lien élève copié : partagez-le à la classe'); });
+      if (main.querySelector('[data-act="lien"]')) main.querySelector('[data-act="lien"]').addEventListener('click', function () { EM.ui.copy(lienEleve, 'Lien élève copié : partagez-le à la classe'); });
       return;
     }
 

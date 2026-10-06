@@ -51,6 +51,18 @@
     if (e.key === 'Escape' && !document.getElementById('modal').hidden) ui.closeModal();
   });
 
+  /**
+   * Demande une confirmation dans une fenêtre de la page (les boîtes confirm() du navigateur
+   * sont bloquées dans certains contextes et peu lisibles sur téléphone).
+   */
+  ui.confirmer = function (titre, message, libelleOui, onOui, danger) {
+    ui.modal(esc(titre), '<p>' + esc(message) + '</p><div class="row" style="justify-content:flex-end">' +
+      '<button class="btn ghost" data-close>Annuler</button><button class="btn ' + (danger ? 'danger' : 'gold') + '" data-oui>' + esc(libelleOui) + '</button></div>',
+    function (body) {
+      body.querySelector('[data-oui]').addEventListener('click', function () { ui.closeModal(); onOui(); });
+    });
+  };
+
   /** Copie un texte dans le presse-papiers (avec repli). */
   ui.copy = function (txt, msg) {
     function fallback() {

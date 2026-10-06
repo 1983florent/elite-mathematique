@@ -69,7 +69,7 @@
         }).join('') + '</table></div></div>';
     }
 
-    html += '<div class="card"><h2>Sauvegarde</h2><p class="small muted">Exporte ta progression pour la garder ou la transférer sur un autre appareil (par exemple par WhatsApp ou Bluetooth), puis importe le fichier. Dans l'application Android, l'export ouvre le menu de partage : enregistre le texte reçu dans un fichier .json pour l'importer.</p>' +
+    html += '<div class="card"><h2>Sauvegarde</h2><p class="small muted">Exporte ta progression pour la garder ou la transférer sur un autre appareil (par exemple par WhatsApp ou Bluetooth), puis importe le fichier. Dans l\'application Android, l\'export ouvre le menu de partage : enregistre le texte reçu dans un fichier .json pour l\'importer.</p>' +
       '<div class="row"><button class="btn" data-act="export">⬇️ Exporter</button><label class="btn ghost" style="cursor:pointer">⬆️ Importer<input type="file" accept="application/json,.json" data-act="import" hidden></label>' +
       '<button class="btn danger" data-act="reset">Tout effacer</button></div></div>';
     main.innerHTML = html;
@@ -79,6 +79,17 @@
       if (window.AndroidBridge && window.AndroidBridge.partager) {
         // dans l'application Android : on partage le fichier de progression (WhatsApp, Bluetooth, e-mail…)
         window.AndroidBridge.partager(S.exporter(), 'Progression ELITE MATHÉMATIQUE');
+        return;
+      }
+      if (EM.MODE_EN_LIGNE) {
+        // page en ligne : pas de téléchargement possible, on affiche le texte à copier
+        EM.ui.modal('Exporter ma progression', '<p class="small muted">Copie ce texte et garde-le dans un fichier .json (ou envoie-le-toi par WhatsApp) pour l\'importer ailleurs.</p>' +
+          '<textarea class="inp" id="exp-txt" readonly style="min-height:180px;font-family:monospace;font-size:.8rem"></textarea>' +
+          '<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" data-copier>Copier</button></div>', function (body) {
+          var ta = body.querySelector('#exp-txt');
+          ta.value = S.exporter();
+          body.querySelector('[data-copier]').addEventListener('click', function () { ta.select(); EM.ui.copy(ta.value, 'Progression copiée'); });
+        });
         return;
       }
       var blob = new Blob([S.exporter()], { type: 'application/json' });
@@ -98,7 +109,7 @@
       rd.readAsText(f);
     });
     main.querySelector('[data-act="reset"]').addEventListener('click', function () {
-      if (confirm('Effacer toute ta progression ? Cette action est définitive.')) { S.reinitialiser(); EM.route(); }
+      EM.ui.confirmer('Tout effacer ?', 'Toute ta progression (points, badges, maîtrise, examens) sera supprimée de cet appareil. Cette action est définitive.', 'Tout effacer', function () { S.reinitialiser(); EM.route(); }, true);
     });
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -180,6 +180,22 @@ Object.keys(EM.contenu).forEach(function (id) {
 });
 if (missing.length) (STRICT ? errors : warnings).push(missing.length + ' chapitre(s) sans contenu : ' + missing.join(', '));
 
+/* ---------- syntaxe de tous les fichiers JavaScript (vues et outils compris) ---------- */
+(function () {
+  var vm = require('vm');
+  (function walk(rel) {
+    fs.readdirSync(path.join(ROOT, rel)).forEach(function (f) {
+      var r = rel + '/' + f, abs = path.join(ROOT, r);
+      if (fs.statSync(abs).isDirectory()) return walk(r);
+      if (!/\.js$/.test(f)) return;
+      try { new vm.Script(fs.readFileSync(abs, 'utf8'), { filename: r }); }
+      catch (e) { errors.push('[syntaxe] ' + r + ' : ' + e.message); }
+    });
+  })('js');
+  try { new vm.Script(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8'), { filename: 'sw.js' }); }
+  catch (e) { errors.push('[syntaxe] sw.js : ' + e.message); }
+})();
+
 /* ---------- cohérence index.html / service worker / fichiers ---------- */
 (function () {
   var html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');

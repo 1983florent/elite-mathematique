@@ -60,6 +60,7 @@
       var b = e.target.closest('[data-lv]');
       if (b) EM.go('#/exo/' + g.id + '?n=' + b.getAttribute('data-lv') + '&s=' + newSeed() + (query.ch ? '&ch=' + query.ch : ''));
       if (e.target.closest('[data-act="share"]')) {
+        if (EM.MODE_EN_LIGNE) { EM.ui.copy(code, 'Code copié : ' + code); return; }
         var url = location.href.split('#')[0] + '#/exo/' + g.id + '?n=' + niveau + '&s=' + seed;
         EM.ui.copy(url, 'Lien de l\'exercice copié : envoie-le à tes camarades !');
       }

@@ -157,10 +157,14 @@
     document.getElementById('btn-classe').addEventListener('click', function () { EM.choisirClasse(); });
     document.getElementById('btn-theme').addEventListener('click', toggleTheme);
     document.getElementById('btn-recherche').addEventListener('click', function () { EM.go('#/recherche'); });
-    window.addEventListener('hashchange', route);
+    window.addEventListener('hashchange', function () {
+      // une ancre simple (#main, lien d'évitement) n'est pas une page : on ne change pas de vue
+      if (location.hash && location.hash.indexOf('#/') !== 0) return;
+      route();
+    });
     route();
     // mode hors ligne (seulement en http/https)
-    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !EM.MODE_EN_LIGNE) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* pas grave */ });
     }
   }

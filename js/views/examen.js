@@ -193,7 +193,7 @@
       }
       main.addEventListener('click', function (ev) {
         if (ev.target.closest('[data-act="rendre"]')) {
-          if (confirm('Rendre ta copie maintenant ? Tu ne pourras plus modifier tes réponses.')) rendre(false);
+          EM.ui.confirmer('Rendre ta copie ?', 'Tu ne pourras plus modifier tes réponses. La correction s\'affichera sous chaque exercice.', 'Rendre ma copie', function () { rendre(); });
         }
       });
 

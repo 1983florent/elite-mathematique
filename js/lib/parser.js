@@ -301,9 +301,29 @@
   }
   /** Découpe « 2 ; -3 » ou « {2 ; -3} » ; la virgule sert de séparateur si elle n'est pas décimale. */
   function splitList(s) {
-    s = normalize(s).replace(/^[{(\[]\s*/, '').replace(/\s*[})\]]$/, '');
+    s = normalize(s).trim();
+    // on retire les délimiteurs extérieurs seulement s'ils entourent toute la saisie : « (1 ; 2) », « {a ; b} »
+    var open = { '(': ')', '{': '}', '[': ']' };
+    if (open[s[0]]) {
+      var depth = 0, closeAt = -1;
+      for (var i = 0; i < s.length; i++) {
+        if ('({['.indexOf(s[i]) >= 0) depth++;
+        else if (')}]'.indexOf(s[i]) >= 0) { depth--; if (depth === 0) { closeAt = i; break; } }
+      }
+      if (closeAt === s.length - 1) s = s.slice(1, -1).trim();
+    }
     if (!s) return [];
-    return s.split(/;|,(?!\d)/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length; });
+    var out = [], cur = '', d = 0;
+    for (var j = 0; j < s.length; j++) {
+      var c = s[j];
+      if ('({['.indexOf(c) >= 0) d++;
+      if (')}]'.indexOf(c) >= 0) d--;
+      // séparateurs : « ; » toujours, « , » seulement hors parenthèses et si ce n'est pas une virgule décimale
+      if (d === 0 && (c === ';' || (c === ',' && !/\d/.test(s[j + 1] || '')))) { out.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    out.push(cur);
+    return out.map(function (x) { return x.trim(); }).filter(function (x) { return x.length; });
   }
   /** L'arbre est-il un produit (éventuellement précédé d'un signe moins) ? */
   function isProduct(n) {
@@ -323,7 +343,7 @@
   }
 
   /** Retire une unité écrite après un nombre : « 25 m² », « 60 km/h », « 1 500 F CFA », « 75 min », « 12 % ». */
-  var UNIT_RE = /(f\s*cfa|francs?(\s*cfa)?|f|km\/h|m\/s|[kh]?m²|da?m²|[cm]m²|ha|[cdm]?m³|cm³|mm³|km|hm|dam|dm|cm|mm|m|kg|hg|dag|dg|cg|mg|g|t|q|kl|hl|dal|dl|cl|ml|l|h|min|s|°|%|ans?|jours?|mois|heures?|minutes?|secondes?|personnes?|élèves?)$/i;
+  var UNIT_RE = /(f\s*cfa|francs?(\s*cfa)?|f|km\/h|m\/s|[kh]?m²|da?m²|[cm]m²|ha|[cdm]?m³|cm³|mm³|km|hm|dam|dm|cm|mm|m|kg|hg|dag|dg|cg|mg|g|t|q|kl|hl|dal|dl|cl|ml|l|h|min|s|°|%|u\.\s*a\.?|ua|ans?|jours?|mois|heures?|minutes?|secondes?|personnes?|élèves?)$/i;
   function stripUnit(raw) {
     var s = String(raw).trim();
     for (var i = 0; i < 2; i++) {
@@ -333,7 +353,8 @@
     }
     return s.replace(/\s/g, '');
   }
-  EM.parser && (EM.parser.stripUnit = stripUnit);
+  EM.parser.stripUnit = stripUnit;
+  EM.parser.splitList = function (str) { return splitList(str); };
 
   var EMPTY_WORDS =['∅', 'ø', 'vide', 'aucune', 'aucun', 'pas de solution', 'ensemble vide', '{}', 'aucune solution'];
 
@@ -409,12 +430,28 @@
   }
 
   function checkInterval(q, raw) {
-    var s = normalize(raw).replace(/\s/g, '');
-    var m = /^([\[\]])(.+?);(.+?)([\[\]])$/.exec(s);
-    if (!m) return { ok: false, msg: 'Écris un intervalle comme ]-inf ; 3] ou [2 ; 5[.' };
+    var s = normalize(raw).replace(/\s/g, '').replace(/≤|=</g, '<=').replace(/≥|=>/g, '>=');
     var r = q.reponse;
-    var a = evalNum(m[2]), b = evalNum(m[3]);
-    var openA = m[1] === ']', openB = m[4] === '[';
+    var a, b, openA, openB;
+    // on accepte aussi une inégalité : x < 3, x >= -1/2, 2 < x, -1 <= x < 4
+    var ineq = /^(?:(.+?)(<=|<))?x(<=|<|>=|>)(.+)$/.exec(s) || /^(.+?)(<=|<|>=|>)x$/.exec(s);
+    if (ineq && /x/.test(s) && !/[\[\]]/.test(s)) {
+      if (/^(.+?)(<=|<|>=|>)x$/.test(s) && !/x(<=|<|>=|>)/.test(s)) {
+        var m2 = /^(.+?)(<=|<|>=|>)x$/.exec(s), v2 = evalNum(m2[1]);
+        // « 3 > x » équivaut à « x < 3 »
+        if (m2[2][0] === '<') { a = v2; openA = m2[2] === '<'; b = Infinity; openB = true; }
+        else { a = -Infinity; openA = true; b = v2; openB = m2[2] === '>'; }
+      } else {
+        var lo = ineq[1] != null ? evalNum(ineq[1]) : null, op1 = ineq[2], op2 = ineq[3], v = evalNum(ineq[4]);
+        if (op2[0] === '<') { b = v; openB = op2 === '<'; a = lo == null ? -Infinity : lo; openA = lo == null ? true : op1 === '<'; }
+        else { if (lo != null) return { ok: false, msg: 'Inégalité mal écrite.' }; a = v; openA = op2 === '>'; b = Infinity; openB = true; }
+      }
+    } else {
+      var m = /^([\[\]])(.+?);(.+?)([\[\]])$/.exec(s);
+      if (!m) return { ok: false, msg: 'Écris un intervalle comme ]-inf ; 3] ou [2 ; 5[, ou une inégalité comme x < 3.' };
+      a = evalNum(m[2]); b = evalNum(m[3]);
+      openA = m[1] === ']'; openB = m[4] === '[';
+    }
     var okA = (r.a === -Infinity ? a === -Infinity : close(a, toNumber(r.a), q.tol) && openA === !!r.ouvA);
     var okB = (r.b === Infinity ? b === Infinity : close(b, toNumber(r.b), q.tol) && openB === !!r.ouvB);
     return { ok: okA && okB };

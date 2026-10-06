@@ -93,8 +93,7 @@
       if (q.type === 'set' || q.type === 'tuple') {
         var low = raw.toLowerCase();
         if (q.type === 'set' && /^(∅|ø|vide|aucune?( solution)?|\{\s*\})$/.test(low)) return EM.render.tex('\\varnothing');
-        var parts = EM.parser.normalize(raw).replace(/^[{(\[]\s*/, '').replace(/\s*[})\]]$/, '')
-          .split(/;|,(?!\d)/).map(function (s) { return s.trim(); }).filter(Boolean);
+        var parts = EM.parser.splitList(raw);
         var texs = parts.map(function (s) { return EM.parser.parse(s, []).tex(); });
         return EM.render.tex(q.type === 'set' ? '\\left\\{ ' + texs.join(' \\,;\\, ') + ' \\right\\}' : '\\left(' + texs.join(' \\,;\\, ') + '\\right)');
       }

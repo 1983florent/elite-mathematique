@@ -1828,7 +1828,7 @@
       var fAl = '\\' + fn + '\\left(' + aT + '\\right)';
       var fam2 = fn === 'cos' ? piTex(U(-alpha)) : alpha === 0 ? '\\pi' : '\\pi - ' + (alpha < 0 ? '\\left(' + aT + '\\right)' : aT);
       steps.push('$' + valT + ' = ' + fAl + '$, donc $' + fArg + ' = ' + fAl + ' \\iff ' + lhsArg + ' = ' + (alpha === 0 ? '2k\\pi' : aT + ' + 2k\\pi') + (thetas.length > 1 ? '$ ou $' + lhsArg + ' = ' + fam2 + ' + 2k\\pi' : '') + '$, $k \\in \\Z$.');
-      if (!(fn === 'cos' && lhsArg === 'x')) steps.push('Donc $x = ' + famT.join('$ ou $x = ') + '$ ($k \\in \\Z$).');
+      if (!(lhsArg === 'x' && (fn === 'cos' || thetas.length === 1))) steps.push('Donc $x = ' + famT.join('$ ou $x = ') + '$ ($k \\in \\Z$).');
       var solT = sols.map(function (X) { return piTex(U(X)); });
       steps.push('On donne à $k$ des valeurs entières et on garde les solutions de $]-\\pi \\,;\\, \\pi]$ : $S = ' + T.set(solT) + '$.');
       return {

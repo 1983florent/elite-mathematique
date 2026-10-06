@@ -70,9 +70,9 @@
   }
   /** Tableau HTML simple : lignes = [[en-tête, v1, v2…], …] (cellules en HTML/TeX). */
   function tableau(lignes) {
-    return '<table class="em-table"><tbody>' + lignes.map(function (l) {
+    return '<div class="table-wrap"><table class="t"><tbody>' + lignes.map(function (l) {
       return '<tr>' + l.map(function (c, j) { return j === 0 ? '<th>' + c + '</th>' : '<td>' + c + '</td>'; }).join('') + '</tr>';
-    }).join('') + '</tbody></table>';
+    }).join('') + '</tbody></table></div>';
   }
   function deg(x) { return x * Math.PI / 180; }
   /** Élision : « de Awa » -> « d'Awa », « que Ousmane » -> « qu'Ousmane ». */

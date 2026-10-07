@@ -24,16 +24,14 @@ d'applications de « sources inconnues » si Android le demande.
 ## Publier sur le Play Store
 
 L'APK automatique est signé avec une clé de débogage commune (`app/debug.keystore`, non secrète), ce qui permet
-d'installer les mises à jour par-dessus l'ancienne version. Pour le Play Store, il faut :
-
-1. créer une clé de publication **privée** (à ne jamais publier) :
-   `keytool -genkeypair -keystore publication.jks -alias elite -keyalg RSA -keysize 2048 -validity 10000` ;
-2. compiler un *Android App Bundle* signé : Android Studio → *Build → Generate Signed Bundle / APK* ;
-3. déposer le fichier `.aab` dans la Google Play Console.
+d'installer les mises à jour par-dessus l'ancienne version. Pour le Play Store, GitHub Actions produit aussi un
+**App Bundle** (`.aab`) signé avec la clé d'envoi privée, fournie par les secrets du dépôt.
+Toutes les étapes (compte, secrets, fiche, tests, publication) : [docs/PLAY-STORE.md](../docs/PLAY-STORE.md).
 
 ## Fonctions propres à Android
 
-- Bouton retour du téléphone : revient à la page précédente du logiciel.
+- Bouton ou geste « retour » : revient à la page précédente du logiciel (retour prédictif d'Android 13 et plus).
+- Affichage bord à bord (Android 15 et plus) : le contenu s'écarte des barres système et du clavier.
 - Liens WhatsApp et e-mail : ouverts dans les applications correspondantes.
 - Fiches enseignant : impression ou enregistrement en PDF (A4).
 - Progression : export par le menu de partage, import par le sélecteur de fichiers.

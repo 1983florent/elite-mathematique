@@ -42,6 +42,8 @@ GitHub Actions la compile automatiquement à chaque mise à jour, après avoir l
 sur la branche principale, l'APK est publié ici :
 https://github.com/1983florent/elite-mathematique/releases/download/android/elite-mathematique.apk
 
+Pour publier sur le **Google Play Store** : [docs/PLAY-STORE.md](docs/PLAY-STORE.md) (textes et visuels de la fiche dans [`play-store/`](play-store/fiche.md)).
+
 ## Utilisation
 
 - **En ligne** : le workflow « Site web » publie le logiciel sur GitHub Pages à chaque mise à jour de `main`

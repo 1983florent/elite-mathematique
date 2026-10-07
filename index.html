@@ -2,63 +2,100 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELITE MATHEMATIQUE</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; color: #333; }
-    header { background: #1e2a78; color: white; padding: 20px; text-align: center; }
-    .logo { max-width: 150px; margin: 10px auto; display: block; }
-    section { padding: 20px; max-width: 900px; margin: auto; background: white; margin-top: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h2 { color: #1e2a78; }
-    .don { background: #fff8e1; padding: 15px; border-left: 5px solid #fbc02d; margin-top: 10px; }
-    footer { text-align: center; padding: 20px; background: #1e2a78; color: white; margin-top: 20px; }
-    .btn { display: inline-block; padding: 10px 20px; background: #1e2a78; color: white; border-radius: 5px; text-decoration: none; margin: 10px 5px; }
-    .qr { text-align: center; margin-top: 10px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ELITE MATHÉMATIQUE — Le programme sénégalais de mathématiques</title>
+  <meta name="description" content="Cours, exercices corrigés à l'infini, examens blancs BFEM et BAC, outils de calcul : tout le programme sénégalais de mathématiques, du CM2 à la Terminale, même sans connexion.">
+  <meta name="theme-color" content="#121a52">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="preload" href="vendor/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/lexend.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // thème choisi avant l'affichage (évite un flash)
+    try { var th = localStorage.getItem('em.theme'); if (th) document.documentElement.setAttribute('data-theme', th); } catch (e) {}
+  </script>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="ELITE MATHEMATIQUE" class="logo">
-    <h1>ELITE MATHEMATIQUE</h1>
-    <p>L'application mathématique la plus complète d'Afrique</p>
-  </header>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation principale"></aside>
+    <div class="main-col">
+      <header class="topbar">
+        <div class="topbar-in">
+          <a class="brand" href="#/" aria-label="Accueil ELITE MATHÉMATIQUE">
+            <img src="icons/logo.svg" alt="" width="32" height="32">
+            <span class="brand-name">ELITE<span>MATHÉMATIQUE</span></span>
+          </a>
+          <div class="topbar-actions">
+            <button class="chip-classe" id="btn-classe" type="button" aria-label="Changer de classe">Ma classe</button>
+            <button class="icon-btn" id="btn-recherche" type="button" aria-label="Rechercher" title="Rechercher"></button>
+            <button class="icon-btn" id="btn-theme" type="button" aria-label="Changer de thème" title="Mode clair ou sombre"></button>
+          </div>
+        </div>
+        <div class="flag-stripe" aria-hidden="true"><span></span><span></span><span></span></div>
+      </header>
 
-  <section>
-    <h2>✨ Fonctionnalités Clés</h2>
-    <ul>
-      <li>Graphiques 2D & 3D dynamiques</li>
-      <li>Calculs symboliques et numériques</li>
-      <li>Algèbre, Analyse, Topologie, Statistiques</li>
-      <li>IA mathématique, solveurs avancés</li>
-      <li>Manuels PDF intégrés</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>📥 Télécharger l'application</h2>
-    <p>Disponible sur Android :</p>
-    <a href="#" class="btn">Télécharger sur le Play Store</a>
-    <a href="#" class="btn">Télécharger l'APK directe</a>
-  </section>
-
-  <section>
-    <h2>💖 Soutenir le projet</h2>
-    <div class="don">
-      <p><strong>Numéro Wave / Orange Money :</strong> (+221) 70 601 31 69</p>
-      <p><strong>Email :</strong> maths.florent@gmail.com</p>
-      <div class="qr">
-        <p>Scanner le QR Code :</p>
-        <img src="qr-code.png" alt="QR Code Wave" style="max-width:150px;">
-      </div>
-      <p>
-        <a href="#" class="btn">Copier le numéro</a>
-        <a href="mailto:maths.florent@gmail.com" class="btn">Envoyer un message</a>
-      </p>
+      <main id="main" tabindex="-1">
+        <noscript>
+          <div class="card"><p>ELITE MATHÉMATIQUE a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></div>
+        </noscript>
+        <div class="card loading">Chargement…</div>
+      </main>
     </div>
-  </section>
+  </div>
 
-  <footer>
-    <p>&copy; 2025 ELITE MATHEMATIQUE - Tous droits réservés</p>
-  </footer>
+  <nav class="bottomnav" id="bottomnav" aria-label="Navigation"></nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modal" class="modal" hidden></div>
+
+  <!-- Bibliothèques -->
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="js/lib/core.js"></script>
+  <script src="js/lib/parser.js"></script>
+  <script src="js/lib/render.js"></script>
+  <script src="js/lib/figures.js"></script>
+  <script src="js/lib/icons.js"></script>
+  <script src="js/lib/motif.js"></script>
+  <!-- Programme et contenus -->
+  <script src="js/data/programme.js"></script>
+  <script src="js/data/contenu-cm2-6e.js"></script>
+  <script src="js/data/contenu-5e-4e.js"></script>
+  <script src="js/data/contenu-3e-2l.js"></script>
+  <script src="js/data/contenu-2s-1l.js"></script>
+  <script src="js/data/contenu-1s.js"></script>
+  <script src="js/data/contenu-tle.js"></script>
+  <script src="js/data/afrique.js"></script>
+  <script src="js/data/guides.js"></script>
+  <script src="js/data/histoire.js"></script>
+  <!-- Générateurs d'exercices -->
+  <script src="js/gen/00-reference.js"></script>
+  <script src="js/gen/cm2-6e.js"></script>
+  <script src="js/gen/5e-4e.js"></script>
+  <script src="js/gen/3e-2l.js"></script>
+  <script src="js/gen/2s-1l.js"></script>
+  <script src="js/gen/1s.js"></script>
+  <script src="js/gen/tle.js"></script>
+  <script src="js/gen/plus-college.js"></script>
+  <script src="js/gen/plus-lycee.js"></script>
+  <script src="js/gen/missions.js"></script>
+  <script src="js/demos.js"></script>
+  <!-- Application -->
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/views/accueil.js"></script>
+  <script src="js/views/programme.js"></script>
+  <script src="js/views/exercice.js"></script>
+  <script src="js/views/examen.js"></script>
+  <script src="js/views/revision.js"></script>
+  <script src="js/views/progres.js"></script>
+  <script src="js/views/enseignant.js"></script>
+  <script src="js/views/decouvrir.js"></script>
+  <script src="js/tools/grapheur.js"></script>
+  <script src="js/tools/outils.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,36 @@
+ELITE MATHÉMATIQUE — version web installable (PWA)
+==================================================
+
+Ce dossier contient tout le logiciel : cours, exercices, missions, démonstrations, examens blancs, laboratoire.
+Il fonctionne sans connexion une fois ouvert, sans compte et sans publicité.
+
+
+1. L'UTILISER TOUT DE SUITE, SUR UN ORDINATEUR
+   Décompresser le dossier, puis double-cliquer sur index.html.
+   (Tout fonctionne, mais ce mode ne s'installe pas comme une application.)
+
+
+2. L'INSTALLER COMME UNE APPLICATION (téléphone, tablette, ordinateur)
+   Une PWA doit être servie par un site en https. Trois façons simples :
+
+   a) GitHub Pages (déjà prévu dans le dépôt elite-mathematique)
+      Fusionner la branche dans « main », puis GitHub → Settings → Pages → Source : « GitHub Actions ».
+      Adresse : https://1983florent.github.io/elite-mathematique/
+
+   b) Netlify Drop (gratuit, sans configuration)
+      Ouvrir https://app.netlify.com/drop et y glisser le dossier elite-mathematique-pwa.
+      Netlify donne une adresse en https.
+
+   c) N'importe quel hébergement web en https : copier le contenu du dossier à la racine du site.
+
+   Ensuite, sur le téléphone : ouvrir l'adresse dans Chrome → menu ⋮ → « Installer l'application ».
+   Sur ordinateur : icône d'installation dans la barre d'adresse de Chrome ou d'Edge.
+   Après la première ouverture, l'application marche sans connexion.
+
+
+3. RACCOURCIS
+   Un appui long sur l'icône installée propose : Missions Sénégal, Examens blancs, Défi du jour, Calcul mental.
+
+
+Confidentialité : aucune donnée n'est collectée ; la progression reste sur l'appareil (voir confidentialite.html).
+Contact : maths.florent@gmail.com

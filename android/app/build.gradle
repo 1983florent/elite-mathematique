@@ -1,0 +1,71 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'sn.elitemathematique.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'sn.elitemathematique.app'
+        minSdk 21
+        // Le Play Store exige de cibler Android 16 (API 36) depuis le 31 août 2026.
+        targetSdk 36
+        // Le Play Store refuse un envoi dont le numéro de version n'augmente pas :
+        // sur GitHub Actions, il suit le numéro d'exécution du workflow.
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '0').toInteger() + 100)
+        versionName '2.0'
+    }
+
+    signingConfigs {
+        // Clé de débogage commune (non secrète) : chaque APK produit par GitHub Actions
+        // porte la même signature, ce qui permet de mettre à jour l'application installée.
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        // Clé d'envoi Play Store : fournie par GitHub Actions à partir des secrets du dépôt,
+        // jamais enregistrée dans le dépôt (voir docs/PLAY-STORE.md).
+        if (System.getenv('ANDROID_UPLOAD_KEYSTORE')) {
+            envoi {
+                storeFile file(System.getenv('ANDROID_UPLOAD_KEYSTORE'))
+                storePassword System.getenv('ANDROID_UPLOAD_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled false
+            if (System.getenv('ANDROID_UPLOAD_KEYSTORE')) {
+                signingConfig signingConfigs.envoi
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Copie le logiciel web (racine du dépôt) dans les ressources de l'application.
+def webRoot = rootProject.file('..')
+def webAssets = file('src/main/assets/www')
+tasks.register('copierLogicielWeb', Sync) {
+    description = 'Copie index.html, css, js, vendor, icons et le manifeste dans les assets Android.'
+    from(webRoot) {
+        include 'index.html', 'manifest.webmanifest', 'confidentialite.html'
+        include 'css/**', 'js/**', 'vendor/**', 'icons/**'
+        exclude 'icons/apercu/**'
+    }
+    into webAssets
+}
+tasks.named('preBuild').configure { dependsOn 'copierLogicielWeb' }

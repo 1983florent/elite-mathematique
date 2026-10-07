@@ -1,0 +1,120 @@
+# Compile l'application Android à chaque mise à jour :
+# - l'APK (installation directe) et la PWA (zip du site installable), téléchargeables dans l'onglet
+#   « Actions » (rubrique Artifacts) et publiés dans la release « Application Android »
+#   à chaque mise à jour de la branche principale, ou en lançant le workflow à la main (Run workflow) ;
+# - l'App Bundle (.aab) pour le Play Store, signé avec la clé d'envoi si les secrets
+#   ANDROID_UPLOAD_* sont définis dans le dépôt (voir docs/PLAY-STORE.md).
+name: Application Android
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Tests et APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Banc de tests du logiciel
+        run: node tests/run.js --seeds 40
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compiler l'APK et l'App Bundle (Play Store)
+        working-directory: android
+        env:
+          CLE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ -n "$CLE_BASE64" ]; then
+            printf '%s' "$CLE_BASE64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/envoi.jks"
+            export ANDROID_UPLOAD_KEYSTORE="$RUNNER_TEMP/envoi.jks"
+            AAB=../elite-mathematique-play.aab
+          else
+            echo "::warning::Clé d'envoi absente (secrets ANDROID_UPLOAD_*) : l'App Bundle n'est pas signé. Voir docs/PLAY-STORE.md."
+            AAB=../elite-mathematique-play-non-signe.aab
+          fi
+          ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
+          rm -f "$RUNNER_TEMP/envoi.jks"
+          cp app/build/outputs/apk/debug/app-debug.apk ../elite-mathematique.apk
+          cp app/build/outputs/bundle/release/app-release.aab "$AAB"
+          echo "Numéro de version (versionCode) : $((GITHUB_RUN_NUMBER + 100))"
+
+      - name: Vérifier l'APK (signature et contenu)
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs elite-mathematique.apk
+          unzip -l elite-mathematique.apk > contenu.txt
+          for f in assets/www/index.html assets/www/confidentialite.html assets/www/css/style.css assets/www/js/app.js assets/www/js/gen/tle.js assets/www/vendor/katex/katex.min.js; do
+            grep -q " $f$" contenu.txt || { echo "Fichier absent de l'APK : $f"; exit 1; }
+          done
+          echo "Fichiers du logiciel dans l'APK : $(grep -c ' assets/www/' contenu.txt)"
+          ls -la elite-mathematique.apk
+
+      - name: Vérifier l'App Bundle
+        run: |
+          AAB=$(ls elite-mathematique-play*.aab)
+          unzip -l "$AAB" | grep -q " base/assets/www/index.html$" || { echo "index.html absent de l'App Bundle"; exit 1; }
+          if [ "$AAB" = "elite-mathematique-play.aab" ]; then
+            jarsigner -verify "$AAB" | tee verif.txt
+            grep -q "jar verified" verif.txt
+            keytool -printcert -jarfile "$AAB" | head -8
+          fi
+          ls -la "$AAB"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elite-mathematique-apk
+          path: elite-mathematique.apk
+          if-no-files-found: error
+
+      - name: Préparer la PWA (zip du site installable)
+        run: |
+          mkdir elite-mathematique-pwa
+          cp -r index.html confidentialite.html manifest.webmanifest sw.js css js vendor icons elite-mathematique-pwa/
+          cp docs/LISEZMOI-PWA.txt elite-mathematique-pwa/LISEZMOI.txt
+          zip -qr -9 elite-mathematique-pwa.zip elite-mathematique-pwa
+          ls -la elite-mathematique-pwa.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elite-mathematique-pwa
+          path: elite-mathematique-pwa.zip
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elite-mathematique-play-store
+          path: elite-mathematique-play*.aab
+          if-no-files-found: error
+
+      - name: Publier l'APK et la PWA (branche principale ou lancement manuel)
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete android --yes --cleanup-tag || true
+          gh release create android elite-mathematique.apk elite-mathematique-pwa.zip \
+            --title "Application Android et PWA" \
+            --notes "ELITE MATHÉMATIQUE, construit automatiquement (branche ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}).
+
+          - elite-mathematique.apk : application Android, à ouvrir sur le téléphone pour l'installer (Android 5.0 ou plus). Fonctionne sans connexion.
+          - elite-mathematique-pwa.zip : version web installable (PWA). Voir LISEZMOI.txt dans le zip." \
+            --target "$GITHUB_SHA"

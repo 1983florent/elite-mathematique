@@ -1,0 +1,33 @@
+{
+  "id": "./index.html",
+  "name": "ELITE MATHÉMATIQUE",
+  "short_name": "Élite Maths",
+  "description": "Le programme sénégalais de mathématiques du CM2 à la Terminale : cours, exercices corrigés à l'infini, missions, démonstrations animées, examens blancs CFEE, BFEM et BAC, même hors connexion.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7fb",
+  "theme_color": "#121a52",
+  "categories": ["education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Missions Sénégal", "short_name": "Missions", "url": "./index.html#/missions" },
+    { "name": "Examens blancs", "short_name": "Examens", "url": "./index.html#/examens" },
+    { "name": "Défi du jour", "short_name": "Défi", "url": "./index.html#/defi" },
+    { "name": "Calcul mental", "short_name": "Calcul mental", "url": "./index.html#/calcul-mental" }
+  ],
+  "screenshots": [
+    { "src": "icons/apercu/telephone-1.jpg", "sizes": "540x1169", "type": "image/jpeg", "form_factor": "narrow", "label": "Accueil : classe, défi du jour et parcours" },
+    { "src": "icons/apercu/telephone-2.jpg", "sizes": "540x1169", "type": "image/jpeg", "form_factor": "narrow", "label": "Mission Sénégal : mesurer le baobab de la cour" },
+    { "src": "icons/apercu/telephone-3.jpg", "sizes": "540x1169", "type": "image/jpeg", "form_factor": "narrow", "label": "Démonstration animée : Pythagore" },
+    { "src": "icons/apercu/ordinateur-1.jpg", "sizes": "1280x720", "type": "image/jpeg", "form_factor": "wide", "label": "Accueil sur ordinateur et ligne du parcours" }
+  ]
+}

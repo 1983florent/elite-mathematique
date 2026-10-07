@@ -48,7 +48,10 @@ Pour publier sur le **Google Play Store** : [docs/PLAY-STORE.md](docs/PLAY-STORE
 
 - **En ligne** : le workflow « Site web » publie le logiciel sur GitHub Pages à chaque mise à jour de `main`
   (à activer une fois : *Settings → Pages → Source : GitHub Actions*). Adresse : https://1983florent.github.io/elite-mathematique/
-- **Sur Android** : ouvrir le site dans Chrome, puis menu ⋮ → « Installer l'application ». Elle fonctionne ensuite hors connexion.
+- **Sur Android** : installer l'APK https://github.com/1983florent/elite-mathematique/releases/download/android/elite-mathematique.apk,
+  ou ouvrir le site dans Chrome, puis menu ⋮ → « Installer l'application ». Elle fonctionne ensuite hors connexion.
+- **PWA à héberger soi-même** : https://github.com/1983florent/elite-mathematique/releases/download/android/elite-mathematique-pwa.zip
+  (voir `LISEZMOI.txt` dans le zip).
 - **Sans internet du tout** : copier le dossier (clé USB, carte mémoire, partage de fichiers) et ouvrir `index.html` dans un navigateur.
 
 Aucune installation, aucun compte, aucune donnée envoyée : la progression reste sur l'appareil.

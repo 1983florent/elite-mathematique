@@ -1,6 +1,7 @@
 # Compile l'application Android à chaque mise à jour :
-# - l'APK (installation directe), téléchargeable dans l'onglet « Actions » (rubrique Artifacts) et,
-#   sur la branche principale, publié dans la release « Application Android » ;
+# - l'APK (installation directe) et la PWA (zip du site installable), téléchargeables dans l'onglet
+#   « Actions » (rubrique Artifacts) et publiés dans la release « Application Android »
+#   à chaque mise à jour de la branche principale, ou en lançant le workflow à la main (Run workflow) ;
 # - l'App Bundle (.aab) pour le Play Store, signé avec la clé d'envoi si les secrets
 #   ANDROID_UPLOAD_* sont définis dans le dépôt (voir docs/PLAY-STORE.md).
 name: Application Android
@@ -84,19 +85,36 @@ jobs:
           path: elite-mathematique.apk
           if-no-files-found: error
 
+      - name: Préparer la PWA (zip du site installable)
+        run: |
+          mkdir elite-mathematique-pwa
+          cp -r index.html confidentialite.html manifest.webmanifest sw.js css js vendor icons elite-mathematique-pwa/
+          cp docs/LISEZMOI-PWA.txt elite-mathematique-pwa/LISEZMOI.txt
+          zip -qr -9 elite-mathematique-pwa.zip elite-mathematique-pwa
+          ls -la elite-mathematique-pwa.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elite-mathematique-pwa
+          path: elite-mathematique-pwa.zip
+          if-no-files-found: error
+
       - uses: actions/upload-artifact@v4
         with:
           name: elite-mathematique-play-store
           path: elite-mathematique-play*.aab
           if-no-files-found: error
 
-      - name: Publier l'APK (branche principale)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Publier l'APK et la PWA (branche principale ou lancement manuel)
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete android --yes --cleanup-tag || true
-          gh release create android elite-mathematique.apk \
-            --title "Application Android" \
-            --notes "APK d'ELITE MATHÉMATIQUE, construit automatiquement à partir de la dernière version (commit ${GITHUB_SHA::7}). Fonctionne sans connexion. Android 5.0 ou plus." \
+          gh release create android elite-mathematique.apk elite-mathematique-pwa.zip \
+            --title "Application Android et PWA" \
+            --notes "ELITE MATHÉMATIQUE, construit automatiquement (branche ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}).
+
+          - elite-mathematique.apk : application Android, à ouvrir sur le téléphone pour l'installer (Android 5.0 ou plus). Fonctionne sans connexion.
+          - elite-mathematique-pwa.zip : version web installable (PWA). Voir LISEZMOI.txt dans le zip." \
             --target "$GITHUB_SHA"

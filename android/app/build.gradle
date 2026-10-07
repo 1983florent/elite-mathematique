@@ -64,6 +64,7 @@ tasks.register('copierLogicielWeb', Sync) {
     from(webRoot) {
         include 'index.html', 'manifest.webmanifest', 'confidentialite.html'
         include 'css/**', 'js/**', 'vendor/**', 'icons/**'
+        exclude 'icons/apercu/**'
     }
     into webAssets
 }

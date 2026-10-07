@@ -1,6 +1,8 @@
-# Compile l'application Android (APK) à chaque mise à jour.
-# L'APK est téléchargeable dans l'onglet « Actions » (rubrique Artifacts) ;
-# sur la branche principale, il est aussi publié dans la release « Application Android ».
+# Compile l'application Android à chaque mise à jour :
+# - l'APK (installation directe), téléchargeable dans l'onglet « Actions » (rubrique Artifacts) et,
+#   sur la branche principale, publié dans la release « Application Android » ;
+# - l'App Bundle (.aab) pour le Play Store, signé avec la clé d'envoi si les secrets
+#   ANDROID_UPLOAD_* sont définis dans le dépôt (voir docs/PLAY-STORE.md).
 name: Application Android
 
 on:
@@ -31,28 +33,61 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Compiler l'APK
+      - name: Compiler l'APK et l'App Bundle (Play Store)
         working-directory: android
+        env:
+          CLE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          if [ -n "$CLE_BASE64" ]; then
+            printf '%s' "$CLE_BASE64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/envoi.jks"
+            export ANDROID_UPLOAD_KEYSTORE="$RUNNER_TEMP/envoi.jks"
+            AAB=../elite-mathematique-play.aab
+          else
+            echo "::warning::Clé d'envoi absente (secrets ANDROID_UPLOAD_*) : l'App Bundle n'est pas signé. Voir docs/PLAY-STORE.md."
+            AAB=../elite-mathematique-play-non-signe.aab
+          fi
+          ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
+          rm -f "$RUNNER_TEMP/envoi.jks"
           cp app/build/outputs/apk/debug/app-debug.apk ../elite-mathematique.apk
+          cp app/build/outputs/bundle/release/app-release.aab "$AAB"
+          echo "Numéro de version (versionCode) : $((GITHUB_RUN_NUMBER + 100))"
 
       - name: Vérifier l'APK (signature et contenu)
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify --print-certs elite-mathematique.apk
           unzip -l elite-mathematique.apk > contenu.txt
-          for f in assets/www/index.html assets/www/css/style.css assets/www/js/app.js assets/www/js/gen/tle.js assets/www/vendor/katex/katex.min.js; do
+          for f in assets/www/index.html assets/www/confidentialite.html assets/www/css/style.css assets/www/js/app.js assets/www/js/gen/tle.js assets/www/vendor/katex/katex.min.js; do
             grep -q " $f$" contenu.txt || { echo "Fichier absent de l'APK : $f"; exit 1; }
           done
           echo "Fichiers du logiciel dans l'APK : $(grep -c ' assets/www/' contenu.txt)"
           ls -la elite-mathematique.apk
 
+      - name: Vérifier l'App Bundle
+        run: |
+          AAB=$(ls elite-mathematique-play*.aab)
+          unzip -l "$AAB" | grep -q " base/assets/www/index.html$" || { echo "index.html absent de l'App Bundle"; exit 1; }
+          if [ "$AAB" = "elite-mathematique-play.aab" ]; then
+            jarsigner -verify "$AAB" | tee verif.txt
+            grep -q "jar verified" verif.txt
+            keytool -printcert -jarfile "$AAB" | head -8
+          fi
+          ls -la "$AAB"
+
       - uses: actions/upload-artifact@v4
         with:
           name: elite-mathematique-apk
           path: elite-mathematique.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elite-mathematique-play-store
+          path: elite-mathematique-play*.aab
           if-no-files-found: error
 
       - name: Publier l'APK (branche principale)

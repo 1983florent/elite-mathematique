@@ -5,11 +5,18 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.view.View;
+import android.view.WindowInsets;
+import android.widget.FrameLayout;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -38,7 +45,34 @@ public class MainActivity extends Activity {
         super.onCreate(etat);
         web = new WebView(this);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        setContentView(web);
+        // Le WebView est posé dans un cadre couleur encre : sur Android 15 et plus, l'application occupe
+        // tout l'écran (« bord à bord ») et le cadre se décale des barres système et du clavier.
+        FrameLayout cadre = new FrameLayout(this);
+        cadre.setBackgroundColor(Color.parseColor("#121A52"));
+        cadre.addView(web, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        setContentView(cadre);
+        if (Build.VERSION.SDK_INT >= 35) {
+            cadre.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+                @Override
+                public WindowInsets onApplyWindowInsets(View vue, WindowInsets marges) {
+                    Insets barres = marges.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                    Insets clavier = marges.getInsets(WindowInsets.Type.ime());
+                    vue.setPadding(barres.left, barres.top, barres.right, Math.max(barres.bottom, clavier.bottom));
+                    return WindowInsets.CONSUMED;
+                }
+            });
+        }
+        // Android 13 et plus : le geste ou le bouton « retour » revient à la page précédente du logiciel
+        // (onBackPressed n'est plus appelé pour les applications qui ciblent Android 16).
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                    new OnBackInvokedCallback() {
+                        @Override
+                        public void onBackInvoked() {
+                            retour();
+                        }
+                    });
+        }
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -112,11 +146,17 @@ public class MainActivity extends Activity {
         web.saveState(etat);
     }
 
+    /** Retour : page précédente du logiciel, sinon l'application passe en arrière-plan (comme l'accueil d'Android). */
+    private void retour() {
+        if (web.canGoBack()) web.goBack();
+        else moveTaskToBack(true);
+    }
+
+    /** Android 12 et moins. */
     @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
-        if (web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        retour();
     }
 
     @Override

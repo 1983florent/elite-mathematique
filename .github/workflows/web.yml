@@ -32,7 +32,7 @@ jobs:
       - name: Préparer le site
         run: |
           mkdir -p _site
-          cp -r index.html manifest.webmanifest sw.js css js vendor icons _site/
+          cp -r index.html confidentialite.html manifest.webmanifest sw.js css js vendor icons _site/
           cp logo.png qr-code.png _site/ 2>/dev/null || true
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

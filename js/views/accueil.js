@@ -163,11 +163,20 @@
   EM.initiales = initiales;
 
   function soutien() {
+    // Dans l'application Android (Play Store), pas d'appel aux dons : la règle des paiements de Google Play
+    // interdit d'orienter vers un moyen de paiement extérieur.
+    if (EM.estAndroid()) {
+      return '<h2 class="section-title">' + I('coeur') + 'Contact</h2><div class="support"><div>' +
+        '<p>Une question, une erreur dans un exercice, une idée ? Écris-nous : <strong>maths.florent@gmail.com</strong></p>' +
+        '<div class="row"><a class="btn sm ghost" href="#/a-propos">' + I('info') + 'À propos</a><a class="btn sm ghost" href="confidentialite.html">Confidentialité</a></div></div></div>' +
+        '<p class="footer">© ' + new Date().getFullYear() + ' ELITE MATHÉMATIQUE · Programme de mathématiques du Sénégal, du CM2 à la Terminale.</p>';
+    }
     return '<h2 class="section-title">' + I('coeur') + 'Soutenir le projet</h2><div class="support"><div>' +
       '<p>ELITE MATHÉMATIQUE est gratuit pour tous les élèves du Sénégal. Vous pouvez soutenir son développement :</p>' +
       '<p class="num"><strong>Wave / Orange Money :</strong> (+221) 70 601 31 69<br><strong>E-mail :</strong> maths.florent@gmail.com</p>' +
       '<div class="row">' + (EM.estAndroid() ? '' : '<a class="btn sm gold" href="' + EM.APK_URL + '">' + I('telephone') + 'Application Android</a>') +
-      '<button class="btn sm ghost" data-act="copier">' + I('copier') + 'Copier le numéro</button><a class="btn sm ghost" href="#/a-propos">' + I('info') + 'À propos</a></div></div>' +
+      '<button class="btn sm ghost" data-act="copier">' + I('copier') + 'Copier le numéro</button><a class="btn sm ghost" href="#/a-propos">' + I('info') + 'À propos</a>' +
+      '<a class="btn sm ghost" href="confidentialite.html">Confidentialité</a></div></div>' +
       '<img class="qr-img" src="qr-code.png" alt="QR code pour soutenir le projet" onerror="this.remove()"></div>' +
       '<p class="footer">© ' + new Date().getFullYear() + ' ELITE MATHÉMATIQUE · Programme de mathématiques du Sénégal, du CM2 à la Terminale.</p>';
   }
@@ -281,8 +290,10 @@
         '<p><a class="btn gold" href="' + EM.APK_URL + '">' + I('telephone') + 'Télécharger l\'application Android (APK)</a></p>' +
         '<p>Après le téléchargement, ouvre le fichier et autorise l\'installation (« sources inconnues ») si ton téléphone le demande. L\'application fonctionne sans connexion, sur Android 5.0 ou plus. ' +
         'Autre possibilité : dans Chrome, menu ⋮ puis « Installer l\'application ». Le dossier du logiciel peut aussi être copié sur une clé USB : il suffit d\'ouvrir <code>index.html</code>.</p>') +
-      '<h2>Tes données</h2><p>Ta progression reste sur ton appareil. Tu peux l\'exporter dans « Mes progrès » pour la transférer sur un autre téléphone.</p>' +
-      '<h2>Contact et soutien</h2><p class="num"><strong>Wave / Orange Money :</strong> (+221) 70 601 31 69 · maths.florent@gmail.com</p>' +
+      '<h2>Tes données</h2><p>Ta progression reste sur ton appareil : rien n\'est envoyé, aucun compte n\'est demandé. Tu peux l\'exporter dans « Mes progrès » pour la transférer sur un autre téléphone. ' +
+      '<a href="confidentialite.html">Politique de confidentialité</a></p>' +
+      (EM.estAndroid() ? '<h2>Contact</h2><p class="num">maths.florent@gmail.com</p>' :
+        '<h2>Contact et soutien</h2><p class="num"><strong>Wave / Orange Money :</strong> (+221) 70 601 31 69 · maths.florent@gmail.com</p>') +
       '<p class="small muted">Polices : Bricolage Grotesque et Lexend (licence SIL OFL). Formules : KaTeX (licence MIT). Contributions : voir <code>docs/CONTRIBUER.md</code>.</p></div>';
   };
 })(typeof window !== 'undefined' ? window : globalThis);
